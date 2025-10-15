@@ -275,6 +275,9 @@
                                 onclick="${inst.is_healthy ? 'stopMCP' : 'startMCP'}('${inst.id}')">
                             <i class="fas fa-${inst.is_healthy ? 'stop' : 'play'}"></i>
                         </button>
+                        <button class="btn btn-sm btn-primary" onclick="editMCP('${inst.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
                         <button class="btn btn-sm btn-danger" onclick="deleteMCP('${inst.id}')">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -298,6 +301,110 @@
                 alert('MCP服务已停止');
             } else {
                 alert('停止失败');
+            }
+        }
+        
+        async function editMCP(instanceId) {
+            // 获取实例详情
+            const response = await fetch(`/api/mcp/instances/${instanceId}`);
+            if (!response.ok) {
+                alert('获取实例信息失败');
+                return;
+            }
+            
+            const instance = await response.json();
+            
+            // 填充表单
+            document.getElementById('mcpName').value = instance.name;
+            document.getElementById('mcpType').value = instance.type;
+            document.getElementById('mcpPort').value = instance.port;
+            
+            // 更新配置字段
+            updateConfigFields();
+            
+            // 填充配置
+            if (instance.type === 'elasticsearch') {
+                document.getElementById('esUrl').value = instance.config.es_url || '';
+                document.getElementById('esUsername').value = instance.config.es_username || '';
+                document.getElementById('esPassword').value = instance.config.es_password || '';
+                document.getElementById('esApiKey').value = instance.config.es_api_key || '';
+                document.getElementById('esCACert').value = instance.config.es_ca_cert || '';
+                document.getElementById('esDisableSSL').checked = instance.config.es_disable_ssl || false;
+            } else if (instance.type === 'kibana') {
+                document.getElementById('kibanaUrl').value = instance.config.kibana_url || '';
+                document.getElementById('kibanaUsername').value = instance.config.kibana_username || '';
+                document.getElementById('kibanaPassword').value = instance.config.kibana_password || '';
+                document.getElementById('kibanaCookies').value = instance.config.kibana_cookies || '';
+                document.getElementById('kibanaCACert').value = instance.config.kibana_ca_cert || '';
+                document.getElementById('kibanaDisableSSL').checked = instance.config.kibana_disable_ssl || false;
+            } else if (instance.type === 'newflow') {
+                document.getElementById('newflowUrl').value = instance.config.newflow_url || '';
+                document.getElementById('newflowApiKey').value = instance.config.newflow_api_key || '';
+            }
+            
+            // 修改表单提交行为
+            const form = document.getElementById('mcpForm');
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                await updateMCPInstance(instanceId);
+                form.onsubmit = createMCPInstance; // 恢复原来的提交函数
+            };
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('mcpModal'));
+            modal.show();
+        }
+        
+        async function updateMCPInstance(instanceId) {
+            const formData = {
+                name: document.getElementById('mcpName').value,
+                type: document.getElementById('mcpType').value,
+                port: parseInt(document.getElementById('mcpPort').value),
+                config: {}
+            };
+            
+            // 收集配置（复用createMCPInstance的逻辑）
+            if (formData.type === 'elasticsearch') {
+                formData.config.es_url = document.getElementById('esUrl').value;
+                const username = document.getElementById('esUsername').value;
+                const password = document.getElementById('esPassword').value;
+                if (username) formData.config.es_username = username;
+                if (password) formData.config.es_password = password;
+                const apiKey = document.getElementById('esApiKey').value;
+                if (apiKey) formData.config.es_api_key = apiKey;
+                const caCert = document.getElementById('esCACert').value;
+                if (caCert) formData.config.es_ca_cert = caCert;
+                formData.config.es_disable_ssl = document.getElementById('esDisableSSL').checked;
+            } else if (formData.type === 'kibana') {
+                formData.config.kibana_url = document.getElementById('kibanaUrl').value;
+                const username = document.getElementById('kibanaUsername').value;
+                const password = document.getElementById('kibanaPassword').value;
+                if (username) formData.config.kibana_username = username;
+                if (password) formData.config.kibana_password = password;
+                const cookies = document.getElementById('kibanaCookies').value;
+                if (cookies) formData.config.kibana_cookies = cookies;
+                const caCert = document.getElementById('kibanaCACert').value;
+                if (caCert) formData.config.kibana_ca_cert = caCert;
+                formData.config.kibana_disable_ssl = document.getElementById('kibanaDisableSSL').checked;
+            } else if (formData.type === 'newflow') {
+                formData.config.newflow_url = document.getElementById('newflowUrl').value;
+                const apiKey = document.getElementById('newflowApiKey').value;
+                if (apiKey) formData.config.newflow_api_key = apiKey;
+            }
+            
+            const response = await fetch(`/api/mcp/instances/${instanceId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            if (response.ok) {
+                alert('MCP实例更新成功');
+                bootstrap.Modal.getInstance(document.getElementById('mcpModal')).hide();
+                document.getElementById('mcpForm').reset();
+            } else {
+                const error = await response.json();
+                alert('更新失败: ' + (error.detail || '未知错误'));
             }
         }
         
