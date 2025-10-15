@@ -41,7 +41,7 @@ services:
       - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-changeme123}
     volumes:
       - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
-      - ./elasticsearch/branding:/usr/share/kibana/branding:ro
+      - ./kibana/branding:/usr/share/kibana/branding:ro
     networks:
       - elastic
 
