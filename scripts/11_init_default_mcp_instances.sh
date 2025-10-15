@@ -39,9 +39,11 @@ instance_exists() {
 echo ""
 echo "📦 创建Elasticsearch MCP实例..."
 if instance_exists "本地ES集群"; then
-    echo "ℹ️  Elasticsearch MCP实例已存在，跳过"
+    echo "ℹ️  Elasticsearch MCP实例已存在，检查状态..."
+    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地ES集群']; print(matches[0] if matches else '')")
 else
-    curl -s -X POST "${API_BASE}/instances" \
+    # 创建实例并直接获取ID
+    RESPONSE=$(curl -s -X POST "${API_BASE}/instances" \
       -H "Content-Type: application/json" \
       -d '{
         "name": "本地ES集群",
@@ -51,27 +53,29 @@ else
           "es_url": "http://localhost:9200",
           "es_disable_ssl": true
         }
-      }' | python3 -m json.tool || echo "⚠️  创建失败"
+      }')
     
-    # 启动实例
-    sleep 2
-    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地ES集群']; print(matches[0] if matches else '')")
-    
-    if [ -n "$INSTANCE_ID" ]; then
-        echo "🚀 启动Elasticsearch MCP实例..."
-        curl -s -X POST "${API_BASE}/instances/${INSTANCE_ID}/start" || echo "⚠️  启动失败"
-        sleep 3
-        echo "✅ Elasticsearch MCP: http://localhost:3001/mcp"
-    fi
+    echo "$RESPONSE" | python3 -m json.tool
+    INSTANCE_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('id', ''))")
+fi
+
+# 启动实例
+if [ -n "$INSTANCE_ID" ]; then
+    echo "🚀 启动Elasticsearch MCP实例..."
+    curl -s -X POST "${API_BASE}/instances/${INSTANCE_ID}/start" | python3 -m json.tool
+    sleep 3
+    echo "✅ Elasticsearch MCP: http://localhost:3001/mcp"
 fi
 
 # 2. 创建Kibana MCP实例（端口3002）
 echo ""
 echo "📊 创建Kibana MCP实例..."
 if instance_exists "本地Kibana"; then
-    echo "ℹ️  Kibana MCP实例已存在，跳过"
+    echo "ℹ️  Kibana MCP实例已存在，检查状态..."
+    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地Kibana']; print(matches[0] if matches else '')")
 else
-    curl -s -X POST "${API_BASE}/instances" \
+    # 创建实例并直接获取ID
+    RESPONSE=$(curl -s -X POST "${API_BASE}/instances" \
       -H "Content-Type: application/json" \
       -d '{
         "name": "本地Kibana",
@@ -81,34 +85,35 @@ else
           "kibana_url": "http://localhost:5601",
           "kibana_disable_ssl": true
         }
-      }' | python3 -m json.tool || echo "⚠️  创建失败"
+      }')
     
-    # 启动实例
-    sleep 2
-    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地Kibana']; print(matches[0] if matches else '')")
-    
-    if [ -n "$INSTANCE_ID" ]; then
-        echo "🚀 启动Kibana MCP实例..."
-        curl -s -X POST "${API_BASE}/instances/${INSTANCE_ID}/start" || echo "⚠️  启动失败"
-        sleep 3
-        echo "✅ Kibana MCP: http://localhost:3002/mcp"
-    fi
+    echo "$RESPONSE" | python3 -m json.tool
+    INSTANCE_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('id', ''))")
+fi
+
+# 启动实例
+if [ -n "$INSTANCE_ID" ]; then
+    echo "🚀 启动Kibana MCP实例..."
+    curl -s -X POST "${API_BASE}/instances/${INSTANCE_ID}/start" | python3 -m json.tool
+    sleep 3
+    echo "✅ Kibana MCP: http://localhost:3002/mcp"
 fi
 
 # 3. 创建NewFlow MCP实例（端口3003）
 echo ""
 echo "🔄 创建NewFlow MCP实例..."
 if instance_exists "本地NewFlow"; then
-    echo "ℹ️  NewFlow MCP实例已存在，跳过"
+    echo "ℹ️  NewFlow MCP实例已存在，检查状态..."
+    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地NewFlow']; print(matches[0] if matches else '')")
 else
     # NewFlow在Docker容器中，宿主机上的MCP通过端口映射访问
-    # 使用localhost:5677/api/v1（宿主机访问Docker端口映射）
     NEWFLOW_URL="http://localhost:5677/api/v1"
     
     echo "ℹ️  NewFlow URL: $NEWFLOW_URL"
     echo "ℹ️  (MCP在宿主机，通过端口映射访问Docker中的NewFlow)"
     
-    curl -s -X POST "${API_BASE}/instances" \
+    # 创建实例并直接获取ID
+    RESPONSE=$(curl -s -X POST "${API_BASE}/instances" \
       -H "Content-Type: application/json" \
       -d '{
         "name": "本地NewFlow",
@@ -118,18 +123,18 @@ else
           "newflow_url": "'"${NEWFLOW_URL}"'",
           "newflow_api_key": "'"${NEWFLOW_API_KEY:-}"'"
         }
-      }' | python3 -m json.tool || echo "⚠️  创建失败"
+      }')
     
-    # 启动实例
-    sleep 2
-    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地NewFlow']; print(matches[0] if matches else '')")
-    
-    if [ -n "$INSTANCE_ID" ]; then
-        echo "🚀 启动NewFlow MCP实例..."
-        curl -s -X POST "${API_BASE}/instances/${INSTANCE_ID}/start" || echo "⚠️  启动失败"
-        sleep 3
-        echo "✅ NewFlow MCP: http://localhost:3003/mcp"
-    fi
+    echo "$RESPONSE" | python3 -m json.tool
+    INSTANCE_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('id', ''))")
+fi
+
+# 启动实例
+if [ -n "$INSTANCE_ID" ]; then
+    echo "🚀 启动NewFlow MCP实例..."
+    curl -s -X POST "${API_BASE}/instances/${INSTANCE_ID}/start" | python3 -m json.tool
+    sleep 3
+    echo "✅ NewFlow MCP: http://localhost:3003/mcp"
 fi
 
 echo ""
