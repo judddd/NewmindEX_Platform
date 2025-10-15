@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
+    container_name: es01
+    environment:
+      - node.name=es01
+      - cluster.name=${ES_CLUSTER_NAME:-es-cluster}
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms${ES_MEM:-2g} -Xmx${ES_MEM:-2g}"
+      - xpack.security.enabled=false
+      - xpack.ml.enabled=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata01:/usr/share/elasticsearch/data
+    ports:
+      - "${ES_PORT_1:-9200}:9200"
+    networks:
+      - elastic
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.17.3
+    container_name: kibana
+    depends_on:
+      - es01
+    ports:
+      - "${KIBANA_PORT:-5601}:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es01:9200
+    networks:
+      - elastic
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.17.3
+    container_name: logstash
+    ports:
+      - "${LOGSTASH_PORT:-5044}:5044"
+      - "9600:9600"
+    networks:
+      - elastic
+
+  newflow:
+    image: newflow:1.0.12
+    container_name: newflow
+    ports:
+      - "${NEWFLOW_PORT:-5677}:5677"
+    environment:
+      - N8N_PORT=5677
+      - DB_SQLITE_POOL_SIZE=5
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
+    volumes:
+      - ./newflow_data:/home/node/.newflow
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - elastic
+
+volumes:
+  esdata01:
+    driver: local
+
+networks:
+  elastic:
+    driver: bridge

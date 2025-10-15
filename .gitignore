@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+*.log
+dist/
+build/
+
+# Data & Volumes
+elasticsearch/node*/
+newflow_data/
+*.db
+*.sqlite
+
+# Environment
+.env.local
+.env.*.local
+
+# Mac
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# MCP Runtime
+python_dashboard/mcp_pids/
+python_dashboard/mcp_logs/
+mcp_tool/instances/*/logs/
+mcp_tool/instances/*/pids/
+
+# Installers (too large for git, downloaded on demand)
+installers/*.dmg
+installers/*.tar
+

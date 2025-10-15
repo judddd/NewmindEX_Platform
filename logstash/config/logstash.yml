@@ -1,0 +1,13 @@
+# Logstash配置文件
+
+# 管道设置
+pipeline.workers: 2
+pipeline.batch.size: 125
+pipeline.batch.delay: 50
+
+# 监控设置
+xpack.monitoring.enabled: true
+xpack.monitoring.elasticsearch.hosts: ["http://es01:9200"]
+xpack.monitoring.elasticsearch.username: "elastic"
+xpack.monitoring.elasticsearch.password: "${ELASTICSEARCH_PASSWORD}"
+

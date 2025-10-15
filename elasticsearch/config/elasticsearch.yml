@@ -1,0 +1,31 @@
+# Elasticsearch配置文件
+
+# 网络设置
+network.host: 0.0.0.0
+
+# 安全配置
+xpack.security.enabled: true
+xpack.security.authc.api_key.enabled: true
+
+# 审计日志配置
+xpack.security.audit.enabled: true
+xpack.security.audit.logfile.events.include:
+  - access_denied
+  - access_granted
+  - anonymous_access_denied
+  - authentication_failed
+  - authentication_success
+  - connection_denied
+  - tampered_request
+  - run_as_denied
+  - run_as_granted
+xpack.security.audit.logfile.events.emit_request_body: true
+
+# Machine Learning配置
+xpack.ml.enabled: true
+xpack.ml.max_machine_memory_percent: 30
+xpack.ml.max_open_jobs: 512
+
+# 监控配置
+xpack.monitoring.collection.enabled: true
+

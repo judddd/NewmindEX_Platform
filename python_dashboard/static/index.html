@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewMind AI Platform - Management Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .dashboard-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .status-card {
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .status-running { border-left-color: #28a745; }
+        .status-stopped { border-left-color: #dc3545; }
+        .status-warning { border-left-color: #ffc107; }
+        .badge-running { background-color: #28a745; }
+        .badge-stopped { background-color: #dc3545; }
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="dashboard-container">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <h1 class="logo"><i class="fas fa-brain"></i> NewMind AI Platform</h1>
+                    <p class="text-muted">Enterprise AI Workflow Management Dashboard</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div id="connection-status" class="badge bg-secondary">
+                        <i class="fas fa-circle-notch fa-spin"></i> 连接中...
+                    </div>
+                </div>
+            </div>
+
+            <!-- 服务状态总览 -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Elasticsearch</h6>
+                            <h3 class="card-title" id="es-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <small id="es-health"></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Kibana</h6>
+                            <h3 class="card-title" id="kibana-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <a href="http://localhost:5601" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                <i class="fas fa-external-link-alt"></i> 打开
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">LM Studio</h6>
+                            <h3 class="card-title" id="lm-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <small id="lm-models"></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">NewFlow</h6>
+                            <h3 class="card-title" id="newflow-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <a href="http://localhost:5677" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                <i class="fas fa-external-link-alt"></i> 打开
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MCP服务器管理 -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-server"></i> MCP服务器管理</h5>
+                            <button class="btn btn-primary btn-sm" onclick="showCreateModal()">
+                                <i class="fas fa-plus"></i> 创建MCP实例
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="mcp-instances" class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>实例名称</th>
+                                            <th>类型</th>
+                                            <th>状态</th>
+                                            <th>端口</th>
+                                            <th>端点</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mcp-table-body">
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">加载中...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快速操作 -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-project-diagram"></i> NewFlow工作流</h6>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-primary w-100" onclick="importWorkflows()">
+                                <i class="fas fa-file-import"></i> 一键导入工作流
+                            </button>
+                            <div id="workflow-status" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-key"></i> Elasticsearch</h6>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-warning w-100" onclick="checkLicense()">
+                                <i class="fas fa-certificate"></i> 检查许可证
+                            </button>
+                            <div id="license-status" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-download"></i> NewMindChat配置</h6>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-success w-100" onclick="downloadNewMindChatConfig()">
+                                <i class="fas fa-download"></i> 导出配置
+                            </button>
+                            <small class="text-muted d-block mt-2">导出运行中的MCP配置</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="row mt-4">
+                <div class="col-12 text-center text-muted">
+                    <p class="mb-0">
+                        <i class="fas fa-heart text-danger"></i> NewMind AI Platform v1.0.0 | 
+                        <a href="/docs" target="_blank">API文档</a> | 
+                        <a href="https://github.com/TocharianOU/mac_product" target="_blank">GitHub</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // WebSocket连接
+        let ws = null;
+        
+        function connectWebSocket() {
+            ws = new WebSocket(`ws://${window.location.host}/ws`);
+            
+            ws.onopen = () => {
+                document.getElementById('connection-status').innerHTML = 
+                    '<i class="fas fa-check-circle"></i> 已连接';
+                document.getElementById('connection-status').className = 'badge bg-success';
+            };
+            
+            ws.onmessage = (event) => {
+                const status = JSON.parse(event.data);
+                updateDashboard(status);
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('connection-status').innerHTML = 
+                    '<i class="fas fa-times-circle"></i> 断开连接';
+                document.getElementById('connection-status').className = 'badge bg-danger';
+                // 5秒后重连
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+        
+        function updateDashboard(status) {
+            // 更新ES状态
+            const esStatus = status.elasticsearch.status === 'running';
+            document.getElementById('es-status').innerHTML = 
+                `<span class="badge badge-${esStatus ? 'running' : 'stopped'}">${esStatus ? '运行中' : '离线'}</span>`;
+            if (status.elasticsearch.health) {
+                document.getElementById('es-health').textContent = 
+                    `集群状态: ${status.elasticsearch.health.status || 'unknown'}`;
+            }
+            
+            // 更新Kibana状态
+            document.getElementById('kibana-status').innerHTML = 
+                `<span class="badge badge-running">运行中</span>`;
+            
+            // 更新LM Studio状态
+            const lmStatus = status.lmstudio.status === 'running';
+            document.getElementById('lm-status').innerHTML = 
+                `<span class="badge badge-${lmStatus ? 'running' : 'stopped'}">${lmStatus ? '运行中' : '离线'}</span>`;
+            
+            // 更新NewFlow状态
+            document.getElementById('newflow-status').innerHTML = 
+                `<span class="badge badge-running">运行中</span>`;
+            
+            // 更新MCP实例表格
+            if (status.mcp_servers && status.mcp_servers.instances) {
+                updateMCPTable(status.mcp_servers.instances);
+            }
+        }
+        
+        function updateMCPTable(instances) {
+            const tbody = document.getElementById('mcp-table-body');
+            if (instances.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无MCP实例</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = instances.map(inst => `
+                <tr>
+                    <td>${inst.name}</td>
+                    <td><span class="badge bg-info">${inst.type}</span></td>
+                    <td><span class="badge badge-${inst.is_healthy ? 'running' : 'stopped'}">${inst.is_healthy ? '运行中' : '已停止'}</span></td>
+                    <td>${inst.port}</td>
+                    <td><code>${inst.endpoint}</code></td>
+                    <td>
+                        <button class="btn btn-sm btn-${inst.is_healthy ? 'danger' : 'success'}" 
+                                onclick="${inst.is_healthy ? 'stopMCP' : 'startMCP'}('${inst.id}')">
+                            <i class="fas fa-${inst.is_healthy ? 'stop' : 'play'}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteMCP('${inst.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        async function startMCP(instanceId) {
+            const response = await fetch(`/api/mcp/instances/${instanceId}/start`, { method: 'POST' });
+            if (response.ok) {
+                alert('MCP服务启动成功');
+            } else {
+                alert('启动失败');
+            }
+        }
+        
+        async function stopMCP(instanceId) {
+            const response = await fetch(`/api/mcp/instances/${instanceId}/stop`, { method: 'POST' });
+            if (response.ok) {
+                alert('MCP服务已停止');
+            } else {
+                alert('停止失败');
+            }
+        }
+        
+        async function deleteMCP(instanceId) {
+            if (!confirm('确定要删除此MCP实例吗？')) return;
+            
+            const response = await fetch(`/api/mcp/instances/${instanceId}`, { method: 'DELETE' });
+            if (response.ok) {
+                alert('MCP实例已删除');
+            } else {
+                alert('删除失败');
+            }
+        }
+        
+        async function importWorkflows() {
+            document.getElementById('workflow-status').innerHTML = '<div class="spinner-border spinner-border-sm"></div> 导入中...';
+            const response = await fetch('/api/newflow/import', { method: 'POST' });
+            const result = await response.json();
+            document.getElementById('workflow-status').innerHTML = 
+                `<div class="alert alert-success mt-2">成功: ${result.success} / 失败: ${result.failed}</div>`;
+        }
+        
+        async function checkLicense() {
+            const response = await fetch('/api/es/license');
+            const license = await response.json();
+            document.getElementById('license-status').innerHTML = 
+                `<div class="alert alert-info mt-2">类型: ${license.license?.type || 'unknown'}</div>`;
+        }
+        
+        async function downloadNewMindChatConfig() {
+            const response = await fetch('/api/mcp/newmindchat-config');
+            const config = await response.json();
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'newmindchat-config.json';
+            a.click();
+        }
+        
+        function showNetworkHelp() {
+            const helpHTML = `
+                <div class="modal fade" id="networkHelpModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info text-white">
+                                <h5 class="modal-title"><i class="fas fa-network-wired"></i> Docker网络配置说明</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <h6><i class="fas fa-check-circle text-success"></i> 推荐方式：使用localhost（端口映射）</h6>
+                                <p>Docker已将容器端口映射到主机，MCP服务器可直接通过localhost访问：</p>
+                                <ul>
+                                    <li><code>http://localhost:9200</code> → Elasticsearch</li>
+                                    <li><code>http://localhost:5601</code> → Kibana</li>
+                                </ul>
+                                <p class="text-success"><strong>优点：</strong>简单稳定，容器重启后无需更改配置</p>
+                                
+                                <hr>
+                                
+                                <h6><i class="fas fa-info-circle text-warning"></i> 备用方式：使用Docker IP</h6>
+                                <p>如果localhost访问失败，可使用容器的内部IP地址：</p>
+                                <div class="alert alert-warning">
+                                    <strong>⚠️ 注意：</strong>容器重启后IP可能变化，需重新配置
+                                </div>
+                                <p>获取当前Docker IP：</p>
+                                <pre class="bg-light p-2"><code>bash scripts/get_docker_ips.sh</code></pre>
+                                
+                                <hr>
+                                
+                                <h6><i class="fas fa-book"></i> 详细文档</h6>
+                                <p>完整的网络架构和故障排查指南，请查看：<code>NETWORK_GUIDE.md</code></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除旧模态框
+            const oldModal = document.getElementById('networkHelpModal');
+            if (oldModal) oldModal.remove();
+            
+            // 添加新模态框
+            document.body.insertAdjacentHTML('beforeend', helpHTML);
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('networkHelpModal'));
+            modal.show();
+        }
+        
+        function showCreateModal() {
+            // 创建模态框HTML
+            const modalHTML = `
+                <div class="modal fade" id="createMCPModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> 创建MCP服务实例</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="createMCPForm">
+                                    <!-- 基本信息 -->
+                                    <div class="mb-3">
+                                        <label class="form-label">实例名称 *</label>
+                                        <input type="text" class="form-control" id="mcpName" required 
+                                               placeholder="例如: 生产环境ES">
+                                    </div>
+                                    
+                                    <!-- 类型选择 -->
+                                    <div class="mb-3">
+                                        <label class="form-label">服务类型 *</label>
+                                        <select class="form-select" id="mcpType" required onchange="updateConfigFields()">
+                                            <option value="">请选择...</option>
+                                            <option value="elasticsearch">Elasticsearch</option>
+                                            <option value="kibana">Kibana</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- 模板选择 -->
+                                    <div class="mb-3">
+                                        <label class="form-label">使用模板（可选）</label>
+                                        <select class="form-select" id="mcpTemplate" onchange="applyTemplate()">
+                                            <option value="">自定义配置</option>
+                                            <optgroup label="本地Docker服务（推荐）">
+                                                <option value="local_es_cluster">本地ES集群（localhost）</option>
+                                                <option value="local_kibana">本地Kibana（localhost）</option>
+                                            </optgroup>
+                                            <optgroup label="Docker IP直接访问（备用）">
+                                                <option value="local_es_docker_ip">本地ES集群（Docker IP）</option>
+                                                <option value="local_kibana_docker_ip">本地Kibana（Docker IP）</option>
+                                            </optgroup>
+                                            <optgroup label="远程服务">
+                                                <option value="remote_es">远程ES集群</option>
+                                                <option value="production_kibana">生产环境Kibana</option>
+                                            </optgroup>
+                                        </select>
+                                        <small class="text-muted">
+                                            💡 推荐使用localhost模板。如遇连接问题，可尝试Docker IP模板。
+                                            <a href="#" onclick="showNetworkHelp(); return false;">查看网络配置说明</a>
+                                        </small>
+                                    </div>
+                                    
+                                    <!-- Elasticsearch配置 -->
+                                    <div id="esConfig" style="display:none;">
+                                        <h6 class="border-bottom pb-2 mb-3">Elasticsearch 配置</h6>
+                                        
+                                        <!-- ES URL -->
+                                        <div class="mb-3">
+                                            <label class="form-label">ES URL * <i class="fas fa-info-circle text-muted" title="Elasticsearch服务器地址"></i></label>
+                                            <input type="text" class="form-control" id="esUrl" 
+                                                   placeholder="http://localhost:9200 或 https://es.example.com:9200">
+                                            <small class="text-muted">支持HTTP和HTTPS协议</small>
+                                        </div>
+                                        
+                                        <!-- 认证方式选择 -->
+                                        <div class="mb-3">
+                                            <label class="form-label">认证方式</label>
+                                            <select class="form-select" id="esAuthType" onchange="toggleESAuthFields()">
+                                                <option value="basic">用户名/密码（Basic Auth）</option>
+                                                <option value="apikey">API Key</option>
+                                                <option value="none">无认证</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- Basic Auth -->
+                                        <div id="esBasicAuth">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">用户名</label>
+                                                    <input type="text" class="form-control" id="esUsername" 
+                                                           placeholder="elastic">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">密码</label>
+                                                    <input type="password" class="form-control" id="esPassword" 
+                                                           placeholder="输入密码">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- API Key Auth -->
+                                        <div id="esApiKeyAuth" style="display:none;">
+                                            <div class="mb-3">
+                                                <label class="form-label">API Key</label>
+                                                <input type="text" class="form-control" id="esApiKey" 
+                                                       placeholder="your-api-key-here">
+                                                <small class="text-muted">从ES创建的API Key</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- TLS/SSL配置 -->
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="esDisableTLS" onchange="toggleESCACert()">
+                                                <label class="form-check-label" for="esDisableTLS">
+                                                    禁用SSL证书验证 <span class="badge bg-warning">仅开发环境</span>
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">等同于设置 NODE_TLS_REJECT_UNAUTHORIZED=0</small>
+                                        </div>
+                                        
+                                        <!-- CA证书 -->
+                                        <div id="esCACertField" style="display:none;">
+                                            <div class="mb-3">
+                                                <label class="form-label">CA证书路径 <i class="fas fa-info-circle text-muted" title="自定义CA证书文件路径"></i></label>
+                                                <input type="text" class="form-control" id="esCACert" 
+                                                       placeholder="/path/to/ca-cert.pem">
+                                                <small class="text-muted">用于生产环境的自签名证书验证</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Kibana配置 -->
+                                    <div id="kibanaConfig" style="display:none;">
+                                        <h6 class="border-bottom pb-2 mb-3">Kibana 配置</h6>
+                                        
+                                        <!-- Kibana URL -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Kibana URL * <i class="fas fa-info-circle text-muted" title="Kibana服务器地址"></i></label>
+                                            <input type="text" class="form-control" id="kibanaUrl" 
+                                                   placeholder="http://localhost:5601 或 https://kibana.example.com:5601">
+                                            <small class="text-muted">支持HTTP和HTTPS协议</small>
+                                        </div>
+                                        
+                                        <!-- 认证方式选择 -->
+                                        <div class="mb-3">
+                                            <label class="form-label">认证方式</label>
+                                            <select class="form-select" id="kibanaAuthType" onchange="toggleKibanaAuthFields()">
+                                                <option value="basic">用户名/密码（Basic Auth）</option>
+                                                <option value="cookie">Cookie认证</option>
+                                                <option value="none">无认证</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- Basic Auth -->
+                                        <div id="kibanaBasicAuth">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">用户名</label>
+                                                    <input type="text" class="form-control" id="kibanaUsername" 
+                                                           placeholder="elastic">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">密码</label>
+                                                    <input type="password" class="form-control" id="kibanaPassword" 
+                                                           placeholder="输入密码">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Cookie Auth -->
+                                        <div id="kibanaCookieAuth" style="display:none;">
+                                            <div class="mb-3">
+                                                <label class="form-label">Session Cookies</label>
+                                                <input type="text" class="form-control" id="kibanaCookies" 
+                                                       placeholder="sid=xxx; security-session=yyy">
+                                                <small class="text-muted">从浏览器复制完整的Cookie字符串</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Space配置 -->
+                                        <div class="mb-3">
+                                            <label class="form-label">默认Space <i class="fas fa-info-circle text-muted" title="Kibana工作空间"></i></label>
+                                            <input type="text" class="form-control" id="kibanaSpace" 
+                                                   value="default" placeholder="default">
+                                            <small class="text-muted">多租户环境下的工作空间名称</small>
+                                        </div>
+                                        
+                                        <!-- TLS/SSL配置 -->
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="kibanaDisableTLS" onchange="toggleKibanaCACert()">
+                                                <label class="form-check-label" for="kibanaDisableTLS">
+                                                    禁用SSL证书验证 <span class="badge bg-warning">仅开发环境</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- CA证书 -->
+                                        <div id="kibanaCACertField" style="display:none;">
+                                            <div class="mb-3">
+                                                <label class="form-label">CA证书路径</label>
+                                                <input type="text" class="form-control" id="kibanaCACert" 
+                                                       placeholder="/path/to/ca-cert.pem">
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 高级设置 -->
+                                        <div class="mb-3">
+                                            <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                                    onclick="toggleKibanaAdvanced()">
+                                                <i class="fas fa-cog"></i> 高级设置
+                                            </button>
+                                        </div>
+                                        <div id="kibanaAdvanced" style="display:none;">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">请求超时（毫秒）</label>
+                                                    <input type="number" class="form-control" id="kibanaTimeout" 
+                                                           value="30000" placeholder="30000">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">最大重试次数</label>
+                                                    <input type="number" class="form-control" id="kibanaMaxRetries" 
+                                                           value="3" placeholder="3">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 端口配置 -->
+                                    <div class="mb-3">
+                                        <label class="form-label">MCP服务端口</label>
+                                        <input type="number" class="form-control" id="mcpPort" 
+                                               placeholder="留空自动分配 (3001-3100)">
+                                        <small class="text-muted">建议留空，系统会自动分配可用端口</small>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary" onclick="createMCPInstance()">
+                                    <i class="fas fa-check"></i> 创建并启动
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除旧模态框
+            const oldModal = document.getElementById('createMCPModal');
+            if (oldModal) oldModal.remove();
+            
+            // 添加新模态框
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('createMCPModal'));
+            modal.show();
+        }
+        
+        function updateConfigFields() {
+            const type = document.getElementById('mcpType').value;
+            document.getElementById('esConfig').style.display = type === 'elasticsearch' ? 'block' : 'none';
+            document.getElementById('kibanaConfig').style.display = type === 'kibana' ? 'block' : 'none';
+        }
+        
+        // ES认证字段切换
+        function toggleESAuthFields() {
+            const authType = document.getElementById('esAuthType').value;
+            document.getElementById('esBasicAuth').style.display = authType === 'basic' ? 'block' : 'none';
+            document.getElementById('esApiKeyAuth').style.display = authType === 'apikey' ? 'block' : 'none';
+        }
+        
+        // ES TLS设置切换
+        function toggleESCACert() {
+            const disabled = document.getElementById('esDisableTLS').checked;
+            document.getElementById('esCACertField').style.display = disabled ? 'none' : 'block';
+        }
+        
+        // Kibana认证字段切换
+        function toggleKibanaAuthFields() {
+            const authType = document.getElementById('kibanaAuthType').value;
+            document.getElementById('kibanaBasicAuth').style.display = authType === 'basic' ? 'block' : 'none';
+            document.getElementById('kibanaCookieAuth').style.display = authType === 'cookie' ? 'block' : 'none';
+        }
+        
+        // Kibana TLS设置切换
+        function toggleKibanaCACert() {
+            const disabled = document.getElementById('kibanaDisableTLS').checked;
+            document.getElementById('kibanaCACertField').style.display = disabled ? 'none' : 'block';
+        }
+        
+        // Kibana高级设置切换
+        function toggleKibanaAdvanced() {
+            const advanced = document.getElementById('kibanaAdvanced');
+            advanced.style.display = advanced.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        async function applyTemplate() {
+            const templateId = document.getElementById('mcpTemplate').value;
+            if (!templateId) return;
+            
+            // 获取模板
+            const response = await fetch('/api/mcp/templates');
+            const templates = await response.json();
+            const template = templates[templateId];
+            
+            if (template) {
+                // 填充表单
+                document.getElementById('mcpName').value = template.name;
+                document.getElementById('mcpType').value = template.type;
+                updateConfigFields();
+                
+                // 填充配置
+                if (template.type === 'elasticsearch') {
+                    document.getElementById('esUrl').value = template.config.es_url || '';
+                    document.getElementById('esUsername').value = template.config.es_username || '';
+                    document.getElementById('esPassword').value = template.config.es_password || '';
+                } else if (template.type === 'kibana') {
+                    document.getElementById('kibanaUrl').value = template.config.kibana_url || '';
+                    document.getElementById('kibanaUsername').value = template.config.kibana_username || '';
+                    document.getElementById('kibanaPassword').value = template.config.kibana_password || '';
+                    document.getElementById('kibanaSpace').value = template.config.kibana_space || 'default';
+                }
+            }
+        }
+        
+        async function createMCPInstance() {
+            const name = document.getElementById('mcpName').value;
+            const type = document.getElementById('mcpType').value;
+            const port = document.getElementById('mcpPort').value;
+            
+            if (!name || !type) {
+                alert('请填写必填项');
+                return;
+            }
+            
+            // 构建配置
+            let config = {};
+            if (type === 'elasticsearch') {
+                const authType = document.getElementById('esAuthType').value;
+                config = {
+                    es_url: document.getElementById('esUrl').value || 'http://localhost:9200'
+                };
+                
+                // 认证配置
+                if (authType === 'basic') {
+                    config.es_username = document.getElementById('esUsername').value || '';
+                    config.es_password = document.getElementById('esPassword').value || '';
+                } else if (authType === 'apikey') {
+                    config.es_api_key = document.getElementById('esApiKey').value || '';
+                }
+                
+                // TLS配置
+                if (document.getElementById('esDisableTLS').checked) {
+                    config.disable_tls = true;
+                } else {
+                    const caCert = document.getElementById('esCACert').value;
+                    if (caCert) {
+                        config.es_ca_cert = caCert;
+                    }
+                }
+                
+            } else if (type === 'kibana') {
+                const authType = document.getElementById('kibanaAuthType').value;
+                config = {
+                    kibana_url: document.getElementById('kibanaUrl').value || 'http://localhost:5601',
+                    kibana_space: document.getElementById('kibanaSpace').value || 'default'
+                };
+                
+                // 认证配置
+                if (authType === 'basic') {
+                    config.kibana_username = document.getElementById('kibanaUsername').value || '';
+                    config.kibana_password = document.getElementById('kibanaPassword').value || '';
+                } else if (authType === 'cookie') {
+                    config.kibana_cookies = document.getElementById('kibanaCookies').value || '';
+                }
+                
+                // TLS配置
+                if (document.getElementById('kibanaDisableTLS').checked) {
+                    config.disable_tls = true;
+                } else {
+                    const caCert = document.getElementById('kibanaCACert').value;
+                    if (caCert) {
+                        config.kibana_ca_cert = caCert;
+                    }
+                }
+                
+                // 高级配置
+                const timeout = document.getElementById('kibanaTimeout').value;
+                const maxRetries = document.getElementById('kibanaMaxRetries').value;
+                if (timeout && timeout !== '30000') {
+                    config.kibana_timeout = parseInt(timeout);
+                }
+                if (maxRetries && maxRetries !== '3') {
+                    config.kibana_max_retries = parseInt(maxRetries);
+                }
+            }
+            
+            // 创建实例
+            const payload = {
+                name: name,
+                type: type,
+                config: config
+            };
+            
+            if (port) {
+                payload.port = parseInt(port);
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/instances', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    const instance = await response.json();
+                    
+                    // 关闭模态框
+                    bootstrap.Modal.getInstance(document.getElementById('createMCPModal')).hide();
+                    
+                    // 询问是否立即启动
+                    if (confirm(`MCP实例创建成功！\n\n实例ID: ${instance.id}\n端口: ${instance.port}\n端点: ${instance.endpoint}\n\n是否立即启动？`)) {
+                        await startMCP(instance.id);
+                    }
+                } else {
+                    const error = await response.json();
+                    alert(`创建失败: ${error.detail || '未知错误'}`);
+                }
+            } catch (error) {
+                alert(`创建失败: ${error.message}`);
+            }
+        }
+        
+        // 初始化
+        connectWebSocket();
+    </script>
+</body>
+</html>
+

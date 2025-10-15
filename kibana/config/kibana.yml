@@ -1,0 +1,30 @@
+# Kibana配置文件
+
+# 服务器配置
+server.host: "0.0.0.0"
+server.port: 5601
+server.name: "NewMind AI Platform"
+
+# Elasticsearch连接
+elasticsearch.hosts: ["http://es01:9200"]
+elasticsearch.username: "elastic"
+elasticsearch.password: "${ELASTICSEARCH_PASSWORD}"
+
+# 自定义品牌配置
+xpack.customBranding.logo: "/usr/share/kibana/branding/kibana_logo.svg"
+xpack.customBranding.mark: "/usr/share/kibana/branding/kibana_mark.svg"
+xpack.customBranding.pageTitle: "NewMind AI Platform"
+xpack.customBranding.faviconSVG: "/usr/share/kibana/branding/kibana_mark.svg"
+
+# 自定义颜色主题
+xpack.customBranding.customCss: |
+  .euiHeader {
+    background-color: #1a1a2e;
+  }
+  .euiHeaderLogo__text {
+    color: #ffffff;
+  }
+
+# 监控配置
+monitoring.ui.enabled: true
+
