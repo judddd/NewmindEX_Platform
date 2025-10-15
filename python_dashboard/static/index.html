@@ -314,33 +314,65 @@
             
             const instance = await response.json();
             
-            // 填充表单
+            // 填充表单基本信息
             document.getElementById('mcpName').value = instance.name;
             document.getElementById('mcpType').value = instance.type;
             document.getElementById('mcpPort').value = instance.port;
             
-            // 更新配置字段
+            // 更新配置字段（显示对应类型的配置区域）
             updateConfigFields();
             
-            // 填充配置
-            if (instance.type === 'elasticsearch') {
-                document.getElementById('esUrl').value = instance.config.es_url || '';
-                document.getElementById('esUsername').value = instance.config.es_username || '';
-                document.getElementById('esPassword').value = instance.config.es_password || '';
-                document.getElementById('esApiKey').value = instance.config.es_api_key || '';
-                document.getElementById('esCACert').value = instance.config.es_ca_cert || '';
-                document.getElementById('esDisableSSL').checked = instance.config.es_disable_ssl || false;
-            } else if (instance.type === 'kibana') {
-                document.getElementById('kibanaUrl').value = instance.config.kibana_url || '';
-                document.getElementById('kibanaUsername').value = instance.config.kibana_username || '';
-                document.getElementById('kibanaPassword').value = instance.config.kibana_password || '';
-                document.getElementById('kibanaCookies').value = instance.config.kibana_cookies || '';
-                document.getElementById('kibanaCACert').value = instance.config.kibana_ca_cert || '';
-                document.getElementById('kibanaDisableSSL').checked = instance.config.kibana_disable_ssl || false;
-            } else if (instance.type === 'newflow') {
-                document.getElementById('newflowUrl').value = instance.config.newflow_url || '';
-                document.getElementById('newflowApiKey').value = instance.config.newflow_api_key || '';
-            }
+            // 使用setTimeout确保DOM更新后再填充配置
+            setTimeout(() => {
+                try {
+                    // 填充配置
+                    if (instance.type === 'elasticsearch') {
+                        const esUrl = document.getElementById('esUrl');
+                        if (esUrl) esUrl.value = instance.config.es_url || '';
+                        
+                        const esUsername = document.getElementById('esUsername');
+                        if (esUsername) esUsername.value = instance.config.es_username || '';
+                        
+                        const esPassword = document.getElementById('esPassword');
+                        if (esPassword) esPassword.value = instance.config.es_password || '';
+                        
+                        const esApiKey = document.getElementById('esApiKey');
+                        if (esApiKey) esApiKey.value = instance.config.es_api_key || '';
+                        
+                        const esCACert = document.getElementById('esCACert');
+                        if (esCACert) esCACert.value = instance.config.es_ca_cert || '';
+                        
+                        const esDisableSSL = document.getElementById('esDisableSSL');
+                        if (esDisableSSL) esDisableSSL.checked = instance.config.es_disable_ssl || false;
+                    } else if (instance.type === 'kibana') {
+                        const kibanaUrl = document.getElementById('kibanaUrl');
+                        if (kibanaUrl) kibanaUrl.value = instance.config.kibana_url || '';
+                        
+                        const kibanaUsername = document.getElementById('kibanaUsername');
+                        if (kibanaUsername) kibanaUsername.value = instance.config.kibana_username || '';
+                        
+                        const kibanaPassword = document.getElementById('kibanaPassword');
+                        if (kibanaPassword) kibanaPassword.value = instance.config.kibana_password || '';
+                        
+                        const kibanaCookies = document.getElementById('kibanaCookies');
+                        if (kibanaCookies) kibanaCookies.value = instance.config.kibana_cookies || '';
+                        
+                        const kibanaCACert = document.getElementById('kibanaCACert');
+                        if (kibanaCACert) kibanaCACert.value = instance.config.kibana_ca_cert || '';
+                        
+                        const kibanaDisableSSL = document.getElementById('kibanaDisableSSL');
+                        if (kibanaDisableSSL) kibanaDisableSSL.checked = instance.config.kibana_disable_ssl || false;
+                    } else if (instance.type === 'newflow') {
+                        const newflowUrl = document.getElementById('newflowUrl');
+                        if (newflowUrl) newflowUrl.value = instance.config.newflow_url || '';
+                        
+                        const newflowApiKey = document.getElementById('newflowApiKey');
+                        if (newflowApiKey) newflowApiKey.value = instance.config.newflow_api_key || '';
+                    }
+                } catch (error) {
+                    console.error('填充配置时出错:', error);
+                }
+            }, 100);
             
             // 修改表单提交行为
             const form = document.getElementById('mcpForm');

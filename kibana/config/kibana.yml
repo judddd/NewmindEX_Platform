@@ -8,21 +8,8 @@ server.name: "NewMind AI Platform"
 # Elasticsearch连接（无认证）
 elasticsearch.hosts: ["http://es01:9200"]
 
-# 自定义品牌配置
-xpack.customBranding.logo: "/usr/share/kibana/branding/kibana_logo.svg"
-xpack.customBranding.mark: "/usr/share/kibana/branding/kibana_mark.svg"
-xpack.customBranding.pageTitle: "NewMind AI Platform"
-xpack.customBranding.faviconSVG: "/usr/share/kibana/branding/kibana_mark.svg"
-
-# 自定义颜色主题
-xpack.customBranding.customCss: |
-  .euiHeader {
-    background-color: #1a1a2e;
-  }
-  .euiHeaderLogo__text {
-    color: #ffffff;
-  }
-
 # 监控配置
 monitoring.ui.enabled: true
 
+# 注意：自定义品牌功能(xpackCustomBranding)在Kibana 8.17.3中不可用
+# 需要企业版许可证或更高版本才支持
