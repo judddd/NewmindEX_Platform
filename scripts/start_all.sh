@@ -63,12 +63,12 @@ bash scripts/09_download_lm_model.sh || echo "⚠️  LM Studio配置跳过"
 echo ""
 
 # 步骤10：配置ES Connector
-echo "步骤 11/11: 配置ES Connector"
+echo "步骤 11/12: 配置ES Connector"
 bash scripts/10_configure_es_connector.sh || echo "⚠️  Connector配置跳过"
 echo ""
 
 # 启动Python Dashboard
-echo "🐍 启动Python Dashboard..."
+echo "步骤 12/12: 启动Python Dashboard..."
 cd python_dashboard
 # 检查并停止旧的Dashboard进程
 if [ -f dashboard.pid ]; then
@@ -88,8 +88,13 @@ DASHBOARD_PID=$!
 echo $DASHBOARD_PID > dashboard.pid
 cd ..
 echo "✅ Python Dashboard已在后台启动，PID: $DASHBOARD_PID。日志文件: python_dashboard/dashboard.log"
-
 echo ""
+
+# 步骤11：初始化默认MCP实例
+echo "🔧 初始化默认MCP实例（3001-3003端口）..."
+bash scripts/11_init_default_mcp_instances.sh || echo "⚠️  MCP实例初始化失败，可在Dashboard中手动创建"
+echo ""
+
 echo "✅ 所有服务启动完成！"
 echo ""
 echo "===================================="
@@ -104,6 +109,11 @@ echo "🤖 LM Studio: http://localhost:1234"
 echo ""
 echo "🔐 默认凭据:"
 echo "   Elasticsearch/Kibana: elastic / changeme123"
+echo ""
+echo "🔌 MCP服务地址:"
+echo "   • Elasticsearch MCP: http://localhost:3001/mcp"
+echo "   • Kibana MCP: http://localhost:3002/mcp"
+echo "   • NewFlow MCP: http://localhost:3003/mcp"
 echo ""
 echo "📝 提示："
 echo "   • 查看日志: tail -f python_dashboard/dashboard.log"
