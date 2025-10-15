@@ -49,15 +49,13 @@ else
         "port": 3001,
         "config": {
           "es_url": "http://localhost:9200",
-          "es_username": "elastic",
-          "es_password": "'"${ELASTIC_PASSWORD:-changeme123}"'",
           "es_disable_ssl": true
         }
       }' | python3 -m json.tool || echo "⚠️  创建失败"
     
     # 启动实例
     sleep 2
-    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; instances = json.load(sys.stdin).get('instances', []); print([i['id'] for i in instances if i['name'] == '本地ES集群'][0] if instances else '')")
+    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地ES集群']; print(matches[0] if matches else '')")
     
     if [ -n "$INSTANCE_ID" ]; then
         echo "🚀 启动Elasticsearch MCP实例..."
@@ -81,15 +79,13 @@ else
         "port": 3002,
         "config": {
           "kibana_url": "http://localhost:5601",
-          "kibana_username": "elastic",
-          "kibana_password": "'"${ELASTIC_PASSWORD:-changeme123}"'",
           "kibana_disable_ssl": true
         }
       }' | python3 -m json.tool || echo "⚠️  创建失败"
     
     # 启动实例
     sleep 2
-    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; instances = json.load(sys.stdin).get('instances', []); print([i['id'] for i in instances if i['name'] == '本地Kibana'][0] if instances else '')")
+    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地Kibana']; print(matches[0] if matches else '')")
     
     if [ -n "$INSTANCE_ID" ]; then
         echo "🚀 启动Kibana MCP实例..."
@@ -126,7 +122,7 @@ else
     
     # 启动实例
     sleep 2
-    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; instances = json.load(sys.stdin).get('instances', []); print([i['id'] for i in instances if i['name'] == '本地NewFlow'][0] if instances else '')")
+    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地NewFlow']; print(matches[0] if matches else '')")
     
     if [ -n "$INSTANCE_ID" ]; then
         echo "🚀 启动NewFlow MCP实例..."

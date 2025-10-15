@@ -5,10 +5,8 @@ server.host: "0.0.0.0"
 server.port: 5601
 server.name: "NewMind AI Platform"
 
-# Elasticsearch连接
+# Elasticsearch连接（无认证）
 elasticsearch.hosts: ["http://es01:9200"]
-elasticsearch.username: "elastic"
-elasticsearch.password: "${ELASTICSEARCH_PASSWORD}"
 
 # 自定义品牌配置
 xpack.customBranding.logo: "/usr/share/kibana/branding/kibana_logo.svg"
