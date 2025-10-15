@@ -13,9 +13,12 @@ build/
 
 # Data & Volumes
 elasticsearch/node*/
-newflow_data/
-*.db
-*.sqlite
+# newflow_data/ - 保留用户数据和配置（离线环境设计）
+newflow_data/*.log
+newflow_data/n8nEventLog-*.log
+newflow_data/crash.journal
+newflow_data/execution_data/
+newflow_data/logs/
 
 # Environment
 .env.local
