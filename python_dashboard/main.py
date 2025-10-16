@@ -93,8 +93,22 @@ async def get_status():
     # 加载环境变量
     es_password = os.getenv("ELASTIC_PASSWORD", "changeme123")
     
-    # 检查ES
-    es_health = await get_cluster_health(password=es_password)
+    # 检查ES - 通过Docker检查实际状态
+    es_status_result = await get_docker_service_status('elasticsearch')
+    es_running = es_status_result.get('status') == 'running'
+    
+    # 如果ES运行中，获取健康状态
+    es_health = None
+    if es_running:
+        es_health = await get_cluster_health(password=es_password)
+    
+    # 检查Kibana - 通过Docker检查实际状态
+    kibana_status_result = await get_docker_service_status('kibana')
+    kibana_running = kibana_status_result.get('status') == 'running'
+    
+    # 检查NewFlow - 通过Docker检查实际状态
+    newflow_status_result = await get_docker_service_status('newflow')
+    newflow_running = newflow_status_result.get('status') == 'running'
     
     # 检查LM Studio
     lm_status = await get_lm_status()
@@ -106,11 +120,11 @@ async def get_status():
     
     return {
         "elasticsearch": {
-            "status": "running" if es_health else "stopped",
+            "status": "running" if es_running else "stopped",
             "health": es_health
         },
         "kibana": {
-            "status": "running",  # 假设与ES同状态
+            "status": "running" if kibana_running else "stopped",
             "url": f"http://localhost:{os.getenv('KIBANA_PORT', '5601')}"
         },
         "lmstudio": {
@@ -118,7 +132,7 @@ async def get_status():
             "port": int(os.getenv('LMSTUDIO_PORT', '1234'))
         },
         "newflow": {
-            "status": "running",
+            "status": "running" if newflow_running else "stopped",
             "url": f"http://localhost:{os.getenv('NEWFLOW_PORT', '5677')}"
         },
         "mcp_servers": {
@@ -213,6 +227,149 @@ async def lmstudio_stop():
     if success:
         return {"message": "LM服务已停止"}
     raise HTTPException(status_code=500, detail="停止失败")
+
+@app.post("/api/open-lmstudio")
+async def open_lmstudio():
+    """打开LM Studio应用"""
+    import subprocess
+    try:
+        # macOS上使用open命令打开应用
+        subprocess.Popen(['open', '-a', 'LM Studio'])
+        return {"success": True, "message": "LM Studio应用已启动"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ==================== Docker服务管理 API ====================
+
+# 服务名映射
+SERVICE_MAPPING = {
+    'elasticsearch': ['es01', 'es02', 'es03'],  # ES集群三节点
+    'kibana': ['kibana'],
+    'newflow': ['newflow'],
+    'logstash': ['logstash']
+}
+
+@app.get("/api/docker/{service}/status")
+async def get_docker_service_status(service: str):
+    """获取Docker服务状态"""
+    import subprocess
+    try:
+        if service not in SERVICE_MAPPING:
+            raise HTTPException(status_code=400, detail=f"无效的服务名称: {service}")
+        
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        docker_services = SERVICE_MAPPING[service]
+        
+        # 检查所有相关容器的状态
+        all_running = True
+        any_running = False
+        
+        for svc in docker_services:
+            result = subprocess.run(
+                ['docker-compose', 'ps', '-q', svc],
+                cwd=project_root,
+                capture_output=True,
+                text=True
+            )
+            
+            if result.stdout.strip():
+                # 有容器ID，检查是否运行中
+                container_id = result.stdout.strip().split('\n')[0]
+                inspect_result = subprocess.run(
+                    ['docker', 'inspect', '-f', '{{.State.Running}}', container_id],
+                    capture_output=True,
+                    text=True
+                )
+                is_running = inspect_result.stdout.strip() == 'true'
+                if is_running:
+                    any_running = True
+                else:
+                    all_running = False
+            else:
+                all_running = False
+        
+        # 判断状态
+        if all_running and any_running:
+            status = 'running'
+        elif any_running:
+            status = 'partial'
+        else:
+            status = 'stopped'
+        
+        return {
+            "success": True,
+            "service": service,
+            "status": status,
+            "containers": docker_services
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e), "status": "unknown"}
+
+
+@app.post("/api/docker/{service}/toggle")
+async def toggle_docker_service(service: str):
+    """切换Docker服务状态（启动/停止）"""
+    import subprocess
+    try:
+        if service not in SERVICE_MAPPING:
+            raise HTTPException(status_code=400, detail=f"无效的服务名称: {service}")
+        
+        # 先获取当前状态
+        status_response = await get_docker_service_status(service)
+        current_status = status_response.get('status', 'stopped')
+        
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        docker_services = SERVICE_MAPPING[service]
+        
+        if current_status in ['running', 'partial']:
+            # 停止服务
+            for svc in docker_services:
+                result = subprocess.run(
+                    ['docker-compose', 'stop', svc],
+                    cwd=project_root,
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+            
+            return {
+                "success": True,
+                "action": "stopped",
+                "message": f"{service} 服务已停止",
+                "new_status": "stopped"
+            }
+        else:
+            # 启动服务
+            for svc in docker_services:
+                result = subprocess.run(
+                    ['docker-compose', 'up', '-d', svc],
+                    cwd=project_root,
+                    capture_output=True,
+                    text=True,
+                    timeout=60
+                )
+                
+                if result.returncode != 0:
+                    return {
+                        "success": False,
+                        "error": result.stderr,
+                        "message": f"{service} 服务启动失败"
+                    }
+            
+            return {
+                "success": True,
+                "action": "started",
+                "message": f"{service} 服务启动成功",
+                "new_status": "running"
+            }
+            
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": "操作超时"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 
 
 # ==================== NewFlow API ====================

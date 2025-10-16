@@ -7,36 +7,225 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* 全局样式 - 深色科技风格 */
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151b3d;
+            --bg-card: #1a1f3a;
+            --text-primary: #e4e7eb;
+            --text-secondary: #9ca3af;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --border-color: #2d3748;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
             min-height: 100vh;
             padding: 20px;
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
+        
         .dashboard-container {
-            background: white;
-            border-radius: 15px;
+            background: rgba(26, 31, 58, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(59, 130, 246, 0.1);
         }
-        .status-card {
-            border-left: 4px solid #667eea;
-            transition: all 0.3s;
-        }
-        .status-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-        .status-running { border-left-color: #28a745; }
-        .status-stopped { border-left-color: #dc3545; }
-        .status-warning { border-left-color: #ffc107; }
-        .badge-running { background-color: #28a745; }
-        .badge-stopped { background-color: #dc3545; }
+        
         .logo {
-            font-size: 2.5rem;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            color: var(--text-primary);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1));
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 1rem 1.5rem;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+            color: var(--text-primary);
+        }
+        
+        /* 状态卡片 */
+        .status-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+        
+        .badge-running { 
+            background: linear-gradient(135deg, var(--success), #059669) !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .badge-stopped { 
+            background: linear-gradient(135deg, var(--danger), #dc2626) !important;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* 表格样式 */
+        .table {
+            color: var(--text-primary);
+            background: transparent;
+        }
+        
+        .table thead {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1));
+        }
+        
+        .table thead th {
+            color: var(--accent-cyan);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .table tbody tr {
+            border-color: var(--border-color);
+        }
+        
+        .table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        .table th, .table td {
+            border-color: var(--border-color);
+        }
+        
+        /* 按钮样式 */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            border: none;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            border: none;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            border: none;
+        }
+        
+        .btn-outline-primary {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--accent-blue);
+            color: white;
+        }
+        
+        /* 模态框样式 */
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+        }
+        
+        /* 表单样式 */
+        .form-control, .form-select {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: var(--bg-secondary);
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+        }
+        
+        .form-label {
+            color: var(--text-primary);
+        }
+        
+        /* 文本样式 */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-primary);
+        }
+        
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+        
+        /* 工作流表格深色样式 */
+        #workflow-status > div,
+        #license-status > div {
+            background: transparent !important;
+        }
+        
+        #workflow-status .table,
+        #license-status .table {
+            background: transparent;
+            color: var(--text-primary);
+            margin-bottom: 0;
+        }
+        
+        #workflow-status .alert,
+        #license-status .alert {
+            background: rgba(59, 130, 246, 0.1) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        .alert {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        code {
+            background: var(--bg-secondary);
+            color: var(--accent-cyan);
+            padding: 2px 6px;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -65,7 +254,14 @@
                             <h3 class="card-title" id="es-status">
                                 <span class="badge badge-stopped">离线</span>
                             </h3>
-                            <small id="es-health"></small>
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="elasticsearch-toggle-btn" onclick="toggleDockerService('elasticsearch')" class="btn btn-sm btn-success flex-grow-1">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <a href="http://localhost:9200" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -76,9 +272,14 @@
                             <h3 class="card-title" id="kibana-status">
                                 <span class="badge badge-stopped">离线</span>
                             </h3>
-                            <a href="http://localhost:5601" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
-                                <i class="fas fa-external-link-alt"></i> 打开
-                            </a>
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="kibana-toggle-btn" onclick="toggleDockerService('kibana')" class="btn btn-sm btn-success flex-grow-1">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <a href="http://localhost:5601" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -90,6 +291,11 @@
                                 <span class="badge badge-stopped">离线</span>
                             </h3>
                             <small id="lm-models"></small>
+                            <div class="d-flex gap-2 mt-3">
+                                <button onclick="openLMStudio()" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                    <i class="fas fa-external-link-alt"></i> 打开应用
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -100,9 +306,14 @@
                             <h3 class="card-title" id="newflow-status">
                                 <span class="badge badge-stopped">离线</span>
                             </h3>
-                            <a href="http://localhost:5677" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
-                                <i class="fas fa-external-link-alt"></i> 打开
-                            </a>
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="newflow-toggle-btn" onclick="toggleDockerService('newflow')" class="btn btn-sm btn-success flex-grow-1">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <a href="http://localhost:5677" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -151,8 +362,8 @@
                             <h6><i class="fas fa-project-diagram"></i> NewFlow工作流</h6>
                         </div>
                         <div class="card-body">
-                            <button class="btn btn-primary w-100" onclick="importWorkflows()">
-                                <i class="fas fa-file-import"></i> 一键导入工作流
+                            <button class="btn btn-primary w-100" onclick="viewWorkflows()">
+                                <i class="fas fa-eye"></i> 查看工作流
                             </button>
                             <div id="workflow-status" class="mt-2"></div>
                         </div>
@@ -228,27 +439,40 @@
         }
         
         function updateDashboard(status) {
-            // 更新ES状态
+            // 更新ES状态和按钮
             const esStatus = status.elasticsearch.status === 'running';
             document.getElementById('es-status').innerHTML = 
                 `<span class="badge badge-${esStatus ? 'running' : 'stopped'}">${esStatus ? '运行中' : '离线'}</span>`;
-            if (status.elasticsearch.health) {
-                document.getElementById('es-health').textContent = 
-                    `集群状态: ${status.elasticsearch.health.status || 'unknown'}`;
+            const esBtn = document.getElementById('elasticsearch-toggle-btn');
+            if (esBtn) {
+                esBtn.className = esStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
+                esBtn.innerHTML = esStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
             }
             
-            // 更新Kibana状态
+            // 更新Kibana状态和按钮
+            const kibanaStatus = status.kibana?.status === 'running';
             document.getElementById('kibana-status').innerHTML = 
-                `<span class="badge badge-running">运行中</span>`;
+                `<span class="badge badge-${kibanaStatus ? 'running' : 'stopped'}">${kibanaStatus ? '运行中' : '离线'}</span>`;
+            const kibanaBtn = document.getElementById('kibana-toggle-btn');
+            if (kibanaBtn) {
+                kibanaBtn.className = kibanaStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
+                kibanaBtn.innerHTML = kibanaStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
+            }
             
             // 更新LM Studio状态
             const lmStatus = status.lmstudio.status === 'running';
             document.getElementById('lm-status').innerHTML = 
                 `<span class="badge badge-${lmStatus ? 'running' : 'stopped'}">${lmStatus ? '运行中' : '离线'}</span>`;
             
-            // 更新NewFlow状态
+            // 更新NewFlow状态和按钮
+            const newflowStatus = status.newflow?.status === 'running';
             document.getElementById('newflow-status').innerHTML = 
-                `<span class="badge badge-running">运行中</span>`;
+                `<span class="badge badge-${newflowStatus ? 'running' : 'stopped'}">${newflowStatus ? '运行中' : '离线'}</span>`;
+            const newflowBtn = document.getElementById('newflow-toggle-btn');
+            if (newflowBtn) {
+                newflowBtn.className = newflowStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
+                newflowBtn.innerHTML = newflowStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
+            }
             
             // 更新MCP实例表格
             if (status.mcp_servers && status.mcp_servers.instances) {
@@ -314,10 +538,20 @@
             
             const instance = await response.json();
             
+            // 先显示创建模态框
+            showCreateModal();
+            
+            // 等待模态框渲染完成后再填充数据
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             // 填充表单基本信息
-            document.getElementById('mcpName').value = instance.name;
-            document.getElementById('mcpType').value = instance.type;
-            document.getElementById('mcpPort').value = instance.port;
+            const nameInput = document.getElementById('mcpName');
+            const typeSelect = document.getElementById('mcpType');
+            const portInput = document.getElementById('mcpPort');
+            
+            if (nameInput) nameInput.value = instance.name;
+            if (typeSelect) typeSelect.value = instance.type;
+            if (portInput) portInput.value = instance.port;
             
             // 更新配置字段（显示对应类型的配置区域）
             updateConfigFields();
@@ -457,6 +691,153 @@
             const result = await response.json();
             document.getElementById('workflow-status').innerHTML = 
                 `<div class="alert alert-success mt-2">成功: ${result.success} / 失败: ${result.failed}</div>`;
+        }
+        
+        async function viewWorkflows() {
+            const statusDiv = document.getElementById('workflow-status');
+            statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm"></div> 加载中...';
+            
+            try {
+                const response = await fetch('/api/newflow/workflows');
+                if (!response.ok) {
+                    statusDiv.innerHTML = '<div class="alert alert-danger mt-2">加载失败：NewFlow服务未运行</div>';
+                    return;
+                }
+                
+                const data = await response.json();
+                const workflows = data.workflows || [];
+                
+                if (workflows.length === 0) {
+                    statusDiv.innerHTML = '<div class="alert alert-info mt-2">暂无工作流</div>';
+                    return;
+                }
+                
+                // 显示工作流列表
+                let html = '<div class="mt-2" style="max-height: 300px; overflow-y: auto;">';
+                html += '<table class="table table-sm table-hover">';
+                html += '<thead><tr><th>工作流名称</th><th>状态</th></tr></thead><tbody>';
+                
+                workflows.forEach(wf => {
+                    const activeClass = wf.active ? 'text-success' : 'text-muted';
+                    const activeIcon = wf.active ? 'fa-check-circle' : 'fa-circle';
+                    html += `<tr>
+                        <td>${wf.name}</td>
+                        <td class="${activeClass}"><i class="fas ${activeIcon}"></i> ${wf.active ? '已激活' : '未激活'}</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table></div>';
+                statusDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('查看工作流失败:', error);
+                statusDiv.innerHTML = `<div class="alert alert-danger mt-2">加载失败: ${error.message}</div>`;
+            }
+        }
+        
+        async function openLMStudio() {
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 启动中...';
+                
+                const response = await fetch('/api/open-lmstudio', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    button.innerHTML = '<i class="fas fa-check"></i> 已启动';
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }, 2000);
+                } else {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    alert('启动失败: ' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                alert('启动失败: ' + error.message);
+            }
+        }
+        
+        async function toggleDockerService(service) {
+            console.log('🔧 toggleDockerService 被调用，服务:', service);
+            const button = document.getElementById(`${service}-toggle-btn`);
+            if (!button) {
+                console.error('❌ 找不到按钮:', `${service}-toggle-btn`);
+                return;
+            }
+            console.log('✅ 找到按钮:', button);
+            
+            const originalText = button.innerHTML;
+            const originalClass = button.className;
+            
+            try {
+                console.log('📡 获取服务状态...');
+                // 先获取当前状态
+                const statusResponse = await fetch(`/api/docker/${service}/status`);
+                const statusData = await statusResponse.json();
+                const currentStatus = statusData.status || 'stopped';
+                console.log('📊 当前状态:', currentStatus);
+                
+                // 如果正在运行，需要确认停止
+                if (currentStatus === 'running' || currentStatus === 'partial') {
+                    if (!confirm(`确定要停止 ${service} 服务吗？`)) {
+                        return;
+                    }
+                }
+                
+                console.log('🔄 更新按钮状态...');
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+                
+                console.log('📡 发送toggle请求...');
+                const response = await fetch(`/api/docker/${service}/toggle`, { method: 'POST' });
+                const data = await response.json();
+                console.log('📊 API响应:', data);
+                
+                if (data.success) {
+                    const action = data.action === 'started' ? '启动' : '停止';
+                    button.innerHTML = `<i class="fas fa-check"></i> ${action}成功`;
+                    
+                    setTimeout(() => {
+                        button.disabled = false;
+                        // 更新按钮文本和样式
+                        if (data.new_status === 'running') {
+                            button.className = 'btn btn-sm btn-danger flex-grow-1';
+                            button.innerHTML = '<i class="fas fa-stop"></i> 停止';
+                        } else {
+                            button.className = 'btn btn-sm btn-success flex-grow-1';
+                            button.innerHTML = '<i class="fas fa-play"></i> 启动';
+                        }
+                        
+                        // 同时更新徽章状态
+                        const statusElement = document.getElementById(`${service}-status`);
+                        if (statusElement) {
+                            if (data.new_status === 'running') {
+                                statusElement.innerHTML = '<span class="badge badge-running">运行中</span>';
+                            } else {
+                                statusElement.innerHTML = '<span class="badge badge-stopped">离线</span>';
+                            }
+                        }
+                    }, 1500);
+                } else {
+                    alert(`${service} 操作失败: ${data.error || data.message}`);
+                    button.innerHTML = originalText;
+                    button.className = originalClass;
+                    button.disabled = false;
+                }
+            } catch (error) {
+                console.error(`操作${service}失败:`, error);
+                alert(`操作 ${service} 失败：${error.message}`);
+                button.innerHTML = originalText;
+                button.className = originalClass;
+                button.disabled = false;
+            }
         }
         
         async function checkLicense() {

@@ -105,9 +105,11 @@ def start_mcp_server(instance_id: str) -> bool:
         cmd = ["node", str(PROJECT_ROOT / "mcp_tool/mcp-server-kibana/dist/index.js")]
         
     elif mcp_type == "newflow":
+        # 如果配置中没有API key，使用环境变量中的值
+        api_key = config.get("newflow_api_key") or os.getenv("NEWFLOW_API_KEY", "")
         env.update({
             "N8N_BASE_URL": config.get("newflow_url", "http://localhost:5677"),
-            "N8N_API_KEY": config.get("newflow_api_key", "")
+            "N8N_API_KEY": api_key
         })
         cmd = ["node", str(PROJECT_ROOT / "mcp_tool/newflow-mcp-server/build/index.js")]
         

@@ -11,5 +11,7 @@ elasticsearch.hosts: ["http://es01:9200"]
 # 监控配置
 monitoring.ui.enabled: true
 
-# 注意：自定义品牌功能(xpackCustomBranding)在Kibana 8.17.3中不可用
-# 需要企业版许可证或更高版本才支持
+# 自定义品牌配置说明：
+# xpackCustomBranding 在 Kibana 8.17.3 中不能通过 kibana.yml 配置
+# 必须通过 UI 界面设置：Management → Stack Management → Advanced Settings → Global Settings
+# 需要企业版许可证才能看到 Custom branding 选项

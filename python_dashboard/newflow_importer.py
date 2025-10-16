@@ -109,12 +109,18 @@ async def import_all_workflows(newflow_url: str = "http://localhost:5677",
 
 
 async def list_workflows(newflow_url: str = "http://localhost:5677",
-                        api_key: Optional[str] = None) -> Optional[List[Dict]]:
+                        api_key: Optional[str] = None,
+                        include_archived: bool = False) -> Optional[List[Dict]]:
     """
     获取NewFlow中的workflow列表
     
+    Args:
+        newflow_url: NewFlow服务地址
+        api_key: API密钥
+        include_archived: 是否包含已归档的工作流（默认False，只显示未归档的）
+    
     Returns:
-        List[Dict]: workflow列表
+        List[Dict]: workflow列表（默认过滤已归档的）
     """
     try:
         headers = {}
@@ -130,7 +136,14 @@ async def list_workflows(newflow_url: str = "http://localhost:5677",
             
             if response.status_code == 200:
                 data = response.json()
-                return data.get('data', [])
+                # n8n API返回 {data: [...], nextCursor: ...} 格式
+                workflows = data.get('data', [])
+                
+                # 默认过滤已归档的工作流
+                if not include_archived:
+                    workflows = [w for w in workflows if not w.get('isArchived', False)]
+                
+                return workflows
                 
     except Exception as e:
         print(f"获取workflow列表失败: {e}")
