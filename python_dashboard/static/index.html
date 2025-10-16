@@ -7,183 +7,543 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 全局样式 - 深色科技风格 */
+        /* 全局样式 - 超酷暗黑科技风格 */
         :root {
-            --bg-primary: #0a0e27;
-            --bg-secondary: #151b3d;
-            --bg-card: #1a1f3a;
-            --text-primary: #e4e7eb;
-            --text-secondary: #9ca3af;
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #0f1420;
+            --bg-card: #151b2e;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
             --accent-blue: #3b82f6;
             --accent-cyan: #06b6d4;
-            --border-color: #2d3748;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --border-color: #1e293b;
+            --border-glow: rgba(59, 130, 246, 0.3);
             --success: #10b981;
+            --warning: #f59e0b;
             --danger: #ef4444;
+            --glow-cyan: rgba(6, 182, 212, 0.4);
+            --glow-blue: rgba(59, 130, 246, 0.4);
         }
         
         body {
             background: var(--bg-primary);
             background-image: 
-                radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 60%);
             min-height: 100vh;
             padding: 20px;
             color: var(--text-primary);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 动态背景效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(59, 130, 246, 0.03) 2px, rgba(59, 130, 246, 0.03) 4px),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6, 182, 212, 0.03) 2px, rgba(6, 182, 212, 0.03) 4px);
+            animation: backgroundScroll 60s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes backgroundScroll {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
         }
         
         .dashboard-container {
-            background: rgba(26, 31, 58, 0.8);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
+            background: rgba(21, 27, 46, 0.85);
+            backdrop-filter: blur(30px);
+            border-radius: 24px;
             padding: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(59, 130, 246, 0.1);
+            box-shadow: 
+                0 0 0 1px rgba(59, 130, 246, 0.1),
+                0 20px 60px rgba(0, 0, 0, 0.6),
+                0 0 80px rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            position: relative;
+            z-index: 1;
         }
         
         .logo {
             font-size: 2.2rem;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 100%);
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 50%, var(--accent-purple) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: gradientShift 3s ease infinite;
             letter-spacing: -1px;
+            text-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+            filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.4));
         }
         
-        /* 卡片样式 */
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        /* 卡片样式 - 超酷玻璃态射效果 */
         .card {
-            background: var(--bg-card);
+            background: linear-gradient(135deg, rgba(21, 27, 46, 0.95) 0%, rgba(15, 20, 32, 0.95) 100%);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
+            border-radius: 18px;
             color: var(--text-primary);
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .card:hover::before {
+            left: 100%;
+        }
+        
+        .card:hover {
+            border-color: var(--border-glow);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(59, 130, 246, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
         }
         
         .card-header {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1));
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.12), rgba(6, 182, 212, 0.15));
             border-bottom: 1px solid var(--border-color);
             color: var(--text-primary);
             padding: 1rem 1.5rem;
-            border-radius: 16px 16px 0 0;
+            border-radius: 18px 18px 0 0;
+            position: relative;
+            font-weight: 600;
+        }
+        
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            opacity: 0.5;
         }
         
         .card-body {
             padding: 1.5rem;
             color: var(--text-primary);
+            position: relative;
+            z-index: 1;
         }
         
-        /* 状态卡片 */
+        /* 状态卡片 - 超炫发光效果 */
         .status-card {
-            background: var(--bg-card);
+            background: linear-gradient(135deg, rgba(21, 27, 46, 0.95) 0%, rgba(15, 20, 32, 0.95) 100%);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 18px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s;
         }
         
         .status-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+            transform: translateY(-8px);
+            border-color: var(--border-glow);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.5),
+                0 0 30px var(--glow-blue),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-card:hover::before {
+            opacity: 1;
         }
         
         .badge-running { 
-            background: linear-gradient(135deg, var(--success), #059669) !important;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            background: linear-gradient(135deg, #10b981, #059669, #047857) !important;
+            box-shadow: 
+                0 4px 12px rgba(16, 185, 129, 0.4),
+                0 0 20px rgba(16, 185, 129, 0.3);
+            animation: pulseGlow 2s ease-in-out infinite;
+            color: #ffffff !important;
+            font-weight: 700;
         }
         
         .badge-stopped { 
-            background: linear-gradient(135deg, var(--danger), #dc2626) !important;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            background: linear-gradient(135deg, #ef4444, #dc2626, #b91c1c) !important;
+            box-shadow: 
+                0 4px 12px rgba(239, 68, 68, 0.4),
+                0 0 20px rgba(239, 68, 68, 0.3);
+            color: #ffffff !important;
+            font-weight: 700;
         }
         
-        /* 表格样式 */
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 
+                    0 4px 12px rgba(16, 185, 129, 0.4),
+                    0 0 20px rgba(16, 185, 129, 0.3);
+            }
+            50% {
+                box-shadow: 
+                    0 4px 16px rgba(16, 185, 129, 0.6),
+                    0 0 30px rgba(16, 185, 129, 0.5);
+            }
+        }
+        
+        /* 表格样式 - 赛博朋克风格 */
         .table {
             color: var(--text-primary);
             background: transparent;
+            border-collapse: separate;
+            border-spacing: 0;
         }
         
         .table thead {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1));
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.12), rgba(6, 182, 212, 0.15));
+            position: relative;
+        }
+        
+        .table thead::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-purple), transparent);
         }
         
         .table thead th {
             color: var(--accent-cyan);
             border-bottom: 2px solid var(--border-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            position: relative;
+            text-align: left;
+        }
+        
+        .table thead th:first-child {
+            padding-left: 1rem;
         }
         
         .table tbody tr {
             border-color: var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .table tbody tr::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 0;
+            background: linear-gradient(180deg, var(--accent-cyan), var(--accent-purple));
+            transition: height 0.3s ease;
+            z-index: 1;
+            pointer-events: none;
         }
         
         .table tbody tr:hover {
-            background: rgba(59, 130, 246, 0.05);
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.05), transparent);
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+        
+        .table tbody tr:hover::before {
+            height: 100%;
         }
         
         .table th, .table td {
-            border-color: var(--border-color);
+            border-color: rgba(30, 41, 59, 0.5);
+            padding: 1rem;
+            vertical-align: middle;
+            color: var(--text-primary) !important;
         }
         
-        /* 按钮样式 */
+        /* 表格内容字体增强 */
+        .table tbody td {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        
+        /* 表格内的实例名称 */
+        .table tbody td:first-child {
+            color: var(--text-primary) !important;
+            font-weight: 600;
+            padding-left: 1rem !important;
+        }
+        
+        /* 表格内的端口号 */
+        .table tbody td:nth-child(4) {
+            color: var(--accent-cyan) !important;
+            font-weight: 600;
+        }
+        
+        /* 按钮样式 - 炫酷科技感 */
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 50%, var(--accent-purple) 100%);
+            background-size: 200% auto;
             border: none;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 
+                0 4px 12px rgba(59, 130, 246, 0.4),
+                0 0 20px rgba(59, 130, 246, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-weight: 600;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-primary:hover::before {
+            width: 300px;
+            height: 300px;
         }
         
         .btn-primary:hover {
+            background-position: right center;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            box-shadow: 
+                0 6px 20px rgba(59, 130, 246, 0.5),
+                0 0 30px rgba(6, 182, 212, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
         
         .btn-success {
-            background: linear-gradient(135deg, var(--success), #059669);
+            background: linear-gradient(135deg, var(--success), #059669, #047857);
             border: none;
+            box-shadow: 
+                0 4px 12px rgba(16, 185, 129, 0.4),
+                0 0 20px rgba(16, 185, 129, 0.2);
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(16, 185, 129, 0.5),
+                0 0 30px rgba(16, 185, 129, 0.3);
         }
         
         .btn-danger {
-            background: linear-gradient(135deg, var(--danger), #dc2626);
+            background: linear-gradient(135deg, var(--danger), #dc2626, #b91c1c);
             border: none;
+            box-shadow: 
+                0 4px 12px rgba(239, 68, 68, 0.4),
+                0 0 20px rgba(239, 68, 68, 0.2);
+            transition: all 0.3s ease;
+            font-weight: 600;
         }
         
-        .btn-outline-primary {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(239, 68, 68, 0.5),
+                0 0 30px rgba(239, 68, 68, 0.3);
         }
         
-        .btn-outline-primary:hover {
-            background: var(--accent-blue);
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #d97706, #b45309);
+            border: none;
+            box-shadow: 
+                0 4px 12px rgba(245, 158, 11, 0.4),
+                0 0 20px rgba(245, 158, 11, 0.2);
+            transition: all 0.3s ease;
+            font-weight: 600;
             color: white;
         }
         
-        /* 模态框样式 */
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(245, 158, 11, 0.5),
+                0 0 30px rgba(245, 158, 11, 0.3);
+            color: white;
+        }
+        
+        .btn-outline-primary {
+            border: 2px solid var(--accent-blue);
+            color: var(--accent-cyan);
+            background: transparent;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-outline-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+        
+        .btn-outline-primary:hover::before {
+            left: 0;
+        }
+        
+        .btn-outline-primary:hover {
+            border-color: var(--accent-cyan);
+            color: white;
+            box-shadow: 0 0 20px var(--glow-cyan);
+        }
+        
+        .btn-outline-secondary {
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-cyan);
+            background: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* 模态框样式 - 高级玻璃态射效果 */
         .modal-content {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
+            background: linear-gradient(135deg, rgba(21, 27, 46, 0.98) 0%, rgba(15, 20, 32, 0.98) 100%);
+            border: 1px solid var(--border-glow);
             color: var(--text-primary);
+            border-radius: 20px;
+            backdrop-filter: blur(30px);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.7),
+                0 0 40px rgba(59, 130, 246, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
         
         .modal-header {
             border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.08));
+            border-radius: 20px 20px 0 0;
+            position: relative;
+            padding: 1.5rem;
+        }
+        
+        .modal-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            opacity: 0.5;
         }
         
         .modal-footer {
             border-top: 1px solid var(--border-color);
+            background: rgba(10, 14, 26, 0.5);
+            border-radius: 0 0 20px 20px;
+            padding: 1.5rem;
         }
         
-        /* 表单样式 */
+        /* 表单样式 - 未来科技感 */
         .form-control, .form-select {
-            background: var(--bg-secondary);
+            background: rgba(15, 20, 32, 0.6);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
         }
         
         .form-control:focus, .form-select:focus {
-            background: var(--bg-secondary);
-            border-color: var(--accent-blue);
+            background: rgba(15, 20, 32, 0.8);
+            border-color: var(--accent-cyan);
             color: var(--text-primary);
-            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+            box-shadow: 
+                0 0 0 3px rgba(6, 182, 212, 0.2),
+                0 0 20px rgba(6, 182, 212, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transform: translateY(-1px);
         }
         
         .form-label {
             color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+        
+        .form-check-input {
+            background-color: rgba(15, 20, 32, 0.6);
+            border: 1px solid var(--border-color);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--glow-cyan);
+        }
+        
+        .form-check-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 0.25rem rgba(6, 182, 212, 0.25);
         }
         
         /* 文本样式 */
@@ -195,6 +555,26 @@
             color: var(--text-secondary) !important;
         }
         
+        /* 确保卡片subtitle可见 */
+        .card-subtitle {
+            color: var(--accent-cyan) !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+        
+        /* small标签文字 */
+        small {
+            color: var(--text-secondary) !important;
+        }
+        
+        /* 表格内的文字确保可见 */
+        .table-responsive .table td,
+        .table-responsive .table th {
+            color: var(--text-primary) !important;
+        }
+        
         /* 工作流表格深色样式 */
         #workflow-status > div,
         #license-status > div {
@@ -203,9 +583,51 @@
         
         #workflow-status .table,
         #license-status .table {
-            background: transparent;
-            color: var(--text-primary);
+            background: transparent !important;
+            color: var(--text-primary) !important;
             margin-bottom: 0;
+        }
+        
+        #workflow-status .table thead,
+        #license-status .table thead {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1)) !important;
+        }
+        
+        #workflow-status .table thead th,
+        #license-status .table thead th {
+            color: var(--accent-cyan) !important;
+            background: transparent !important;
+        }
+        
+        #workflow-status .table tbody tr,
+        #license-status .table tbody tr {
+            background: transparent !important;
+        }
+        
+        #workflow-status .table tbody td,
+        #license-status .table tbody td {
+            background: transparent !important;
+            color: var(--text-primary) !important;
+            font-weight: 500;
+        }
+        
+        /* 工作流名称加粗 */
+        #workflow-status .table tbody td:first-child,
+        #license-status .table tbody td:first-child {
+            font-weight: 600;
+            padding-left: 0.75rem !important;
+            text-align: left !important;
+        }
+        
+        /* 工作流状态文字颜色 */
+        #workflow-status .text-success {
+            color: #10b981 !important;
+            font-weight: 600;
+        }
+        
+        #workflow-status .text-muted {
+            color: #94a3b8 !important;
+            font-weight: 500;
         }
         
         #workflow-status .alert,
@@ -222,10 +644,454 @@
         }
         
         code {
+            background: rgba(15, 20, 32, 0.9) !important;
+            color: #00d9ff !important;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 217, 255, 0.4);
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9em;
+            font-weight: 600;
+            box-shadow: 
+                0 0 15px rgba(0, 217, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        /* 强制覆盖 Bootstrap 表格默认样式 */
+        .table-responsive {
+            background: transparent !important;
+        }
+        
+        .table > :not(caption) > * > * {
+            background-color: transparent !important;
+        }
+        
+        /* 确保所有徽章使用正确的背景色 */
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .badge.bg-info {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4, #8b5cf6) !important;
+            box-shadow: 
+                0 4px 12px rgba(59, 130, 246, 0.4),
+                0 0 20px rgba(6, 182, 212, 0.3);
+            color: #ffffff !important;
+        }
+        
+        .badge.bg-secondary {
+            background: linear-gradient(135deg, #64748b, #475569) !important;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        .badge.bg-success {
+            background: linear-gradient(135deg, var(--success), #059669) !important;
+            box-shadow: 
+                0 4px 12px rgba(16, 185, 129, 0.3),
+                0 0 20px rgba(16, 185, 129, 0.2);
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        .badge.bg-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626) !important;
+            box-shadow: 
+                0 4px 12px rgba(239, 68, 68, 0.3),
+                0 0 20px rgba(239, 68, 68, 0.2);
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        /* 修复可能的白色文本背景 */
+        td, th {
+            background-color: transparent !important;
+        }
+        
+        /* 覆盖 Bootstrap 的所有可能白色样式 */
+        .bg-light {
+            background-color: var(--bg-secondary) !important;
+        }
+        
+        /* 确保所有表格相关元素都是透明或深色背景 */
+        tbody, thead, tfoot, tr, td, th {
+            background-color: transparent !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* 表格行文字可见性增强 */
+        .table tr td {
+            color: var(--text-primary) !important;
+        }
+        
+        /* 表格加载提示 */
+        .table .text-center {
+            color: var(--accent-cyan) !important;
+            font-weight: 600;
+        }
+        
+        /* Spinner 加载动画的颜色 */
+        .spinner-border {
+            color: var(--accent-cyan) !important;
+        }
+        
+        /* 滚动条样式（Webkit浏览器） */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
             background: var(--bg-secondary);
-            color: var(--accent-cyan);
-            padding: 2px 6px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
             border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-blue);
+        }
+        
+        /* 修复 alert-success 的背景色 */
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+            border-color: rgba(16, 185, 129, 0.3) !important;
+            color: var(--success) !important;
+        }
+        
+        .alert-info {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+            border-color: rgba(59, 130, 246, 0.3) !important;
+            color: var(--accent-cyan) !important;
+        }
+        
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.15) !important;
+            border-color: rgba(239, 68, 68, 0.3) !important;
+            color: var(--danger) !important;
+        }
+        
+        /* 连接状态徽章动画 */
+        #connection-status {
+            transition: all 0.3s ease;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        
+        #connection-status.bg-success {
+            background: linear-gradient(135deg, var(--success), #059669) !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            animation: pulseSuccess 2s ease-in-out infinite;
+        }
+        
+        #connection-status.bg-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626) !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+        
+        @keyframes pulseSuccess {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
+            }
+        }
+        
+        /* 图标样式增强 */
+        .fa {
+            transition: all 0.3s ease;
+        }
+        
+        .card-header .fa,
+        h5 .fa, h6 .fa {
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px var(--glow-cyan);
+        }
+        
+        /* 小按钮增强 */
+        .btn-sm {
+            border-radius: 8px;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+        }
+        
+        /* 下拉菜单暗色主题 */
+        .dropdown-menu {
+            background: rgba(21, 27, 46, 0.98);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+        
+        .dropdown-item {
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-cyan);
+        }
+        
+        /* 输入组样式 */
+        .input-group-text {
+            background: rgba(15, 20, 32, 0.6);
+            border-color: var(--border-color);
+            color: var(--accent-cyan);
+        }
+        
+        /* 选择框箭头 */
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2306b6d4' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        }
+        
+        /* 进度条 */
+        .progress {
+            background: rgba(15, 20, 32, 0.6);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
+            background-size: 200% auto;
+            animation: progressShine 2s linear infinite;
+        }
+        
+        @keyframes progressShine {
+            to {
+                background-position: 200% center;
+            }
+        }
+        
+        /* 文字选中效果 */
+        ::selection {
+            background: rgba(6, 182, 212, 0.3);
+            color: var(--text-primary);
+        }
+        
+        ::-moz-selection {
+            background: rgba(6, 182, 212, 0.3);
+            color: var(--text-primary);
+        }
+        
+        /* 按钮组 */
+        .btn-group .btn {
+            border-color: var(--border-color);
+        }
+        
+        /* 面包屑导航 */
+        .breadcrumb {
+            background: transparent;
+        }
+        
+        .breadcrumb-item + .breadcrumb-item::before {
+            color: var(--text-secondary);
+        }
+        
+        /* 页面加载动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .dashboard-container {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .card {
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+        
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 1.8rem;
+            }
+            
+            .dashboard-container {
+                padding: 20px;
+                border-radius: 16px;
+            }
+            
+            .status-card:hover {
+                transform: translateY(-4px);
+            }
+        }
+        
+        /* ============================================
+           终极字体修复 - 确保所有表格文字可见
+           ============================================ */
+           
+        /* 强制所有表格单元格文字可见 */
+        table td,
+        table th,
+        .table td,
+        .table th,
+        .table tbody td,
+        .table thead th {
+            color: #ffffff !important;
+            opacity: 1 !important;
+        }
+        
+        /* 重置所有表格单元格的对齐和边距 */
+        .table thead th,
+        .table tbody td {
+            vertical-align: middle !important;
+        }
+        
+        /* 确保表格使用固定布局 */
+        #mcp-instances table,
+        #workflow-status table {
+            table-layout: auto !important;
+            width: 100% !important;
+        }
+        
+        /* MCP 实例表格 */
+        #mcp-instances table tbody td {
+            color: #ffffff !important;
+            font-size: 0.95rem !important;
+            font-weight: 500 !important;
+        }
+        
+        /* 实例名称列 - 亮青色高亮 */
+        #mcp-instances table tbody td:nth-child(1) {
+            color: #00d9ff !important;
+            font-weight: 700 !important;
+            text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+            font-size: 1rem !important;
+            padding-left: 1rem !important;
+            text-align: left !important;
+        }
+        
+        /* 类型列 - 徽章保持原样 */
+        #mcp-instances table tbody td:nth-child(2) {
+            color: #ffffff !important;
+        }
+        
+        /* 状态列 - 徽章保持原样 */
+        #mcp-instances table tbody td:nth-child(3) {
+            color: #ffffff !important;
+        }
+        
+        /* 端口列 - 青色高亮 */
+        #mcp-instances table tbody td:nth-child(4) {
+            color: #06b6d4 !important;
+            font-weight: 600 !important;
+        }
+        
+        /* 端点列 - code标签保持原样 */
+        #mcp-instances table tbody td:nth-child(5) {
+            color: #ffffff !important;
+        }
+        
+        /* 操作列 - 按钮保持原样 */
+        #mcp-instances table tbody td:nth-child(6) {
+            color: #ffffff !important;
+        }
+        
+        /* 工作流表格 */
+        #workflow-status table tbody td {
+            color: #ffffff !important;
+            font-weight: 500 !important;
+        }
+        
+        /* 工作流名称列 - 亮青色高亮 */
+        #workflow-status table tbody td:nth-child(1) {
+            color: #00d9ff !important;
+            font-weight: 700 !important;
+            text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+            font-size: 0.95rem !important;
+            padding-left: 0.75rem !important;
+            text-align: left !important;
+        }
+        
+        /* 工作流状态列 */
+        #workflow-status table tbody td:nth-child(2) {
+            color: #ffffff !important;
+        }
+        
+        /* 许可证表格 */
+        #license-status table tbody td {
+            color: #ffffff !important;
+            font-weight: 500 !important;
+        }
+        
+        /* 确保动态生成的内容也应用样式 */
+        [id$="-table-body"] td {
+            color: #ffffff !important;
+        }
+        
+        /* 确保表格头部文字可见 */
+        .table thead th {
+            color: #06b6d4 !important;
+            font-weight: 600 !important;
+        }
+        
+        /* 表格加载/空状态提示 */
+        .table tbody td.text-center {
+            color: #06b6d4 !important;
+            font-weight: 600 !important;
+        }
+        
+        /* 消除“实例名称”列左侧的视觉空栏：移除行左侧装饰条 */
+        .table tbody tr::before {
+            display: none !important;
+            width: 0 !important;
+        }
+        
+        /* === 修复容器偏移问题 === */
+        #mcp-instances {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        #mcp-instances.table-responsive {
+            overflow-x: visible !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        
+        /* 确保MCP卡片内容不偏移 */
+        .card-body #mcp-instances {
+            width: 100% !important;
+        }
+        
+        /* 工作流状态容器也修复 */
+        #workflow-status {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        #workflow-status table {
+            margin: 0 !important;
+            width: 100% !important;
         }
     </style>
 </head>
