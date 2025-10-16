@@ -117,7 +117,17 @@ if lsof -Pi :${NEWFLOW_PORT:-5677} -sTCP:LISTEN 2>/dev/null | grep -q "com.docke
 else
     check_port ${NEWFLOW_PORT:-5677} "NewFlow"
 fi
-check_port ${LMSTUDIO_PORT:-1234} "LM Studio"
+
+# LM Studio端口特殊处理（允许LM Studio进程占用）
+if lsof -Pi :${LMSTUDIO_PORT:-1234} -sTCP:LISTEN 2>/dev/null | grep -q "lmstudio"; then
+    echo "✅ 端口 ${LMSTUDIO_PORT:-1234} (LM Studio) - LM Studio进程已运行"
+elif lsof -Pi :${LMSTUDIO_PORT:-1234} -sTCP:LISTEN 2>/dev/null | grep -q "."; then
+    echo "⚠️  端口 ${LMSTUDIO_PORT:-1234} (LM Studio) 被其他进程占用"
+    lsof -Pi :${LMSTUDIO_PORT:-1234} -sTCP:LISTEN 2>/dev/null | tail -n +2
+    echo "   请手动停止该进程或修改 LM Studio 端口配置"
+else
+    echo "✅ 端口 ${LMSTUDIO_PORT:-1234} (LM Studio) 可用"
+fi
 
 # Dashboard端口特殊处理
 if lsof -Pi :${DASHBOARD_PORT:-8000} -sTCP:LISTEN 2>/dev/null | grep -q "python"; then
