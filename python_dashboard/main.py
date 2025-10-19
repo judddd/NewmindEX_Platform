@@ -240,6 +240,18 @@ async def open_lmstudio():
         return {"success": False, "error": str(e)}
 
 
+@app.post("/api/open-newmindchat")
+async def open_newmindchat():
+    """打开NewmindChat应用"""
+    import subprocess
+    try:
+        # macOS上使用open命令打开应用
+        subprocess.Popen(['open', '-a', 'NewmindChat'])
+        return {"success": True, "message": "NewmindChat应用已启动"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # ==================== Docker服务管理 API ====================
 
 # 服务名映射

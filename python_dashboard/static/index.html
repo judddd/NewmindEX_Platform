@@ -1113,7 +1113,7 @@
 
             <!-- 服务状态总览 -->
             <div class="row mb-4">
-                <div class="col-md-3">
+                <div class="col-md-2 col-lg-2">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">Elasticsearch</h6>
@@ -1131,7 +1131,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2 col-lg-2">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">Kibana</h6>
@@ -1149,7 +1149,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2 col-lg-2">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">LM Studio</h6>
@@ -1159,13 +1159,29 @@
                             <small id="lm-models"></small>
                             <div class="d-flex gap-2 mt-3">
                                 <button onclick="openLMStudio()" class="btn btn-sm btn-outline-primary flex-grow-1">
-                                    <i class="fas fa-external-link-alt"></i> 打开应用
+                                    <i class="fas fa-external-link-alt"></i> 打开
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2 col-lg-2">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">NewmindChat</h6>
+                            <h3 class="card-title" id="newmindchat-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <small id="newmindchat-info" class="text-muted">AI聊天客户端</small>
+                            <div class="d-flex gap-2 mt-3">
+                                <button onclick="openNewmindChat()" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                    <i class="fas fa-external-link-alt"></i> 打开
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-lg-2">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">NewFlow</h6>
@@ -1610,6 +1626,35 @@
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 启动中...';
                 
                 const response = await fetch('/api/open-lmstudio', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    button.innerHTML = '<i class="fas fa-check"></i> 已启动';
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }, 2000);
+                } else {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    alert('启动失败: ' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                alert('启动失败: ' + error.message);
+            }
+        }
+        
+        async function openNewmindChat() {
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 启动中...';
+                
+                const response = await fetch('/api/open-newmindchat', { method: 'POST' });
                 const result = await response.json();
                 
                 if (result.success) {
