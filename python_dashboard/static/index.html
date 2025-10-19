@@ -1586,12 +1586,42 @@
                 
                 if (result.total === 0) {
                     statusDiv.innerHTML = '<div class="alert alert-info mt-2">未找到需要导入的工作流文件</div>';
-                } else if (result.failed === 0) {
-                    statusDiv.innerHTML = `<div class="alert alert-success mt-2">✅ 全部导入成功！共 ${result.success} 个工作流</div>`;
-                } else if (result.success === 0) {
-                    statusDiv.innerHTML = `<div class="alert alert-danger mt-2">❌ 导入失败！共 ${result.failed} 个工作流（可能已存在）</div>`;
                 } else {
-                    statusDiv.innerHTML = `<div class="alert alert-warning mt-2">⚠️ 部分导入成功<br>成功: ${result.success} / 失败: ${result.failed}</div>`;
+                    // 构建状态消息
+                    let alertClass = 'alert-success';
+                    let icon = '✅';
+                    let message = '';
+                    
+                    if (result.success > 0 && result.failed === 0) {
+                        message = `全部处理成功！`;
+                    } else if (result.success === 0 && result.failed > 0) {
+                        alertClass = 'alert-danger';
+                        icon = '❌';
+                        message = `导入失败！`;
+                    } else if (result.success > 0 && result.failed > 0) {
+                        alertClass = 'alert-warning';
+                        icon = '⚠️';
+                        message = `部分导入成功`;
+                    } else if (result.success === 0 && result.failed === 0 && result.skipped > 0) {
+                        alertClass = 'alert-info';
+                        icon = 'ℹ️';
+                        message = `所有工作流均已存在`;
+                    }
+                    
+                    // 构建详细信息
+                    let details = `<strong>${icon} ${message}</strong><br>`;
+                    if (result.success > 0) {
+                        details += `✅ 新导入: ${result.success} 个<br>`;
+                    }
+                    if (result.skipped > 0) {
+                        details += `⏭️ 已跳过: ${result.skipped} 个（已存在）<br>`;
+                    }
+                    if (result.failed > 0) {
+                        details += `❌ 失败: ${result.failed} 个<br>`;
+                    }
+                    details += `📊 总计: ${result.total} 个文件`;
+                    
+                    statusDiv.innerHTML = `<div class="alert ${alertClass} mt-2">${details}</div>`;
                 }
             } catch (error) {
                 console.error('导入工作流失败:', error);

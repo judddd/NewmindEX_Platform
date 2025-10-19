@@ -83,7 +83,7 @@ async def import_workflow(workflow_file: Path,
 async def import_all_workflows(newflow_url: str = "http://localhost:5677",
                                api_key: Optional[str] = None) -> Dict:
     """
-    批量导入所有workflow
+    批量导入所有workflow（跳过同名工作流）
     
     Returns:
         Dict: 导入结果统计
@@ -91,26 +91,68 @@ async def import_all_workflows(newflow_url: str = "http://localhost:5677",
     workflow_files = get_workflow_files()
     
     if not workflow_files:
-        return {"total": 0, "success": 0, "failed": 0}
+        return {"total": 0, "success": 0, "failed": 0, "skipped": 0}
+    
+    # 获取现有工作流列表
+    existing_workflows = await list_workflows(newflow_url, api_key, include_archived=True)
+    existing_names = set()
+    if existing_workflows:
+        existing_names = {wf.get('name', '') for wf in existing_workflows}
     
     results = {
         "total": len(workflow_files),
         "success": 0,
         "failed": 0,
+        "skipped": 0,
         "details": []
     }
     
     for workflow_file in workflow_files:
-        success = await import_workflow(workflow_file, newflow_url, api_key)
-        if success:
-            results["success"] += 1
-        else:
+        try:
+            # 读取工作流名称
+            with open(workflow_file, 'r', encoding='utf-8') as f:
+                workflow_data = json.load(f)
+            
+            workflow_name = workflow_data.get("name", workflow_file.stem)
+            
+            # 检查是否已存在同名工作流
+            if workflow_name in existing_names:
+                print(f"⏭️  跳过已存在: {workflow_file.name} (名称: {workflow_name})")
+                results["skipped"] += 1
+                results["details"].append({
+                    "file": workflow_file.name,
+                    "name": workflow_name,
+                    "status": "skipped",
+                    "reason": "already_exists"
+                })
+                continue
+            
+            # 导入新工作流
+            success = await import_workflow(workflow_file, newflow_url, api_key)
+            if success:
+                results["success"] += 1
+                results["details"].append({
+                    "file": workflow_file.name,
+                    "name": workflow_name,
+                    "status": "success"
+                })
+                # 添加到已存在列表，避免重复导入
+                existing_names.add(workflow_name)
+            else:
+                results["failed"] += 1
+                results["details"].append({
+                    "file": workflow_file.name,
+                    "name": workflow_name,
+                    "status": "failed"
+                })
+        except Exception as e:
+            print(f"处理文件失败 {workflow_file.name}: {e}")
             results["failed"] += 1
-        
-        results["details"].append({
-            "file": workflow_file.name,
-            "success": success
-        })
+            results["details"].append({
+                "file": workflow_file.name,
+                "status": "error",
+                "reason": str(e)
+            })
     
     return results
 

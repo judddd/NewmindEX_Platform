@@ -91,9 +91,11 @@ async def startup_event():
     try:
         result = await import_all_workflows(newflow_url, api_key)
         if result['total'] > 0:
-            print(f"✅ 工作流导入完成: 成功 {result['success']} / 失败 {result['failed']} / 总数 {result['total']}")
+            print(f"✅ 工作流处理完成: 成功 {result['success']} / 跳过 {result['skipped']} / 失败 {result['failed']} / 总数 {result['total']}")
+            if result['skipped'] > 0:
+                print(f"ℹ️  已跳过 {result['skipped']} 个已存在的工作流")
             if result['failed'] > 0:
-                print(f"⚠️  部分工作流导入失败，可能是因为工作流已存在")
+                print(f"⚠️  {result['failed']} 个工作流导入失败")
         else:
             print("ℹ️  未找到需要导入的工作流文件")
     except Exception as e:
