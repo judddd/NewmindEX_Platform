@@ -1,11 +1,13 @@
 """
 NewFlow工作流管理模块
 
-【重要说明】
-- import_workflow 和 import_all_workflows 功能已废弃
-- NewFlow 现在使用自己的内部数据库管理工作流
-- newflow_data 文件夹仅用于 NewFlow 的数据持久化和日志存储
-- 保留 list_workflows 函数用于从 NewFlow API 读取工作流列表
+功能说明：
+- import_workflow: 从 workflow_conf 目录导入单个工作流到 NewFlow
+- import_all_workflows: 批量导入所有工作流（应用启动时自动执行）
+- list_workflows: 从 NewFlow API 读取工作流列表
+
+数据流：
+  workflow_conf/*.json → Dashboard导入 → NewFlow → newflow_data持久化
 """
 
 import httpx

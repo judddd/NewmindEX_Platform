@@ -1,0 +1,181 @@
+{
+  "name": "index摘要tool",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "index-summary",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "summary-webhook",
+      "name": "Index Summary Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -720,
+        80
+      ],
+      "typeVersion": 2,
+      "webhookId": "c8cdc376-a2d5-49b3-8698-332e34a026b0"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 直接传递所有输入给AI，让AI自己理解\nconst input = $input.item.json;\n\nreturn {\n  chatInput: JSON.stringify(input, null, 2)\n};"
+      },
+      "id": "prepare-agent-input",
+      "name": "Prepare Agent Input",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -496,
+        80
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "【ES索引查询服务】\n\n任务：根据索引规模自适应选择查询策略，最小化token消耗\n\n步骤1：获取索引总数\nexecute_es_api: method=GET, path=\"_cat/indices\", params={\"format\":\"json\",\"h\":\"index\"}\n统计返回数量N\n\n步骤2：选择策略\n- N < 1000: 使用已获取的索引列表，直接分类\n- N >= 1000: execute_es_api获取模板 path=\"_index_template\", params={\"filter_path\":\"index_templates.name,index_templates.index_template.index_patterns\"}，从patterns推断分类\n\n输入参数（支持中文和英文）\n- focus: 着重类型(network/security/alerts/process/file/metrics/logs/custom)\n- detail_level: summary/detailed\n- include_system: true/false\n- max_patterns: 数字，默认5\n\n分类规则\n- alerts: 包含'alert'\n- events_process: 包含'events.process'或'endpoint.events.process'\n- events_network: 包含'events.network'或'endpoint.events.network'\n- events_file: 包含'events.file'或'endpoint.events.file'\n- events_security: 包含'events.security'或'endpoint.events.security'\n- metrics: 包含'metrics'\n- logs: logs-*或.ds-logs-*\n- custom: 非系统、非ECS标准\n- system: .开头\n\n模式提取\n- 日期替换为*：logs-2025.10.14 → logs-*\n- 版本号替换为*：.ds-logs-endpoint.events.network-default-2025.10.03-000007 → .ds-logs-endpoint.events.network-*\n\n输出JSON\n{\n  \"summary\": {\"alerts\":[],\"events_process\":[],\"events_network\":[],\"events_file\":[],\"events_security\":[],\"metrics\":[],\"logs\":[],\"custom\":[],\"system\":[]},\n  \"stats\": {\"total\":N,\"by_category\":{...},\"strategy_used\":\"lightweight_list或template_inference\"},\n  \"focus_details\": {\"category\":\"\",\"indices\":[],\"patterns\":[],\"time_range\":\"\",\"notes\":\"\"},\n  \"data_sources\": [],\n  \"analyzed_at\": \"ISO时间戳\"\n}\n\n规则\n- 每类默认5个模式，focus类最多20个，detailed模式10个\n- system索引默认不列举，除非include_system=true\n- 输出纯JSON，不要```\n\n\n【索引Mappings分析服务】\n\n任务：分析索引字段映射结构，谨慎获取样本数据\n\n输入解析（支持多种格式）\n- {\"index\":\"name\"}\n- {\"body\":{\"index\":\"name\"}}\n- {\"索引\":\"name\",\"包含样本\":true}\n- {\"index\":\"logs-*\"}\n\n工具调用\n1. get_mappings: {\"index\":\"索引名\"}，支持通配符\n2. es_search（仅用户明确要求时）: {\"index\":\"索引名\",\"queryBody\":{\"size\":1,\"_source\":[\"关键字段\"],\"query\":{\"match_all\":{}}}}\n\n关键字段选择（取样时）\n- 必选：@timestamp, event.category, event.type\n- 按类型：\n  * 网络：source.ip, destination.ip, network.protocol\n  * 进程：process.name, process.pid\n  * 文件：file.path, file.name\n  * 告警：kibana.alert.rule.name\n- 避免：message全文，大文本\n\n通配符处理\n- 匹配多个索引时，判断结构相似性\n- 相同结构合并分析\n- 不同结构返回差异或分别分析前5个\n\n输出JSON\n{\n  \"index\": \"索引名或pattern\",\n  \"matched_indices\": [],\n  \"is_custom\": true/false,\n  \"structure_analysis\": {\n    \"total_fields\": N,\n    \"field_categories\": {\"text_fields\":[],\"keyword_fields\":[],\"date_fields\":[],\"numeric_fields\":[],\"nested_fields\":[],\"object_fields\":[],\"ip_fields\":[]},\n    \"has_nested\": true/false\n  },\n  \"field_details\": [{\"name\":\"\",\"type\":\"\",\"properties\":{\"analyzer\":\"\",\"format\":\"\",\"fields\":\"\",\"description\":\"\"}}],\n  \"index_purpose\": \"推断用途\",\n  \"data_characteristics\": {\"likely_data_source\":\"\",\"event_type\":\"\",\"time_series\":true/false},\n  \"sample_data\": {\"included\":true/false,\"document\":{},\"insights\":\"\"},\n  \"analyzed_at\": \"ISO时间戳\"\n}\n\n规则\n- 过滤_id,_index,_score等系统字段\n- 字段数>100时，field_details只返回前50个关键字段\n- 索引不存在返回：{\"error\":\"index_not_found\",\"index\":\"索引名\"}\n- 输出纯JSON，不要```\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -272,
+        80
+      ],
+      "id": "summary-agent",
+      "name": "Summary Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "qwen/qwen3-coder-30b",
+          "mode": "list",
+          "cachedResultName": "qwen/qwen3-coder-30b"
+        },
+        "options": {
+          "temperature": 0.1,
+          "timeout": 120000
+        }
+      },
+      "id": "summary-model",
+      "name": "Qwen3-30B Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        -272,
+        304
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "doBBudPqkhtYH1dg",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "http://192.168.1.5:3001/mcp",
+        "serverTransport": "httpStreamable",
+        "include": "selected",
+        "includeTools": [
+          "list_indices",
+          "execute_es_api"
+        ],
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        -80,
+        320
+      ],
+      "id": "summary-mcp-tool",
+      "name": "Summary MCP Tool"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "respond-summary",
+      "name": "Respond Summary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        80,
+        80
+      ],
+      "typeVersion": 1.1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Index Summary Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Agent Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Agent Input": {
+      "main": [
+        [
+          {
+            "node": "Summary Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qwen3-30B Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Summary Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary MCP Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Summary Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "27a2c3e3-44e2-4604-881b-e98d862aec06",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f687a50c61872e8ca3cdc5f4ef80c58fddb4a1dc1fa765569c5fde992f32b225"
+  },
+  "id": "ZO5dZezcO5xRo8Qm",
+  "tags": []
+}

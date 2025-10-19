@@ -13,6 +13,7 @@ import uuid
 import asyncio
 import os
 import socket
+import httpx
 
 # 导入模块
 from database import (
@@ -54,6 +55,51 @@ app.add_middleware(
 
 # 挂载静态文件
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+# ==================== 启动事件 ====================
+
+@app.on_event("startup")
+async def startup_event():
+    """应用启动时执行的任务"""
+    print("🚀 NewMind AI Platform Dashboard 启动中...")
+    
+    # 等待 NewFlow 服务启动（最多等待30秒）
+    newflow_url = f"http://localhost:{os.getenv('NEWFLOW_PORT', '5677')}"
+    api_key = os.getenv('NEWFLOW_API_KEY')
+    
+    print(f"⏳ 等待 NewFlow 服务启动... ({newflow_url})")
+    max_retries = 30
+    for i in range(max_retries):
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{newflow_url}/healthz", timeout=2.0)
+                if response.status_code == 200:
+                    print(f"✅ NewFlow 服务已就绪")
+                    break
+        except:
+            pass
+        
+        if i < max_retries - 1:
+            await asyncio.sleep(1)
+    else:
+        print(f"⚠️  NewFlow 服务未启动，跳过工作流自动导入")
+        return
+    
+    # 自动导入工作流
+    print("📂 开始自动导入工作流...")
+    try:
+        result = await import_all_workflows(newflow_url, api_key)
+        if result['total'] > 0:
+            print(f"✅ 工作流导入完成: 成功 {result['success']} / 失败 {result['failed']} / 总数 {result['total']}")
+            if result['failed'] > 0:
+                print(f"⚠️  部分工作流导入失败，可能是因为工作流已存在")
+        else:
+            print("ℹ️  未找到需要导入的工作流文件")
+    except Exception as e:
+        print(f"❌ 工作流自动导入失败: {e}")
+    
+    print("🎉 Dashboard 启动完成！")
 
 
 # ==================== Pydantic模型 ====================
@@ -427,19 +473,11 @@ async def newflow_workflows():
 
 @app.post("/api/newflow/import")
 async def newflow_import():
-    """
-    【已废弃】一键导入所有工作流
-    
-    注意：此API已不再使用。NewFlow现在使用自己的内部数据库管理工作流。
-    newflow_data 文件夹仅用于 NewFlow 的数据持久化和日志存储。
-    """
-    return {
-        "deprecated": True,
-        "message": "此API已废弃。NewFlow现在使用自己的内部数据库管理工作流。",
-        "total": 0,
-        "success": 0,
-        "failed": 0
-    }
+    """一键导入所有工作流（从 workflow_conf 目录）"""
+    newflow_url = f"http://localhost:{os.getenv('NEWFLOW_PORT', '5677')}"
+    api_key = os.getenv('NEWFLOW_API_KEY')
+    result = await import_all_workflows(newflow_url, api_key)
+    return result
 
 
 # ==================== MCP服务编排API ====================

@@ -1243,9 +1243,14 @@
                             <h6><i class="fas fa-project-diagram"></i> NewFlow工作流</h6>
                         </div>
                         <div class="card-body">
-                            <button class="btn btn-primary w-100" onclick="viewWorkflows()">
-                                <i class="fas fa-eye"></i> 查看工作流
-                            </button>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-primary" onclick="viewWorkflows()">
+                                    <i class="fas fa-eye"></i> 查看工作流
+                                </button>
+                                <button class="btn btn-success" onclick="importWorkflows()">
+                                    <i class="fas fa-download"></i> 导入工作流
+                                </button>
+                            </div>
                             <div id="workflow-status" class="mt-2"></div>
                         </div>
                     </div>
@@ -1568,6 +1573,29 @@
                 alert('MCP实例已删除');
             } else {
                 alert('删除失败');
+            }
+        }
+        
+        async function importWorkflows() {
+            const statusDiv = document.getElementById('workflow-status');
+            statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm"></div> 导入中...';
+            
+            try {
+                const response = await fetch('/api/newflow/import', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.total === 0) {
+                    statusDiv.innerHTML = '<div class="alert alert-info mt-2">未找到需要导入的工作流文件</div>';
+                } else if (result.failed === 0) {
+                    statusDiv.innerHTML = `<div class="alert alert-success mt-2">✅ 全部导入成功！共 ${result.success} 个工作流</div>`;
+                } else if (result.success === 0) {
+                    statusDiv.innerHTML = `<div class="alert alert-danger mt-2">❌ 导入失败！共 ${result.failed} 个工作流（可能已存在）</div>`;
+                } else {
+                    statusDiv.innerHTML = `<div class="alert alert-warning mt-2">⚠️ 部分导入成功<br>成功: ${result.success} / 失败: ${result.failed}</div>`;
+                }
+            } catch (error) {
+                console.error('导入工作流失败:', error);
+                statusDiv.innerHTML = `<div class="alert alert-danger mt-2">导入失败: ${error.message}</div>`;
             }
         }
         

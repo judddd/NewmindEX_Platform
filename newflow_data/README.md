@@ -35,5 +35,13 @@ volumes:
 
 ---
 
-📝 **注意**: 旧版本中从 `workflow_conf` 目录导入工作流的功能已废弃。现在所有工作流都通过 NewFlow Web UI 直接管理。
+## 工作流导入
+
+应用启动时会自动从 `workflow_conf` 目录导入工作流：
+
+```
+workflow_conf/*.json → Dashboard导入 → NewFlow → newflow_data持久化
+```
+
+您也可以通过 Dashboard Web UI 手动点击"导入工作流"按钮来导入新的工作流。
 

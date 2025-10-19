@@ -8,12 +8,12 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "5171406b-91a8-4e59-a269-473fca496b3d",
+      "id": "9d027b2a-f2da-453a-ab83-a0585bc122ce",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "position": [
-        -416,
-        16
+        -224,
+        32
       ],
       "webhookId": "graudframe-ml-alert",
       "typeVersion": 2
@@ -22,12 +22,12 @@
       "parameters": {
         "jsCode": "// 获取webhook接收到的完整数据\nconst webhookData = $input.all();\n\n// 提取所有可能的数据源\nlet alertData = {};\n\nfor (const item of webhookData) {\n  // 合并body, query, headers等所有数据\n  alertData = {\n    timestamp: new Date().toISOString(),\n    body: item.json.body || {},\n    query: item.json.query || {},\n    headers: item.json.headers || {},\n    rawData: item.json\n  };\n}\n\n// 格式化为易读的JSON字符串\nconst formattedAlert = JSON.stringify(alertData, null, 2);\n\nreturn [\n  {\n    json: {\n      alertData: alertData,\n      formattedAlert: formattedAlert,\n      timestamp: alertData.timestamp\n    }\n  }\n];"
       },
-      "id": "745d30b2-625b-4cfc-91dd-a4c028a72b08",
+      "id": "5d3faa4e-b83c-4b4e-b9de-0074cb9de1f5",
       "name": "提取警报数据",
       "type": "n8n-nodes-base.code",
       "position": [
-        -192,
-        16
+        0,
+        32
       ],
       "typeVersion": 2
     },
@@ -42,10 +42,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
-        0,
-        0
+        192,
+        16
       ],
-      "id": "644a47c3-c3c1-4350-9ebe-03e034f12b12",
+      "id": "38a86428-fcce-41fa-b281-d36fe76dbaaf",
       "name": "AI Agent",
       "retryOnFail": true
     },
@@ -61,12 +61,12 @@
           "temperature": 0.7
         }
       },
-      "id": "6f2f95ec-f091-484c-bbb9-53f19c44aa12",
+      "id": "a18809c4-936b-4618-ab24-c6f6fec5d160",
       "name": "Qwen3 模型",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "position": [
-        -32,
-        240
+        160,
+        256
       ],
       "typeVersion": 1.2,
       "credentials": {
@@ -80,12 +80,12 @@
       "parameters": {
         "jsCode": "// Markdown 转 HTML 的完整实现\nconst inputData = $input.first().json;\n\n// 获取AI生成的报告内容\nlet markdownContent = inputData.output \n                   || inputData.text \n                   || inputData.response \n                   || inputData.result\n                   || inputData.content\n                   || JSON.stringify(inputData, null, 2);\n\nconsole.log('原始 Markdown 内容长度:', markdownContent.length);\n\n// ========================================\n// Markdown 转 HTML 转换函数\n// ========================================\nfunction markdownToHtml(markdown) {\n  let html = markdown;\n  \n  // 1. 转义 HTML 特殊字符的函数\n  function escapeHtml(text) {\n    const map = {\n      '&': '&amp;',\n      '<': '&lt;',\n      '>': '&gt;',\n      '\"': '&quot;',\n      \"'\": '&#039;'\n    };\n    return text.replace(/[&<>\"']/g, m => map[m]);\n  }\n  \n  // 2. 处理代码块 (```)\n  html = html.replace(/```([\\w]*)?\\n([\\s\\S]*?)```/g, function(match, lang, code) {\n    return `<pre style=\"background-color: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 10px 0;\"><code class=\"language-${lang || 'text'}\">${escapeHtml(code.trim())}</code></pre>`;\n  });\n  \n  // 3. 处理行内代码 (`)\n  html = html.replace(/`([^`]+)`/g, '<code style=\"background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: monospace; color: #e83e8c; font-size: 0.9em;\">$1</code>');\n  \n  // 4. 处理标题 - 增大字体\n  html = html.replace(/^#### (.*)$/gm, '<h4 style=\"font-size: 18px; color: #495057; margin-top: 18px; margin-bottom: 8px; font-weight: 600;\">$1</h4>');\n  html = html.replace(/^### (.*)$/gm, '<h3 style=\"font-size: 20px; color: #343a40; margin-top: 20px; margin-bottom: 10px; font-weight: 600;\">$1</h3>');\n  html = html.replace(/^## (.*)$/gm, '<h2 style=\"font-size: 22px; color: #212529; margin-top: 22px; margin-bottom: 10px; font-weight: 600;\">$1</h2>');\n  html = html.replace(/^# (.*)$/gm, '<h1 style=\"font-size: 26px; color: #000; margin-top: 25px; margin-bottom: 12px; font-weight: 700;\">$1</h1>');\n  \n  // 5. 处理粗体 (**text**)\n  html = html.replace(/\\*\\*(.+?)\\*\\*/g, '<strong style=\"font-weight: 600; color: #000;\">$1</strong>');\n  \n  // 6. 处理斜体 (*text*)\n  html = html.replace(/(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)/g, '<em>$1</em>');\n  \n  // 7. 处理链接 [text](url)\n  html = html.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '<a href=\"$2\" style=\"color: #007bff; text-decoration: none;\">$1</a>');\n  \n  // 8. 处理分隔线\n  html = html.replace(/^---+$/gm, '<hr style=\"border: 0; border-top: 2px solid #dee2e6; margin: 15px 0;\">');\n  html = html.replace(/^━━━.*$/gm, '<hr style=\"border: 0; border-top: 2px solid #667eea; margin: 15px 0;\">');\n  \n  // 9. 处理无序列表\n  html = html.replace(/^[\\-\\*\\+] (.+)$/gm, '<li style=\"margin-bottom: 5px;\">$1</li>');\n  // 包裹连续的 <li> 标签\n  html = html.replace(/(<li[^>]*>.*?<\\/li>\\n?)+/gs, match => {\n    return '<ul style=\"margin: 8px 0; padding-left: 25px; line-height: 1.5;\">' + match + '</ul>';\n  });\n  \n  // 10. 处理有序列表\n  html = html.replace(/^\\d+\\.\\s(.+)$/gm, '<li style=\"margin-bottom: 5px;\">$1</li>');\n  \n  // 11. 处理段落 - 减小行距\n  const paragraphs = html.split(/\\n\\n+/);\n  html = paragraphs.map(para => {\n    para = para.trim();\n    if (!para) return '';\n    \n    // 如果已经是HTML标签开头，不包装\n    if (para.match(/^<(h[1-6]|ul|ol|pre|hr|blockquote)/)) {\n      return para;\n    }\n    \n    return `<p style=\"margin: 8px 0; line-height: 1.5;\">${para}</p>`;\n  }).join('\\n');\n  \n  // 12. 处理单换行为 <br> - 减少额外空行\n  html = html.replace(/\\n/g, '<br>');\n  \n  return html;\n}\n\n// 转换 Markdown 为 HTML\nconst htmlContent = markdownToHtml(markdownContent);\n\nconsole.log('转换后的 HTML 长度:', htmlContent.length);\n\n// 返回结果\nreturn [\n  {\n    json: {\n      ...inputData,\n      markdownContent: markdownContent,\n      htmlContent: htmlContent,\n      conversionSuccess: true\n    }\n  }\n];"
       },
-      "id": "fce3a862-08eb-413f-80c6-95bbc1059bde",
+      "id": "891c9fd4-d9c7-4341-9b20-63de16fcefe5",
       "name": "Markdown转HTML",
       "type": "n8n-nodes-base.code",
       "position": [
-        304,
-        32
+        496,
+        48
       ],
       "typeVersion": 2
     },
@@ -93,31 +93,31 @@
       "parameters": {
         "jsCode": "// 获取转换后的 HTML 内容\nconst inputData = $input.first().json;\nconst aiReportHtml = inputData.htmlContent || inputData.markdownContent || '';\n\nconsole.log('接收到的 HTML 内容长度:', aiReportHtml.length);\n\nconst timestamp = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });\n\n// 创建HTML格式的邮件\nconst htmlEmail = `<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <style>\n    body {\n      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n      line-height: 1.5;\n      color: #333;\n      max-width: 800px;\n      margin: 0 auto;\n      padding: 20px;\n      background-color: #f5f5f5;\n    }\n    .email-container {\n      background-color: white;\n      border-radius: 8px;\n      padding: 30px;\n      box-shadow: 0 2px 8px rgba(0,0,0,0.1);\n    }\n    .header {\n      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n      color: white;\n      padding: 20px;\n      border-radius: 8px 8px 0 0;\n      margin: -30px -30px 20px -30px;\n    }\n    .header h1 {\n      margin: 0;\n      font-size: 24px;\n    }\n    .timestamp {\n      font-size: 14px;\n      opacity: 0.9;\n      margin-top: 5px;\n    }\n    .report-content {\n      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n      line-height: 1.5;\n      color: #333;\n      font-size: 14px;\n    }\n    .report-content h1 {\n      font-size: 26px;\n      color: #000;\n      margin-top: 25px;\n      margin-bottom: 12px;\n      font-weight: 700;\n    }\n    .report-content h2 {\n      font-size: 22px;\n      color: #212529;\n      margin-top: 22px;\n      margin-bottom: 10px;\n      font-weight: 600;\n    }\n    .report-content h3 {\n      font-size: 20px;\n      color: #343a40;\n      margin-top: 20px;\n      margin-bottom: 10px;\n      font-weight: 600;\n    }\n    .report-content h4 {\n      font-size: 18px;\n      color: #495057;\n      margin-top: 18px;\n      margin-bottom: 8px;\n      font-weight: 600;\n    }\n    .report-content p {\n      margin: 8px 0;\n      line-height: 1.5;\n    }\n    .report-content code {\n      background-color: #f4f4f4;\n      padding: 2px 6px;\n      border-radius: 3px;\n      font-family: 'Consolas', 'Monaco', monospace;\n      color: #e83e8c;\n      font-size: 0.9em;\n    }\n    .report-content pre {\n      background-color: #2d2d2d;\n      color: #f8f8f2;\n      padding: 15px;\n      border-radius: 5px;\n      overflow-x: auto;\n      margin: 10px 0;\n    }\n    .report-content pre code {\n      background: none;\n      color: inherit;\n      padding: 0;\n    }\n    .report-content ul, .report-content ol {\n      margin: 8px 0;\n      padding-left: 25px;\n      line-height: 1.5;\n    }\n    .report-content li {\n      margin-bottom: 5px;\n    }\n    .report-content a {\n      color: #007bff;\n      text-decoration: none;\n    }\n    .report-content a:hover {\n      text-decoration: underline;\n    }\n    .report-content strong {\n      font-weight: 600;\n      color: #000;\n    }\n    .report-content hr {\n      border: 0;\n      border-top: 2px solid #dee2e6;\n      margin: 15px 0;\n    }\n    .footer {\n      margin-top: 30px;\n      padding-top: 20px;\n      border-top: 2px solid #e9ecef;\n      font-size: 12px;\n      color: #6c757d;\n      text-align: center;\n    }\n    .alert-badge {\n      display: inline-block;\n      padding: 4px 12px;\n      background-color: #dc3545;\n      color: white;\n      border-radius: 12px;\n      font-size: 12px;\n      font-weight: bold;\n      margin-left: 10px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"email-container\">\n    <div class=\"header\">\n      <h1>🛡️ 安全警报分析报告 <span class=\"alert-badge\">SECURITY ALERT</span></h1>\n      <div class=\"timestamp\">📅 报告生成时间: ${timestamp}</div>\n    </div>\n    \n    <div class=\"report-content\">\n      ${aiReportHtml}\n    </div>\n    \n    <div class=\"footer\">\n      <p><strong>Graudframe ML 安全监控系统</strong></p>\n      <p>此报告由 AI 安全分析引擎 (Qwen3-80B) 自动生成</p>\n      <p>如有疑问,请联系安全团队 | info@tocharian.eu</p>\n      <p style=\"margin-top: 10px; font-size: 11px;\">⚠️ 本邮件包含敏感安全信息,请妥善保管</p>\n    </div>\n  </div>\n</body>\n</html>`;\n\n// 创建纯文本版本\nconst textEmail = `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🛡️ 安全警报分析报告\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n📅 报告生成时间: ${timestamp}\n\n${inputData.markdownContent || aiReportHtml}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nGraudframe ML 安全监控系统\n此报告由 AI 安全分析引擎自动生成\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;\n\nreturn [\n  {\n    json: {\n      emailSubject: `🚨【安全警报】Graudframe ML 安全分析报告 - ${timestamp}`,\n      emailBodyHtml: htmlEmail,\n      emailBodyText: textEmail,\n      timestamp: timestamp,\n      reportLength: aiReportHtml.length\n    }\n  }\n];"
       },
-      "id": "42017f5c-90d6-486d-8bb7-2ec5d212fac9",
+      "id": "49618c64-11ee-448b-a0f4-2fdaa2ccccdd",
       "name": "格式化邮件内容",
       "type": "n8n-nodes-base.code",
       "position": [
-        480,
-        16
+        672,
+        32
       ],
       "typeVersion": 2
     },
     {
       "parameters": {
-        "fromEmail": "info@xlustlair.com",
-        "toEmail": "luke@newmindtech.cn",
+        "fromEmail": "your_email@example.com",
+        "toEmail": "to_email@example.com",
         "subject": "={{ $json.emailSubject }}",
         "html": "={{ $json.emailBodyHtml }}",
         "options": {
           "allowUnauthorizedCerts": false
         }
       },
-      "id": "6d6cf86c-4f74-4dc7-9bb3-8ffaf1c53231",
+      "id": "99394fdf-4d28-4e07-b18d-22aa2d6ea119",
       "name": "发送邮件",
       "type": "n8n-nodes-base.emailSend",
       "position": [
-        704,
-        16
+        896,
+        32
       ],
       "typeVersion": 2.1,
       "webhookId": "512bd7c0-a798-414e-bc9f-8811a78611f8",
@@ -131,21 +131,21 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"status\": \"success\", \"message\": \"安全警报已接收并处理\", \"timestamp\": $json.timestamp, \"report_sent_to\": \"luke@newmindtech.cn\" } }}",
+        "responseBody": "={{ { \"status\": \"success\", \"message\": \"安全警报已接收并处理\", \"timestamp\": $json.timestamp, \"report_sent_to\": \"your_email@example.com\" } }}",
         "options": {}
       },
-      "id": "5508c070-c751-4b89-be90-d5956c53d0d2",
+      "id": "7061ac16-16f0-4a55-a33e-4231b6d539e5",
       "name": "响应Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "position": [
-        928,
-        16
+        1120,
+        32
       ],
       "typeVersion": 1.1
     },
     {
       "parameters": {
-        "endpointUrl": "http://192.168.1.5:3001/mcp",
+        "endpointUrl": "http://192.168.1.2:3001/mcp",
         "serverTransport": "httpStreamable",
         "include": "selected",
         "includeTools": [
@@ -156,10 +156,10 @@
       "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
       "typeVersion": 1.1,
       "position": [
-        176,
-        240
+        368,
+        256
       ],
-      "id": "cf82683d-af47-44d1-81a7-1f2ceaca6056",
+      "id": "fffb5a99-35bd-45fd-a2d7-4dddeda0989a",
       "name": "MCP Client"
     }
   ],
@@ -256,10 +256,12 @@
   },
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "62b47ac9-7244-41ed-88a1-5b9b202af604",
+  "versionId": "26dc14fa-1e41-44c0-ac3a-e535cf534325",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "f687a50c61872e8ca3cdc5f4ef80c58fddb4a1dc1fa765569c5fde992f32b225"
   },
   "id": "UhNo7qQyLTewnHaD",

@@ -1,0 +1,462 @@
+{
+  "name": "ES环境感知模块",
+  "nodes": [
+    {
+      "parameters": {
+        "endpointUrl": "http://192.168.1.5:3001/mcp",
+        "serverTransport": "httpStreamable",
+        "include": "selected",
+        "includeTools": [
+          "get_mappings",
+          "es_search"
+        ],
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        -288,
+        -272
+      ],
+      "id": "de3013b6-0737-4eb8-a522-9f5ade136eb5",
+      "name": "ES MCP Tool"
+    },
+    {
+      "parameters": {
+        "toolDescription": "获取索引Mappings结构分析。\n\n输入参数（JSON格式）：\n- index: 索引名（必需，支持通配符如 logs-*）\n- include_sample: 是否包含样本数据 (true/false，默认false)\n\n示例：{\"index\":\"logs-endpoint.events.network-*\",\"include_sample\":false}\n\n返回：\n- structure_analysis: 字段分类统计\n- field_details: 字段详细信息\n- index_purpose: 推断的索引用途\n- data_characteristics: 数据特征\n- sample_data: 样本数据（如果请求）\n\n用于深入了解索引字段结构和数据特征。",
+        "method": "POST",
+        "url": "http://localhost:5677/webhook/custom-mappings",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"index\":\"employees\"}"
+      },
+      "id": "89d11c06-294a-404b-9258-07a8ac274ae5",
+      "name": "Mappings Analysis Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        -272
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "获取ES索引分类摘要（支持自适应策略）。\n\n输入参数（可选，JSON格式）：\n- focus: 着重类型 (network/security/alerts/process/file/metrics/logs/custom)\n- detail_level: 详细程度 (summary/detailed)\n- include_system: 是否包含系统索引 (true/false)\n- max_patterns: 每类最大模式数 (默认5)\n\n示例：{\"focus\":\"network\",\"detail_level\":\"detailed\"}\n\n返回：\n- summary: 分类的索引模式\n- stats: 总数和分类统计（含strategy_used）\n- data_sources: 检测到的数据源\n- focus_details: 如果指定focus，返回详细信息\n\n这是第一个应该调用的工具，用于了解ES环境全局。",
+        "method": "POST",
+        "url": "http://localhost:5677/webhook/index-summary",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={}"
+      },
+      "id": "67d1df79-2a33-4cbf-8b00-d99990e03014",
+      "name": "Index Summary Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        -32,
+        -272
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "qwen/qwen3-coder-30b",
+          "mode": "list",
+          "cachedResultName": "qwen/qwen3-coder-30b"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "635dd6e0-749d-4fba-b39b-ea9925af0a36",
+      "name": "Qwen3-30B Discovery Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        -416,
+        -272
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "doBBudPqkhtYH1dg",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "全面分析ES集群，生成完整的数据地图。\n\n执行流程：\n1. 调用 index_summary_tool 了解全局\n   参数：{\"detail_level\":\"detailed\"}\n   关注：安全索引、业务索引、实体索引、自定义索引\n\n2. 针对各类索引调用 mappings_tool 深入分析\n   按需要样本数据来理解字段含义和数据结构\n\n3. 如有疑问，直接用 es_search 查询样本\n   例如：不确定是业务数据还是安全数据时，查看实际内容\n\n4. 整合分析结果\n\n重点关注：\n\n【安全数据】\n- alerts：告警类型、severity、检测规则\n- events.network：IP/端口/协议、连接关系\n- events.process：进程树、命令行、启动链\n- events.file：文件操作、路径、hash\n- events.security：认证、授权、审计\n\n【业务数据】\n- 应用日志：服务名、API调用、错误日志\n- 交易记录：订单、支付、业务流程\n- 用户行为：访问、操作、会话\n- 性能指标：响应时间、吞吐量、资源使用\n\n【实体数据】\n- 用户实体：user.name、user.id、user.roles、user.department\n- 主机实体：host.name、host.ip、host.os、host.location\n- 资产实体：设备、应用、服务\n- 组织实体：部门、团队、权限组\n\n【关联字段】\n- 跨数据关联：user.name、host.name、agent.id\n- 时间关联：@timestamp、event.created\n- 业务关联：transaction.id、session.id、request.id\n\n输出格式：\n{\n  \"indices\": {\n    \"security\": {\n      \"alerts\": [\"索引模式\"],\n      \"events\": {\"network\":[], \"process\":[], \"file\":[], \"security\":[]}\n    },\n    \"business\": {\n      \"application_logs\": [\"应用日志索引\"],\n      \"transactions\": [\"交易/订单索引\"],\n      \"user_activity\": [\"用户行为索引\"],\n      \"metrics\": [\"业务指标索引\"]\n    },\n    \"entities\": {\n      \"users\": [\"用户实体索引\"],\n      \"hosts\": [\"主机资产索引\"],\n      \"assets\": [\"其他资产索引\"]\n    },\n    \"custom\": [\"其他自定义索引\"]\n  },\n  \n  \"fields\": {\n    \"correlation\": {\n      \"user\": [\"user.name\", \"user.id\", \"user.email\"],\n      \"host\": [\"host.name\", \"host.ip\", \"agent.id\"],\n      \"business\": [\"transaction.id\", \"session.id\", \"request.id\"],\n      \"time\": [\"@timestamp\", \"event.created\", \"event.ingested\"]\n    },\n    \"by_type\": {\n      \"security\": {\n        \"alerts\": [\"alert.severity\", \"alert.rule.name\", \"threat.indicator\"],\n        \"network\": [\"source.ip\", \"destination.ip\", \"network.protocol\"],\n        \"process\": [\"process.name\", \"process.pid\", \"process.command_line\"]\n      },\n      \"business\": {\n        \"application\": [\"service.name\", \"log.level\", \"error.message\"],\n        \"transaction\": [\"order.id\", \"payment.status\", \"amount\"],\n        \"user_behavior\": [\"action\", \"resource\", \"result\"]\n      },\n      \"entity\": {\n        \"user\": [\"user.name\", \"user.roles\", \"user.department\"],\n        \"host\": [\"host.name\", \"host.os\", \"host.type\"],\n        \"asset\": [\"asset.type\", \"asset.owner\", \"asset.criticality\"]\n      }\n    }\n  },\n  \n  \"data_sources\": [\"filebeat\", \"auditbeat\", \"application\", \"custom\"],\n  \n  \"relationships\": {\n    \"user_to_security\": \"user.name关联告警和安全事件\",\n    \"user_to_business\": \"user.id关联业务交易和行为\",\n    \"host_to_events\": \"host.name关联所有主机上的事件\",\n    \"process_hierarchy\": \"process.pid -> process.parent.pid 形成进程树\",\n    \"business_flow\": \"transaction.id关联整个业务流程\",\n    \"alert_to_entity\": \"告警关联具体用户/主机实体\"\n  },\n  \n  \"insights\": {\n    \"security_patterns\": {\n      \"alert_types\": [\"malware\", \"network_threat\", \"insider_threat\"],\n      \"high_risk_users\": \"从告警中识别的高风险用户特征\",\n      \"attack_vectors\": \"常见攻击路径和手法\"\n    },\n    \"business_patterns\": {\n      \"service_topology\": \"服务调用关系\",\n      \"user_journey\": \"典型用户行为路径\",\n      \"transaction_flow\": \"业务流程步骤\"\n    },\n    \"entity_insights\": {\n      \"user_distribution\": \"用户分布（部门/角色）\",\n      \"asset_inventory\": \"资产清单和分类\",\n      \"critical_hosts\": \"关键主机识别\"\n    },\n    \"investigation_tips\": {\n      \"安全调查\": {\n        \"查告警\": \"alert.rule.name + host.name + user.name\",\n        \"追溯攻击\": \"从告警 -> 关联事件 -> 追溯源头\",\n        \"分析影响\": \"通过host/user关联找受影响范围\"\n      },\n      \"业务分析\": {\n        \"追踪交易\": \"transaction.id 跟踪完整流程\",\n        \"用户画像\": \"user.id 聚合所有行为\",\n        \"性能诊断\": \"service.name 查错误和慢查询\"\n      },\n      \"实体调查\": {\n        \"用户审计\": \"user.name 查所有活动（安全+业务）\",\n        \"主机分析\": \"host.name 查所有事件和指标\",\n        \"资产追踪\": \"asset关联所有相关数据\"\n      }\n    }\n  },\n  \n  \"version\": 1,\n  \"detected_at\": \"时间戳\"\n}\n",
+        "options": {
+          "systemMessage": "你是ES集群分析专家，目标是全面理解集群中的安全数据、业务数据和实体关系。\n\n【工具策略】\n1. index_summary_tool - 获取所有索引分类（安全/业务/实体）\n2. mappings_tool - 深入分析各类索引结构和样本\n3. es_search/get_mappings - 针对性探索数据\n\n【分析范围】\n- 安全数据：alerts/events（network/process/file/security）\n- 业务数据：应用日志、交易记录、用户行为等\n- 实体数据：用户、主机、资产、组织架构等\n- 关联关系：跨数据类型的关联字段\n\n【输出目标】\n生成完整的集群数据地图，包含：\n- 所有索引分类和用途\n- 数据结构和关键字段\n- 实体关系和关联逻辑\n- 业务流程体现\n- 调查和分析的关键点\n\n输出纯JSON，不用markdown。\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -304,
+        -496
+      ],
+      "id": "0f2d8edf-1a72-4c9e-bd10-cb5511145c94",
+      "name": "Discovery Agent"
+    },
+    {
+      "parameters": {},
+      "id": "e36d1d38-9ca9-49ce-9c2c-aab808776cee",
+      "name": "Manual Discovery Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -640,
+        -400
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "endpointUrl": "http://192.168.1.5:3001/mcp",
+        "serverTransport": "httpStreamable",
+        "include": "selected",
+        "includeTools": [
+          "execute_es_api"
+        ],
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        304,
+        -272
+      ],
+      "id": "90fd4142-0d3d-4f9c-b3ba-3fd1cd720140",
+      "name": "MCP Client"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTimeTool",
+      "typeVersion": 2,
+      "position": [
+        432,
+        -272
+      ],
+      "id": "1c525a2c-6289-47be-b7ea-1798b4b65249",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "qwen/qwen3-coder-30b",
+          "mode": "list",
+          "cachedResultName": "qwen/qwen3-coder-30b"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        176,
+        -272
+      ],
+      "id": "8a570f42-ef33-42f8-a288-06e2e403b407",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "doBBudPqkhtYH1dg",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\"={{ $json.output }}\"",
+        "options": {
+          "systemMessage": "你是ES数据写入助手，负责将环境感知配置数据写入到Elasticsearch索引。\n\n【任务】\n1. 接收环境配置JSON数据\n2. 调用时间工具后添加必要的元数据（时间戳）\n3. 使用mcp工具写入到ES的newflow-es-environment索引\n\n【写入规范】\n- 索引名：newflow-es-environment\n- 文档ID： 使用随机id，确保能有历史文档不被覆盖\n- 方法：PUT（确保幂等性）\n- 必须添加字段：\n  * detected_at: 当前ISO时间戳\n  * last_updated: 当前ISO时间戳\n\n【execute_es_api调用格式】\n{\n  \"method\": \"PUT\",\n  \"path\": \"newflow-es-environment/_doc\",\n  \"body\": {完整的配置JSON对象}\n}\n\n【执行步骤】\n1. 解析输入的环境配置JSON\n2. 生成文档ID：env-{当前毫秒时间戳}\n3. 添加detected_at和last_updated字段\n4. 调用execute_es_api写入\n5. 返回写入结果\n\n【输出格式】\n成功时返回：\n{\n  \"success\": true,\n  \"doc_id\": \"env-1729012345678\",\n  \"index\": \"newflow-es-environment\",\n  \"result\": \"created/updated\"\n}\n\n失败时返回错误信息。"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        -496
+      ],
+      "id": "610eb794-fd6e-420c-b632-9064fbcc87af",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "env-status",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "3451d279-05d8-4b82-860a-10b821e6a9fa",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -848,
+        -64
+      ],
+      "typeVersion": 2,
+      "webhookId": "env-status-webhook-id"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "e1843257-d14b-4856-b221-093154ee0360",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        80,
+        -64
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a hES查询助手。从newflow-es-environment索引查询环境配置。\n\n接收参数：size、days、include_history\n\n调用execute_es_api一次，返回结果。\n\n查询body：\n- include_history=true: {\"size\":size,\"sort\":[{\"detected_at\":{\"order\":\"desc\"}}],\"query\":{\"range\":{\"detected_at\":{\"gte\":\"now-{days}d\"}}}}\n- 否则: {\"size\":1,\"sort\":[{\"detected_at\":{\"order\":\"desc\"}}],\"query\":{\"match_all\":{}}}\n\nmethod: POST\npath: newflow-es-environment/_search\n\n一次调用，直接返回ES结果。elpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -368,
+        -64
+      ],
+      "id": "6d41006f-5ac8-461d-9c64-c7e7f1d048ba",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "qwen/qwen3-coder-30b",
+          "mode": "list",
+          "cachedResultName": "qwen/qwen3-coder-30b"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -512,
+        144
+      ],
+      "id": "83f9eb40-4476-4133-ae7c-412616540d1a",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "doBBudPqkhtYH1dg",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "http://192.168.1.5:3001/mcp",
+        "serverTransport": "httpStreamable",
+        "include": "selected",
+        "includeTools": [
+          "es_search"
+        ],
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        -176,
+        144
+      ],
+      "id": "694d816d-a53b-417e-9148-7d747826cb53",
+      "name": "MCP Client1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 直接传递所有输入给AI，让AI自己理解\nconst input = $input.item.json;\n\nreturn {\n  chatInput: JSON.stringify(input, null, 2)\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -624,
+        -64
+      ],
+      "id": "56434fd7-340e-46a7-827f-f0f0462fba66",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "ES MCP Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Discovery Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mappings Analysis Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Discovery Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Index Summary Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Discovery Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qwen3-30B Discovery Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Discovery Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discovery Agent": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Discovery Trigger": {
+      "main": [
+        [
+          {
+            "node": "Discovery Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "b298c712-beba-42b3-ba49-93980b683f6c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f687a50c61872e8ca3cdc5f4ef80c58fddb4a1dc1fa765569c5fde992f32b225"
+  },
+  "id": "tGAu0pDn0XAZoo8C",
+  "tags": []
+}
