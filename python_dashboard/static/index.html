@@ -1435,14 +1435,20 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             
-            const response = await fetch(`/api/mcp/instances/${instanceId}/stop`, { method: 'POST' });
-            if (response.ok) {
-                await refreshStatusOnce();
-            } else {
-                alert('停止失败');
+            try {
+                const response = await fetch(`/api/mcp/instances/${instanceId}/stop`, { method: 'POST' });
+                if (response.ok) {
+                    await refreshStatusOnce();
+                } else {
+                    const error = await response.json().catch(() => ({}));
+                    alert(`停止失败: ${error.detail || '该实例可能是外部启动的，请在外部系统中手动停止'}`);
+                }
+            } catch (error) {
+                alert(`停止失败: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
             }
-            btn.disabled = false;
-            btn.innerHTML = oldHtml;
         }
         
         async function editMCP(instanceId) {
