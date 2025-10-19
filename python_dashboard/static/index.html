@@ -1393,6 +1393,9 @@
                         <button class="btn btn-sm btn-primary" onclick="editMCP('${inst.id}')">
                             <i class="fas fa-edit"></i>
                         </button>
+                        <button class="btn btn-sm btn-warning" onclick="copyMCP('${inst.id}')" title="复制配置">
+                            <i class="fas fa-copy"></i>
+                        </button>
                         <button class="btn btn-sm btn-danger" onclick="deleteMCP('${inst.id}')">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -1562,6 +1565,47 @@
             } else {
                 const error = await response.json();
                 alert('更新失败: ' + (error.detail || '未知错误'));
+            }
+        }
+        
+        async function copyMCP(instanceId) {
+            // 获取实例详情
+            const response = await fetch(`/api/mcp/instances/${instanceId}`);
+            if (!response.ok) {
+                alert('获取实例信息失败');
+                return;
+            }
+            
+            const instance = await response.json();
+            
+            // 生成新名称
+            const newName = `${instance.name} - 副本`;
+            
+            // 构建新实例数据（不包含ID和端口，让系统自动分配）
+            const newInstance = {
+                name: newName,
+                type: instance.type,
+                config: instance.config
+                // port 留空，让系统自动分配
+            };
+            
+            // 创建新实例
+            try {
+                const createResponse = await fetch('/api/mcp/instances', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newInstance)
+                });
+                
+                if (createResponse.ok) {
+                    const newInst = await createResponse.json();
+                    alert(`✅ 配置复制成功！\n\n新实例: ${newInst.name}\n端口: ${newInst.port}\n端点: ${newInst.endpoint}`);
+                } else {
+                    const error = await createResponse.json();
+                    alert(`复制失败: ${error.detail || '未知错误'}`);
+                }
+            } catch (error) {
+                alert(`复制失败: ${error.message}`);
             }
         }
         

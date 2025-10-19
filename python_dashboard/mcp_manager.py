@@ -269,7 +269,7 @@ def get_mcp_logs(instance_id: str, lines: int = 100) -> str:
 
 def check_mcp_health(instance_id: str) -> bool:
     """
-    检查MCP服务器健康状态
+    检查MCP服务器健康状态（通过HTTP端点）
     
     Args:
         instance_id: MCP实例ID
@@ -277,6 +277,7 @@ def check_mcp_health(instance_id: str) -> bool:
     Returns:
         bool: 是否健康
     """
+    # 首先检查PID文件是否存在
     pid_file = MCP_PIDS_DIR / f"{instance_id}.pid"
     
     if not pid_file.exists():
@@ -286,7 +287,29 @@ def check_mcp_health(instance_id: str) -> bool:
         pid = int(pid_file.read_text())
         # 检查进程是否存在
         os.kill(pid, 0)
-        return True
     except (OSError, ValueError):
+        # 进程不存在，清理PID文件
+        pid_file.unlink(missing_ok=True)
+        return False
+    
+    # 进程存在，进一步检查HTTP端点
+    try:
+        instance = get_instance(instance_id)
+        if not instance:
+            return False
+        
+        port = instance.get('port')
+        if not port:
+            return False
+        
+        # 使用HTTP健康检查
+        import httpx
+        health_url = f"http://localhost:{port}/health"
+        
+        response = httpx.get(health_url, timeout=2.0)
+        return response.status_code == 200
+        
+    except Exception:
+        # HTTP检查失败，但进程存在，可能正在启动中
         return False
 
