@@ -1404,22 +1404,45 @@
             `).join('');
         }
         
+        async function refreshStatusOnce() {
+            try {
+                const res = await fetch('/api/status');
+                const status = await res.json();
+                updateDashboard(status);
+            } catch {}
+        }
+
         async function startMCP(instanceId) {
+            const btn = event.target.closest('button');
+            const oldHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
             const response = await fetch(`/api/mcp/instances/${instanceId}/start`, { method: 'POST' });
             if (response.ok) {
-                alert('MCP服务启动成功');
+                // 服务器会广播，但我们也主动刷新一次，确保立即切换
+                await refreshStatusOnce();
             } else {
                 alert('启动失败');
             }
+            btn.disabled = false;
+            btn.innerHTML = oldHtml;
         }
         
         async function stopMCP(instanceId) {
+            const btn = event.target.closest('button');
+            const oldHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
             const response = await fetch(`/api/mcp/instances/${instanceId}/stop`, { method: 'POST' });
             if (response.ok) {
-                alert('MCP服务已停止');
+                await refreshStatusOnce();
             } else {
                 alert('停止失败');
             }
+            btn.disabled = false;
+            btn.innerHTML = oldHtml;
         }
         
         async function editMCP(instanceId) {

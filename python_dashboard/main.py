@@ -569,7 +569,15 @@ async def mcp_start_instance(instance_id: str):
     """启动MCP服务"""
     success = start_mcp_server(instance_id)
     if success:
-        return {"message": "MCP服务启动成功", "instance_id": instance_id}
+        # 广播最新状态并返回最新实例信息
+        try:
+            status = await get_status()
+            await manager.broadcast(status)
+        except Exception:
+            pass
+        inst = get_instance(instance_id)
+        inst["is_healthy"] = check_mcp_health(instance_id)
+        return {"message": "MCP服务启动成功", "instance": inst}
     raise HTTPException(status_code=500, detail="启动失败")
 
 
@@ -578,7 +586,15 @@ async def mcp_stop_instance(instance_id: str):
     """停止MCP服务"""
     success = stop_mcp_server(instance_id)
     if success:
-        return {"message": "MCP服务已停止", "instance_id": instance_id}
+        # 广播最新状态并返回最新实例信息
+        try:
+            status = await get_status()
+            await manager.broadcast(status)
+        except Exception:
+            pass
+        inst = get_instance(instance_id)
+        inst["is_healthy"] = check_mcp_health(instance_id)
+        return {"message": "MCP服务已停止", "instance": inst}
     raise HTTPException(status_code=500, detail="停止失败")
 
 
