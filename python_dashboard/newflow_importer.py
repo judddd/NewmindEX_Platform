@@ -1,6 +1,11 @@
 """
-NewFlow工作流导入模块
-管理workflow的导入和列表获取
+NewFlow工作流管理模块
+
+【重要说明】
+- import_workflow 和 import_all_workflows 功能已废弃
+- NewFlow 现在使用自己的内部数据库管理工作流
+- newflow_data 文件夹仅用于 NewFlow 的数据持久化和日志存储
+- 保留 list_workflows 函数用于从 NewFlow API 读取工作流列表
 """
 
 import httpx

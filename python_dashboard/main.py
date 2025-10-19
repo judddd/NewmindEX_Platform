@@ -12,6 +12,7 @@ from typing import List, Optional, Dict
 import uuid
 import asyncio
 import os
+import socket
 
 # 导入模块
 from database import (
@@ -79,6 +80,21 @@ class LMServerStart(BaseModel):
     port: int = 1234
 
 
+# ==================== 工具函数 ====================
+
+async def check_port_open(host: str, port: int, timeout: float = 1.0) -> bool:
+    """检查端口是否开放"""
+    try:
+        # 创建socket连接测试端口
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        result = sock.connect_ex((host, port))
+        sock.close()
+        return result == 0
+    except Exception:
+        return False
+
+
 # ==================== 基础服务管理API ====================
 
 @app.get("/")
@@ -113,6 +129,9 @@ async def get_status():
     # 检查LM Studio
     lm_status = await get_lm_status()
     
+    # 检查NewmindChat - 通过端口 61990
+    newmindchat_running = await check_port_open('localhost', 61990)
+    
     # 检查MCP实例
     mcp_instances = get_all_instances()
     for instance in mcp_instances:
@@ -130,6 +149,10 @@ async def get_status():
         "lmstudio": {
             "status": "running" if lm_status else "stopped",
             "port": int(os.getenv('LMSTUDIO_PORT', '1234'))
+        },
+        "newmindchat": {
+            "status": "running" if newmindchat_running else "stopped",
+            "port": 61990
         },
         "newflow": {
             "status": "running" if newflow_running else "stopped",
@@ -404,11 +427,19 @@ async def newflow_workflows():
 
 @app.post("/api/newflow/import")
 async def newflow_import():
-    """一键导入所有工作流"""
-    newflow_url = f"http://localhost:{os.getenv('NEWFLOW_PORT', '5677')}"
-    api_key = os.getenv('NEWFLOW_API_KEY')
-    result = await import_all_workflows(newflow_url, api_key)
-    return result
+    """
+    【已废弃】一键导入所有工作流
+    
+    注意：此API已不再使用。NewFlow现在使用自己的内部数据库管理工作流。
+    newflow_data 文件夹仅用于 NewFlow 的数据持久化和日志存储。
+    """
+    return {
+        "deprecated": True,
+        "message": "此API已废弃。NewFlow现在使用自己的内部数据库管理工作流。",
+        "total": 0,
+        "success": 0,
+        "failed": 0
+    }
 
 
 # ==================== MCP服务编排API ====================

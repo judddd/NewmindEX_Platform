@@ -1112,8 +1112,8 @@
             </div>
 
             <!-- 服务状态总览 -->
-            <div class="row mb-4">
-                <div class="col-md-2 col-lg-2">
+            <div class="row mb-4 g-3">
+                <div class="col">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">Elasticsearch</h6>
@@ -1131,7 +1131,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2 col-lg-2">
+                <div class="col">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">Kibana</h6>
@@ -1149,7 +1149,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2 col-lg-2">
+                <div class="col">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">LM Studio</h6>
@@ -1165,7 +1165,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2 col-lg-2">
+                <div class="col">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">NewmindChat</h6>
@@ -1180,7 +1180,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2 col-lg-2">
+                <div class="col">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">NewFlow</h6>
@@ -1344,6 +1344,11 @@
             const lmStatus = status.lmstudio.status === 'running';
             document.getElementById('lm-status').innerHTML = 
                 `<span class="badge badge-${lmStatus ? 'running' : 'stopped'}">${lmStatus ? '运行中' : '离线'}</span>`;
+            
+            // 更新NewmindChat状态
+            const newmindchatStatus = status.newmindchat?.status === 'running';
+            document.getElementById('newmindchat-status').innerHTML = 
+                `<span class="badge badge-${newmindchatStatus ? 'running' : 'stopped'}">${newmindchatStatus ? '运行中' : '离线'}</span>`;
             
             // 更新NewFlow状态和按钮
             const newflowStatus = status.newflow?.status === 'running';
@@ -1564,14 +1569,6 @@
             } else {
                 alert('删除失败');
             }
-        }
-        
-        async function importWorkflows() {
-            document.getElementById('workflow-status').innerHTML = '<div class="spinner-border spinner-border-sm"></div> 导入中...';
-            const response = await fetch('/api/newflow/import', { method: 'POST' });
-            const result = await response.json();
-            document.getElementById('workflow-status').innerHTML = 
-                `<div class="alert alert-success mt-2">成功: ${result.success} / 失败: ${result.failed}</div>`;
         }
         
         async function viewWorkflows() {
