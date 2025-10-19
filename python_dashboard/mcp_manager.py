@@ -204,40 +204,66 @@ def stop_mcp_server(instance_id: str) -> bool:
     
     try:
         pid = int(pid_file.read_text())
-        
-        # 尝试优雅停止
+
+        # 优雅停止：优先对单个进程 SIGTERM，再尝试进程组
+        terminated = False
         try:
-            os.killpg(os.getpgid(pid), signal.SIGTERM)
-            print(f"发送SIGTERM信号到进程组: {pid}")
-            
-            # 等待进程退出
+            os.kill(pid, signal.SIGTERM)
+            print(f"发送SIGTERM到进程: {pid}")
             for _ in range(10):
                 try:
-                    os.kill(pid, 0)  # 检查进程是否存在
+                    os.kill(pid, 0)
                     time.sleep(0.5)
                 except OSError:
+                    terminated = True
                     break
-            
-            # 如果还在运行，强制杀死
+            if not terminated:
+                try:
+                    os.killpg(os.getpgid(pid), signal.SIGTERM)
+                    print(f"发送SIGTERM到进程组: {os.getpgid(pid)}")
+                except Exception:
+                    pass
+        except ProcessLookupError:
+            terminated = True
+
+        # 若仍存活，强制杀死
+        if not terminated:
             try:
                 os.kill(pid, 0)
-                os.killpg(os.getpgid(pid), signal.SIGKILL)
-                print(f"强制杀死进程组: {pid}")
+                try:
+                    os.kill(pid, signal.SIGKILL)
+                except Exception:
+                    pass
+                try:
+                    os.killpg(os.getpgid(pid), signal.SIGKILL)
+                except Exception:
+                    pass
             except OSError:
-                pass
-                
-        except ProcessLookupError:
-            print(f"进程不存在: {pid}")
-        
-        # 删除PID文件
-        pid_file.unlink()
-        
-        # 更新数据库状态
+                terminated = True
+
+        # 二次确认：HTTP 健康检查应已失败
+        try:
+            instance = get_instance(instance_id)
+            if instance:
+                import httpx
+                health_url = instance.get('health_endpoint') or (
+                    (instance.get('endpoint')[:-4] + 'health') if instance.get('endpoint', '').endswith('/mcp') else None
+                ) or (f"http://localhost:{instance.get('port')}/health" if instance.get('port') else None)
+                if health_url:
+                    resp = httpx.get(health_url, timeout=1.0)
+                    if resp.status_code == 200:
+                        print("警告: 进程已尝试结束，但健康检查仍然通过")
+                        # 不删除 pid_file，返回失败，由前端显示错误
+                        return False
+        except Exception:
+            pass
+
+        # 清理与更新
+        pid_file.unlink(missing_ok=True)
         update_instance(instance_id, {"status": "stopped", "pid": None})
-        
         print(f"MCP服务器已停止: {instance_id}")
         return True
-        
+
     except Exception as e:
         print(f"停止MCP服务器失败: {e}")
         return False
