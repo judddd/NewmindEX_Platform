@@ -269,47 +269,43 @@ def get_mcp_logs(instance_id: str, lines: int = 100) -> str:
 
 def check_mcp_health(instance_id: str) -> bool:
     """
-    检查MCP服务器健康状态（通过HTTP端点）
-    
-    Args:
-        instance_id: MCP实例ID
-        
-    Returns:
-        bool: 是否健康
+    检查MCP服务器健康状态：优先通过HTTP健康端点，其次检查进程。
+    这样即使没有由本进程创建的PID文件（例如外部默认运行的实例），也能正确感知为运行中。
     """
-    # 首先检查PID文件是否存在
-    pid_file = MCP_PIDS_DIR / f"{instance_id}.pid"
+    instance = get_instance(instance_id)
     
+    # 1) 优先HTTP健康检查（支持自定义health_endpoint或由endpoint推导）
+    try:
+        import httpx
+        if instance:
+            health_url = instance.get('health_endpoint')
+            if not health_url:
+                endpoint = instance.get('endpoint')
+                if endpoint:
+                    # 规范地将 /health 拼在 endpoint 所在主机端口上
+                    if endpoint.endswith('/mcp'):
+                        health_url = endpoint[:-4] + 'health'
+                    else:
+                        # 尝试直接 /health
+                        health_url = endpoint.rstrip('/') + '/health'
+                elif instance.get('port'):
+                    health_url = f"http://localhost:{instance['port']}/health"
+            if health_url:
+                resp = httpx.get(health_url, timeout=2.0)
+                if resp.status_code == 200:
+                    return True
+    except Exception:
+        pass
+
+    # 2) 回退：检查PID文件与进程（仅当由我们启动过时可用）
+    pid_file = MCP_PIDS_DIR / f"{instance_id}.pid"
     if not pid_file.exists():
         return False
-    
     try:
         pid = int(pid_file.read_text())
-        # 检查进程是否存在
-        os.kill(pid, 0)
+        os.kill(pid, 0)  # 进程存在
+        return True
     except (OSError, ValueError):
-        # 进程不存在，清理PID文件
         pid_file.unlink(missing_ok=True)
-        return False
-    
-    # 进程存在，进一步检查HTTP端点
-    try:
-        instance = get_instance(instance_id)
-        if not instance:
-            return False
-        
-        port = instance.get('port')
-        if not port:
-            return False
-        
-        # 使用HTTP健康检查
-        import httpx
-        health_url = f"http://localhost:{port}/health"
-        
-        response = httpx.get(health_url, timeout=2.0)
-        return response.status_code == 200
-        
-    except Exception:
-        # HTTP检查失败，但进程存在，可能正在启动中
         return False
 
