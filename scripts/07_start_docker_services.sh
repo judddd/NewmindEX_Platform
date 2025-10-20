@@ -14,7 +14,8 @@ fi
 
 # 导入 NewFlow 镜像（如果尚未导入）
 echo "📦 检查 NewFlow 镜像..."
-if ! docker images | grep -q "newflow.*1.0"; then
+# 精确匹配 "newflow" 开头且版本为 1.0.x（排除 newflow-docs 等）
+if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newflow:1\.0"; then
     NEWFLOW_TAR=$(ls installers/newflow-1.0.*.tar 2>/dev/null | head -1)
     if [ -n "$NEWFLOW_TAR" ]; then
         echo "📦 导入 NewFlow 镜像: $NEWFLOW_TAR"
