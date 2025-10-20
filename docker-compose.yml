@@ -102,7 +102,7 @@ services:
       - elastic
 
   newflow:
-    image: newflow:1.0.12
+    image: newflow:1.0.0
     container_name: newflow
     ports:
       - "${NEWFLOW_PORT:-5677}:5677"

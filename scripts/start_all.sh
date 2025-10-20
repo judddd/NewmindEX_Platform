@@ -47,8 +47,13 @@ echo "步骤 7/11: 初始化Python项目"
 bash scripts/06_init_python_project.sh
 echo ""
 
-# 步骤7：启动Docker服务
-echo "步骤 8/11: 启动Docker服务"
+# 步骤7：导入MCP Docker镜像
+echo "步骤 8/13: 导入MCP Docker镜像"
+bash scripts/07_load_mcp_images.sh || echo "⚠️  MCP镜像导入跳过，将使用Node模式"
+echo ""
+
+# 步骤8：启动Docker服务
+echo "步骤 9/13: 启动Docker服务"
 bash scripts/07_start_docker_services.sh
 echo ""
 

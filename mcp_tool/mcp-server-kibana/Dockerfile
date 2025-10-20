@@ -1,4 +1,4 @@
-# NewFlow MCP Server Docker Image
+# Kibana MCP Server Docker Image
 FROM node:20-alpine
 
 WORKDIR /app
@@ -27,4 +27,5 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
 EXPOSE 3000
 
 # 启动命令
-CMD ["node", "build/index.js"]
+CMD ["node", "dist/index.js"]
+
