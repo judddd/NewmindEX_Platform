@@ -1352,8 +1352,7 @@
             <div class="row mt-4">
                 <div class="col-12 text-center text-muted">
                     <p class="mb-0">
-                        <i class="fas fa-heart text-danger"></i> NewMind AI Platform v1.0.0 | 
-                        <a href="https://github.com/TocharianOU/mac_product" target="_blank">GitHub</a>
+                        <i class="fas fa-heart text-danger"></i> NewMind AI Platform v1.0.0
                     </p>
                 </div>
             </div>
@@ -1596,7 +1595,7 @@
             }, 100);
             
             // 修改表单提交行为
-            const form = document.getElementById('mcpForm');
+            const form = document.getElementById('createMCPForm');
             form.onsubmit = async (e) => {
                 e.preventDefault();
                 await updateMCPInstance(instanceId);
@@ -1604,7 +1603,7 @@
             };
             
             // 显示模态框
-            const modal = new bootstrap.Modal(document.getElementById('mcpModal'));
+            const modal = new bootstrap.Modal(document.getElementById('createMCPModal'));
             modal.show();
         }
         
@@ -1653,8 +1652,8 @@
             
             if (response.ok) {
                 alert('MCP实例更新成功！\n\n配置已更新并重新启动容器。');
-                bootstrap.Modal.getInstance(document.getElementById('mcpModal')).hide();
-                document.getElementById('mcpForm').reset();
+                bootstrap.Modal.getInstance(document.getElementById('createMCPModal')).hide();
+                document.getElementById('createMCPForm').reset();
                 
                 // 刷新整个 Dashboard 状态
                 await refreshStatusOnce();
@@ -1694,9 +1693,6 @@
             // 复制到剪贴板
             try {
                 await navigator.clipboard.writeText(configJson);
-                
-                // 显示成功消息和配置预览
-                alert(`✅ MCP 客户端配置已复制到剪贴板！\n\n实例: ${instance.name}\n端点: ${instance.endpoint}\n\n配置预览：\n${configJson}\n\n💡 将此配置粘贴到 Cursor、NewmindChat 或其他 MCP 客户端的配置文件中。`);
             } catch (error) {
                 // 如果剪贴板API失败，使用备用方案
                 const textarea = document.createElement('textarea');
@@ -1707,9 +1703,57 @@
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                
-                alert(`✅ MCP 客户端配置已复制！\n\n${configJson}`);
             }
+            
+            // 显示配置预览模态框
+            showConfigModal(instance.name, instance.endpoint, configJson);
+        }
+        
+        function showConfigModal(instanceName, endpoint, configJson) {
+            const modalHTML = `
+                <div class="modal fade" id="configModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
+                            <div class="modal-header border-0">
+                                <h5 class="modal-title text-white">
+                                    <i class="fas fa-check-circle text-success"></i> MCP 客户端配置已复制
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" style="background: rgba(255,255,255,0.95); margin: 0 1rem 1rem 1rem; border-radius: 8px;">
+                                <div class="mb-3">
+                                    <p class="mb-2"><strong>实例名称：</strong> ${instanceName}</p>
+                                    <p class="mb-2"><strong>服务端点：</strong> <code>${endpoint}</code></p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>配置内容（已复制到剪贴板）：</strong></label>
+                                    <textarea class="form-control" rows="10" readonly style="font-family: monospace; font-size: 0.9rem; background: #f8f9fa;">${configJson}</textarea>
+                                </div>
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-info-circle"></i> <strong>使用说明：</strong><br>
+                                    将以上配置粘贴到 <strong>Cursor</strong>、<strong>NewmindChat</strong> 或其他 MCP 客户端的配置文件中。
+                                </div>
+                            </div>
+                            <div class="modal-footer border-0" style="background: transparent;">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                                    <i class="fas fa-times"></i> 关闭
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除旧模态框
+            const oldModal = document.getElementById('configModal');
+            if (oldModal) oldModal.remove();
+            
+            // 添加新模态框
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('configModal'));
+            modal.show();
         }
         
         async function deleteMCP(instanceId) {
