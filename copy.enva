@@ -24,6 +24,9 @@ NEWFLOW_CUSTOM_AI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 NEWFLOW_CUSTOM_AI_API_KEY=sk-ead41741d55b40388d590690d3163a2b
 NEWFLOW_CUSTOM_AI_MODEL=qwen-plus
 
+# NewmindChat文档配置
+NEWMINDCHAT_DOCS_PORT=8002
+
 # LM Studio配置
 LMSTUDIO_PORT=1234
 LM_MODEL=qwen/qwen3-coder-30b

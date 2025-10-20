@@ -46,6 +46,22 @@ else
 fi
 echo ""
 
+# 导入 NewmindChat Docs 镜像（如果尚未导入）
+echo "📦 检查 NewmindChat Docs 镜像..."
+if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newmindchat-docs:"; then
+    NEWMINDCHAT_DOCS_TAR=$(ls installers/newmindchat-docs-*.tar 2>/dev/null | head -1)
+    if [ -n "$NEWMINDCHAT_DOCS_TAR" ]; then
+        echo "📦 导入 NewmindChat Docs 镜像: $NEWMINDCHAT_DOCS_TAR"
+        docker load -i "$NEWMINDCHAT_DOCS_TAR"
+        echo "✅ NewmindChat Docs 镜像导入成功"
+    else
+        echo "⚠️  找不到 NewmindChat Docs 镜像文件（installers/newmindchat-docs-*.tar）"
+    fi
+else
+    echo "✅ NewmindChat Docs 镜像已存在，跳过导入"
+fi
+echo ""
+
 # 检查docker-compose
 if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null 2>&1; then
     echo "❌ docker-compose未安装"
@@ -119,6 +135,24 @@ else
 fi
 echo ""
 
+# 启动 NewmindChat Docs 容器（独立于 docker-compose）
+echo "📚 启动 NewmindChat 文档服务..."
+if docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newmindchat-docs:"; then
+    # 停止旧容器（如果存在）
+    docker stop newmindchat-docs 2>/dev/null || true
+    docker rm newmindchat-docs 2>/dev/null || true
+    
+    # 启动新容器
+    if docker run -d --name newmindchat-docs -p ${NEWMINDCHAT_DOCS_PORT:-8002}:8002 newmindchat-docs:1.0 2>/dev/null; then
+        echo "✅ NewmindChat 文档已启动: http://localhost:${NEWMINDCHAT_DOCS_PORT:-8002}"
+    else
+        echo "⚠️  NewmindChat 文档启动失败"
+    fi
+else
+    echo "⚠️  NewmindChat Docs 镜像不存在，跳过文档服务启动"
+fi
+echo ""
+
 echo "✅ Docker服务启动完成！"
 echo ""
 echo "🔗 服务访问地址："
@@ -127,4 +161,5 @@ echo "   Kibana: http://localhost:${KIBANA_PORT:-5601}"
 echo "   Logstash: http://localhost:${LOGSTASH_PORT:-5044}"
 echo "   NewFlow: http://localhost:${NEWFLOW_PORT:-5677}"
 echo "   NewFlow API 文档: http://localhost:${NEWFLOW_DOCS_PORT:-8001}"
+echo "   NewmindChat 文档: http://localhost:${NEWMINDCHAT_DOCS_PORT:-8002}"
 
