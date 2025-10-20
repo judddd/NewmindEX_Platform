@@ -855,6 +855,13 @@
         /* 选择框箭头 */
         .form-select {
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2306b6d4' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 16px 12px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding-right: 2.5rem;
         }
         
         /* 进度条 */
@@ -1524,10 +1531,21 @@
             
             const instance = await response.json();
             
-            // 先显示创建模态框
+            // 移除旧模态框实例
+            const oldModalEl = document.getElementById('createMCPModal');
+            if (oldModalEl) {
+                const oldModalInstance = bootstrap.Modal.getInstance(oldModalEl);
+                if (oldModalInstance) {
+                    oldModalInstance.hide();
+                    oldModalInstance.dispose();
+                }
+                oldModalEl.remove();
+            }
+            
+            // 创建模态框（直接调用但不让它自动显示）
             showCreateModal();
             
-            // 等待模态框渲染完成后再填充数据
+            // 等待DOM渲染和表单重置完成
             await new Promise(resolve => setTimeout(resolve, 100));
             
             // 填充表单基本信息
@@ -1535,76 +1553,119 @@
             const typeSelect = document.getElementById('mcpType');
             const portInput = document.getElementById('mcpPort');
             
-            if (nameInput) nameInput.value = instance.name;
-            if (typeSelect) typeSelect.value = instance.type;
-            if (portInput) portInput.value = instance.port;
+            if (nameInput) nameInput.value = instance.name || '';
+            if (typeSelect) typeSelect.value = instance.type || '';
+            if (portInput) portInput.value = instance.port || '';
             
             // 更新配置字段（显示对应类型的配置区域）
             updateConfigFields();
             
-            // 使用setTimeout确保DOM更新后再填充配置
-            setTimeout(() => {
-                try {
-                    // 填充配置
-                    if (instance.type === 'elasticsearch') {
-                        const esUrl = document.getElementById('esUrl');
-                        if (esUrl) esUrl.value = instance.config.es_url || '';
-                        
-                        const esUsername = document.getElementById('esUsername');
-                        if (esUsername) esUsername.value = instance.config.es_username || '';
-                        
-                        const esPassword = document.getElementById('esPassword');
-                        if (esPassword) esPassword.value = instance.config.es_password || '';
-                        
-                        const esApiKey = document.getElementById('esApiKey');
-                        if (esApiKey) esApiKey.value = instance.config.es_api_key || '';
-                        
-                        const esCACert = document.getElementById('esCACert');
-                        if (esCACert) esCACert.value = instance.config.es_ca_cert || '';
-                        
-                        const esDisableSSL = document.getElementById('esDisableSSL');
-                        if (esDisableSSL) esDisableSSL.checked = instance.config.es_disable_ssl || false;
-                    } else if (instance.type === 'kibana') {
-                        const kibanaUrl = document.getElementById('kibanaUrl');
-                        if (kibanaUrl) kibanaUrl.value = instance.config.kibana_url || '';
-                        
-                        const kibanaUsername = document.getElementById('kibanaUsername');
-                        if (kibanaUsername) kibanaUsername.value = instance.config.kibana_username || '';
-                        
-                        const kibanaPassword = document.getElementById('kibanaPassword');
-                        if (kibanaPassword) kibanaPassword.value = instance.config.kibana_password || '';
-                        
-                        const kibanaCookies = document.getElementById('kibanaCookies');
-                        if (kibanaCookies) kibanaCookies.value = instance.config.kibana_cookies || '';
-                        
-                        const kibanaCACert = document.getElementById('kibanaCACert');
-                        if (kibanaCACert) kibanaCACert.value = instance.config.kibana_ca_cert || '';
-                        
-                        const kibanaDisableSSL = document.getElementById('kibanaDisableSSL');
-                        if (kibanaDisableSSL) kibanaDisableSSL.checked = instance.config.kibana_disable_ssl || false;
-                    } else if (instance.type === 'newflow') {
-                        const newflowUrl = document.getElementById('newflowUrl');
-                        if (newflowUrl) newflowUrl.value = instance.config.newflow_url || '';
-                        
-                        const newflowApiKey = document.getElementById('newflowApiKey');
-                        if (newflowApiKey) newflowApiKey.value = instance.config.newflow_api_key || '';
+            // 等待配置区域显示后再填充
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // 填充配置
+            try {
+                if (instance.type === 'elasticsearch') {
+                    // 设置认证方式
+                    const esAuthType = document.getElementById('esAuthType');
+                    if (instance.config.es_api_key) {
+                        if (esAuthType) esAuthType.value = 'apikey';
+                    } else if (instance.config.es_username || instance.config.es_password) {
+                        if (esAuthType) esAuthType.value = 'basic';
+                    } else {
+                        if (esAuthType) esAuthType.value = 'none';
                     }
-                } catch (error) {
-                    console.error('填充配置时出错:', error);
+                    if (esAuthType) toggleESAuthFields();
+                    
+                    const esUrl = document.getElementById('esUrl');
+                    if (esUrl) esUrl.value = instance.config.es_url || '';
+                    
+                    const esUsername = document.getElementById('esUsername');
+                    if (esUsername) esUsername.value = instance.config.es_username || '';
+                    
+                    const esPassword = document.getElementById('esPassword');
+                    if (esPassword) esPassword.value = instance.config.es_password || '';
+                    
+                    const esApiKey = document.getElementById('esApiKey');
+                    if (esApiKey) esApiKey.value = instance.config.es_api_key || '';
+                    
+                    const esCACert = document.getElementById('esCACert');
+                    if (esCACert) esCACert.value = instance.config.es_ca_cert || '';
+                    
+                    const esDisableTLS = document.getElementById('esDisableTLS');
+                    if (esDisableTLS) {
+                        esDisableTLS.checked = instance.config.disable_tls || false;
+                        toggleESCACert();
+                    }
+                } else if (instance.type === 'kibana') {
+                    // 设置认证方式
+                    const kibanaAuthType = document.getElementById('kibanaAuthType');
+                    if (instance.config.kibana_cookies) {
+                        if (kibanaAuthType) kibanaAuthType.value = 'cookie';
+                    } else if (instance.config.kibana_username || instance.config.kibana_password) {
+                        if (kibanaAuthType) kibanaAuthType.value = 'basic';
+                    } else {
+                        if (kibanaAuthType) kibanaAuthType.value = 'none';
+                    }
+                    if (kibanaAuthType) toggleKibanaAuthFields();
+                    
+                    const kibanaUrl = document.getElementById('kibanaUrl');
+                    if (kibanaUrl) kibanaUrl.value = instance.config.kibana_url || '';
+                    
+                    const kibanaUsername = document.getElementById('kibanaUsername');
+                    if (kibanaUsername) kibanaUsername.value = instance.config.kibana_username || '';
+                    
+                    const kibanaPassword = document.getElementById('kibanaPassword');
+                    if (kibanaPassword) kibanaPassword.value = instance.config.kibana_password || '';
+                    
+                    const kibanaCookies = document.getElementById('kibanaCookies');
+                    if (kibanaCookies) kibanaCookies.value = instance.config.kibana_cookies || '';
+                    
+                    const kibanaSpace = document.getElementById('kibanaSpace');
+                    if (kibanaSpace) kibanaSpace.value = instance.config.kibana_space || 'default';
+                    
+                    const kibanaCACert = document.getElementById('kibanaCACert');
+                    if (kibanaCACert) kibanaCACert.value = instance.config.kibana_ca_cert || '';
+                    
+                    const kibanaDisableTLS = document.getElementById('kibanaDisableTLS');
+                    if (kibanaDisableTLS) {
+                        kibanaDisableTLS.checked = instance.config.disable_tls || false;
+                        toggleKibanaCACert();
+                    }
+                    
+                    // 高级配置
+                    const kibanaTimeout = document.getElementById('kibanaTimeout');
+                    if (kibanaTimeout && instance.config.kibana_timeout) {
+                        kibanaTimeout.value = instance.config.kibana_timeout;
+                    }
+                    
+                    const kibanaMaxRetries = document.getElementById('kibanaMaxRetries');
+                    if (kibanaMaxRetries && instance.config.kibana_max_retries) {
+                        kibanaMaxRetries.value = instance.config.kibana_max_retries;
+                    }
+                } else if (instance.type === 'newflow') {
+                    const newflowUrl = document.getElementById('newflowUrl');
+                    if (newflowUrl) newflowUrl.value = instance.config.newflow_url || '';
+                    
+                    const newflowApiKey = document.getElementById('newflowApiKey');
+                    if (newflowApiKey) newflowApiKey.value = instance.config.newflow_api_key || '';
                 }
-            }, 100);
+            } catch (error) {
+                console.error('填充配置时出错:', error);
+            }
             
             // 修改表单提交行为
             const form = document.getElementById('createMCPForm');
-            form.onsubmit = async (e) => {
-                e.preventDefault();
-                await updateMCPInstance(instanceId);
-                form.onsubmit = createMCPInstance; // 恢复原来的提交函数
-            };
+            if (form) {
+                form.onsubmit = async (e) => {
+                    e.preventDefault();
+                    await updateMCPInstance(instanceId);
+                    // 恢复原来的提交函数
+                    form.onsubmit = createMCPInstance;
+                };
+            }
             
-            // 显示模态框
-            const modal = new bootstrap.Modal(document.getElementById('createMCPModal'));
-            modal.show();
+            // 注意：showCreateModal() 已经自动显示了模态框，这里不需要再次显示
         }
         
         async function updateMCPInstance(instanceId) {
@@ -1713,29 +1774,29 @@
             const modalHTML = `
                 <div class="modal fade" id="configModal" tabindex="-1">
                     <div class="modal-dialog modal-lg">
-                        <div class="modal-content" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-                            <div class="modal-header border-0">
-                                <h5 class="modal-title text-white">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
                                     <i class="fas fa-check-circle text-success"></i> MCP 客户端配置已复制
                                 </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body" style="background: rgba(255,255,255,0.95); margin: 0 1rem 1rem 1rem; border-radius: 8px;">
+                            <div class="modal-body">
                                 <div class="mb-3">
-                                    <p class="mb-2"><strong>实例名称：</strong> ${instanceName}</p>
-                                    <p class="mb-2"><strong>服务端点：</strong> <code>${endpoint}</code></p>
+                                    <p class="mb-2" style="color: var(--text-primary);"><strong>实例名称：</strong> ${instanceName}</p>
+                                    <p class="mb-2" style="color: var(--text-primary);"><strong>服务端点：</strong> <code style="color: var(--accent-cyan); background: rgba(15, 20, 32, 0.6); padding: 0.2rem 0.4rem; border-radius: 4px;">${endpoint}</code></p>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label"><strong>配置内容（已复制到剪贴板）：</strong></label>
-                                    <textarea class="form-control" rows="10" readonly style="font-family: monospace; font-size: 0.9rem; background: #f8f9fa;">${configJson}</textarea>
+                                    <textarea id="configJsonTextarea" class="form-control" rows="10" readonly style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace; font-size: 0.9rem;"></textarea>
                                 </div>
-                                <div class="alert alert-info mb-0">
-                                    <i class="fas fa-info-circle"></i> <strong>使用说明：</strong><br>
+                                <div class="alert" style="background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 10px; color: var(--text-primary);">
+                                    <i class="fas fa-info-circle" style="color: var(--accent-cyan);"></i> <strong>使用说明：</strong><br>
                                     将以上配置粘贴到 <strong>Cursor</strong>、<strong>NewmindChat</strong> 或其他 MCP 客户端的配置文件中。
                                 </div>
                             </div>
-                            <div class="modal-footer border-0" style="background: transparent;">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                     <i class="fas fa-times"></i> 关闭
                                 </button>
                             </div>
@@ -1750,6 +1811,12 @@
             
             // 添加新模态框
             document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // 安全地设置textarea内容
+            const textarea = document.getElementById('configJsonTextarea');
+            if (textarea) {
+                textarea.value = configJson;
+            }
             
             // 显示模态框
             const modal = new bootstrap.Modal(document.getElementById('configModal'));
@@ -2093,6 +2160,7 @@
                                             <option value="">请选择...</option>
                                             <option value="elasticsearch">Elasticsearch</option>
                                             <option value="kibana">Kibana</option>
+                                            <option value="newflow">NewFlow</option>
                                         </select>
                                     </div>
                                     
@@ -2104,6 +2172,7 @@
                                             <optgroup label="本地Docker服务（推荐）">
                                                 <option value="local_es_cluster">本地ES集群（localhost）</option>
                                                 <option value="local_kibana">本地Kibana（localhost）</option>
+                                                <option value="local_newflow">本地NewFlow（localhost）</option>
                                             </optgroup>
                                             <optgroup label="Docker IP直接访问（备用）">
                                                 <option value="local_es_docker_ip">本地ES集群（Docker IP）</option>
@@ -2288,6 +2357,27 @@
                                         </div>
                                     </div>
                                     
+                                    <!-- NewFlow配置 -->
+                                    <div id="newflowConfig" style="display:none;">
+                                        <h6 class="border-bottom pb-2 mb-3">NewFlow 配置</h6>
+                                        
+                                        <!-- NewFlow URL -->
+                                        <div class="mb-3">
+                                            <label class="form-label">NewFlow URL * <i class="fas fa-info-circle text-muted" title="NewFlow 服务器地址"></i></label>
+                                            <input type="text" class="form-control" id="newflowUrl" 
+                                                   placeholder="http://localhost:5677">
+                                            <small class="text-muted">NewFlow 工作流服务地址，通常是 http://localhost:5677</small>
+                                        </div>
+                                        
+                                        <!-- NewFlow API Key -->
+                                        <div class="mb-3">
+                                            <label class="form-label">API Key <i class="fas fa-info-circle text-muted" title="NewFlow API密钥"></i></label>
+                                            <input type="text" class="form-control" id="newflowApiKey" 
+                                                   placeholder="输入 NewFlow API Key（可选）">
+                                            <small class="text-muted">如果 NewFlow 启用了 API 认证，需要填写 API Key</small>
+                                        </div>
+                                    </div>
+                                    
                                     <!-- 端口配置 -->
                                     <div class="mb-3">
                                         <label class="form-label">MCP服务端口</label>
@@ -2315,6 +2405,26 @@
             // 添加新模态框
             document.body.insertAdjacentHTML('beforeend', modalHTML);
             
+            // 重置表单，清除所有字段
+            setTimeout(() => {
+                const form = document.getElementById('createMCPForm');
+                if (form) {
+                    form.reset();
+                    // 显式清空所有输入框
+                    form.querySelectorAll('input[type="text"], input[type="password"], input[type="number"], textarea').forEach(input => {
+                        input.value = '';
+                    });
+                    // 重置所有select为第一个选项
+                    form.querySelectorAll('select').forEach(select => {
+                        select.selectedIndex = 0;
+                    });
+                    // 重置所有checkbox
+                    form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                }
+            }, 0);
+            
             // 显示模态框
             const modal = new bootstrap.Modal(document.getElementById('createMCPModal'));
             modal.show();
@@ -2324,6 +2434,7 @@
             const type = document.getElementById('mcpType').value;
             document.getElementById('esConfig').style.display = type === 'elasticsearch' ? 'block' : 'none';
             document.getElementById('kibanaConfig').style.display = type === 'kibana' ? 'block' : 'none';
+            document.getElementById('newflowConfig').style.display = type === 'newflow' ? 'block' : 'none';
         }
         
         // ES认证字段切换
@@ -2383,6 +2494,9 @@
                     document.getElementById('kibanaUsername').value = template.config.kibana_username || '';
                     document.getElementById('kibanaPassword').value = template.config.kibana_password || '';
                     document.getElementById('kibanaSpace').value = template.config.kibana_space || 'default';
+                } else if (template.type === 'newflow') {
+                    document.getElementById('newflowUrl').value = template.config.newflow_url || '';
+                    document.getElementById('newflowApiKey').value = template.config.newflow_api_key || '';
                 }
             }
         }
@@ -2456,6 +2570,15 @@
                 }
                 if (maxRetries && maxRetries !== '3') {
                     config.kibana_max_retries = parseInt(maxRetries);
+                }
+            } else if (type === 'newflow') {
+                config = {
+                    newflow_url: document.getElementById('newflowUrl').value || 'http://localhost:5677'
+                };
+                
+                const apiKey = document.getElementById('newflowApiKey').value;
+                if (apiKey) {
+                    config.newflow_api_key = apiKey;
                 }
             }
             

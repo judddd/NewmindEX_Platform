@@ -52,7 +52,7 @@ MCP_TEMPLATES = {
         "description": "连接到本地NewFlow服务",
         "config": {
             "newflow_url": "http://localhost:5677",
-            "newflow_api_key": ""
+            "newflow_api_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYTg3YzdkOS1kYTk2LTQ3NDMtOGEwOS0wYzBhMWI5YWRiZjYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwMzc4OTYwfQ.AeMI20moNigjQwcMTi8FRaaOgupTuZ3Apso3jNyQg5Q"
         }
     },
     "remote_es": {

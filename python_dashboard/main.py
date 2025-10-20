@@ -15,6 +15,17 @@ import os
 import socket
 import httpx
 
+# 加载环境变量
+from pathlib import Path
+env_file = Path(__file__).parent.parent / "copy.enva"
+if env_file.exists():
+    with open(env_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ[key] = value
+
 # 导入模块
 from database import (
     init_db, get_all_instances, get_instance, create_instance,

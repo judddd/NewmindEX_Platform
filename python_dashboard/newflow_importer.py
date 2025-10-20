@@ -52,6 +52,8 @@ async def import_workflow(workflow_file: Path,
             "connections": workflow_data.get("connections", {}),
             "settings": workflow_data.get("settings", {}),
             "staticData": workflow_data.get("staticData"),
+            "active": workflow_data.get("active", False),  # 默认不激活
+            "tags": workflow_data.get("tags", []),
         }
         # 移除None值和只读字段
         cleaned_data = {k: v for k, v in cleaned_data.items() if v is not None}
@@ -62,7 +64,7 @@ async def import_workflow(workflow_file: Path,
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{newflow_url}/api/v1/workflows",
+                f"{newflow_url}/rest/workflows",
                 json=cleaned_data,
                 headers=headers,
                 timeout=30.0
@@ -178,7 +180,7 @@ async def list_workflows(newflow_url: str = "http://localhost:5677",
         
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{newflow_url}/api/v1/workflows",
+                f"{newflow_url}/rest/workflows",
                 headers=headers,
                 timeout=10.0
             )
