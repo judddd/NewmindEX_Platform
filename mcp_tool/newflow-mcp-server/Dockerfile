@@ -3,18 +3,12 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# 复制package文件
-COPY package*.json ./
-COPY tsconfig.json ./
-
-# 安装所有依赖（包括devDependencies用于构建）
-RUN npm ci
-
-# 复制源代码
+# 复制源代码（必须在 npm ci 之前，因为 prepare 脚本会立即构建）
 COPY . .
 
-# 构建TypeScript
-RUN npm run build
+# 安装所有依赖（包括devDependencies用于构建）
+# 注意：npm ci 会触发 prepare 脚本自动执行 npm run build
+RUN npm ci
 
 # 清理devDependencies减小镜像大小
 RUN npm prune --production
