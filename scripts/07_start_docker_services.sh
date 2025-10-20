@@ -12,6 +12,23 @@ if [ -f .env ]; then
     export $(cat .env | grep -v '^#' | xargs)
 fi
 
+# 导入 NewFlow 镜像（如果尚未导入）
+echo "📦 检查 NewFlow 镜像..."
+if ! docker images | grep -q "newflow.*1.0"; then
+    NEWFLOW_TAR=$(ls installers/newflow-1.0.*.tar 2>/dev/null | head -1)
+    if [ -n "$NEWFLOW_TAR" ]; then
+        echo "📦 导入 NewFlow 镜像: $NEWFLOW_TAR"
+        docker load -i "$NEWFLOW_TAR"
+        echo "✅ NewFlow 镜像导入成功"
+    else
+        echo "⚠️  找不到 NewFlow 镜像文件（installers/newflow-1.0.*.tar）"
+        echo "   将尝试从 Docker Hub 拉取（可能失败）"
+    fi
+else
+    echo "✅ NewFlow 镜像已存在，跳过导入"
+fi
+echo ""
+
 # 检查docker-compose
 if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null 2>&1; then
     echo "❌ docker-compose未安装"
