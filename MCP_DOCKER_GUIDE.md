@@ -258,14 +258,9 @@ rm -rf python_dashboard/mcp_pids/*.pid
 
 ## 回退到 Native 模式
 
-如需临时回退：
-```bash
-cd python_dashboard
-mv mcp_manager.py mcp_manager_docker.py.bak
-mv mcp_manager_native.py.bak mcp_manager.py
-```
-
-**注意**：需要本地安装 Node.js 20+
+> ⚠️ **已移除 Native 模式备份文件**  
+> 当前系统仅支持 Docker 模式，不再提供 Native 模式回退选项。  
+> 若需要 Native 模式，请从 Git 历史中恢复 `mcp_manager_native.py`。
 
 ---
 

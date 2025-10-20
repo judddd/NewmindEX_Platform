@@ -116,6 +116,7 @@ class MCPInstanceCreate(BaseModel):
 class MCPInstanceUpdate(BaseModel):
     name: Optional[str] = None
     config: Optional[Dict] = None
+    port: Optional[int] = None
 
 
 class ModelDownload(BaseModel):
@@ -538,17 +539,41 @@ async def mcp_get_instance(instance_id: str):
 
 @app.put("/api/mcp/instances/{instance_id}")
 async def mcp_update_instance(instance_id: str, data: MCPInstanceUpdate):
-    """更新MCP实例配置"""
+    """
+    更新MCP实例配置
+    实现策略：停止旧容器 → 更新配置 → 用新配置重新创建容器
+    """
+    from mcp_manager import stop_mcp_server, start_mcp_server
+    
+    # 1. 停止旧容器（如果正在运行）
+    print(f"🔧 停止旧容器: {instance_id}")
+    stop_mcp_server(instance_id)
+    
+    # 2. 更新配置到数据库
     updates = {}
     if data.name:
         updates['name'] = data.name
     if data.config:
         updates['config'] = data.config
+    if data.port:
+        updates['port'] = data.port
     
     success = update_instance(instance_id, updates)
-    if success:
-        return get_instance(instance_id)
-    raise HTTPException(status_code=500, detail="更新失败")
+    if not success:
+        raise HTTPException(status_code=500, detail="配置更新失败")
+    
+    # 3. 用新配置重新创建并启动容器
+    print(f"🚀 用新配置重新启动容器: {instance_id}")
+    start_success = start_mcp_server(instance_id)
+    
+    # 4. 返回更新后的实例状态
+    instance = get_instance(instance_id)
+    if instance:
+        instance['is_healthy'] = check_mcp_health(instance_id)
+        await manager.broadcast({"type": "mcp_status_update", "instance": instance})
+        return instance
+    
+    raise HTTPException(status_code=500, detail="更新后无法获取实例信息")
 
 
 @app.delete("/api/mcp/instances/{instance_id}")

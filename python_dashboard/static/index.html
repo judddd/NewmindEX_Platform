@@ -1457,8 +1457,8 @@
                         <button class="btn btn-sm btn-primary" onclick="editMCP('${inst.id}')">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-warning" onclick="copyMCP('${inst.id}')" title="复制配置">
-                            <i class="fas fa-copy"></i>
+                        <button class="btn btn-sm btn-warning" onclick="copyMCPConfig('${inst.id}')" title="复制MCP客户端配置">
+                            <i class="fas fa-code"></i>
                         </button>
                         <button class="btn btn-sm btn-danger" onclick="deleteMCP('${inst.id}')">
                             <i class="fas fa-trash"></i>
@@ -1652,16 +1652,19 @@
             });
             
             if (response.ok) {
-                alert('MCP实例更新成功');
+                alert('MCP实例更新成功！\n\n配置已更新并重新启动容器。');
                 bootstrap.Modal.getInstance(document.getElementById('mcpModal')).hide();
                 document.getElementById('mcpForm').reset();
+                
+                // 刷新整个 Dashboard 状态
+                await refreshStatusOnce();
             } else {
                 const error = await response.json();
                 alert('更新失败: ' + (error.detail || '未知错误'));
             }
         }
         
-        async function copyMCP(instanceId) {
+        async function copyMCPConfig(instanceId) {
             // 获取实例详情
             const response = await fetch(`/api/mcp/instances/${instanceId}`);
             if (!response.ok) {
@@ -1671,34 +1674,41 @@
             
             const instance = await response.json();
             
-            // 生成新名称
-            const newName = `${instance.name} - 副本`;
-            
-            // 构建新实例数据（不包含ID和端口，让系统自动分配）
-            const newInstance = {
-                name: newName,
-                type: instance.type,
-                config: instance.config
-                // port 留空，让系统自动分配
+            // 生成 MCP 客户端配置（适用于 Cursor、NewmindChat 等）
+            const mcpConfig = {
+                mcpServers: {}
             };
             
-            // 创建新实例
+            // 使用实例名称作为配置key（去除特殊字符）
+            const configKey = instance.name.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase();
+            
+            mcpConfig.mcpServers[configKey] = {
+                initialTimeout: 10,
+                transport: "streamable",
+                url: instance.endpoint || `http://localhost:${instance.port}`
+            };
+            
+            // 格式化为 JSON 字符串
+            const configJson = JSON.stringify(mcpConfig, null, 2);
+            
+            // 复制到剪贴板
             try {
-                const createResponse = await fetch('/api/mcp/instances', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newInstance)
-                });
+                await navigator.clipboard.writeText(configJson);
                 
-                if (createResponse.ok) {
-                    const newInst = await createResponse.json();
-                    alert(`✅ 配置复制成功！\n\n新实例: ${newInst.name}\n端口: ${newInst.port}\n端点: ${newInst.endpoint}`);
-                } else {
-                    const error = await createResponse.json();
-                    alert(`复制失败: ${error.detail || '未知错误'}`);
-                }
+                // 显示成功消息和配置预览
+                alert(`✅ MCP 客户端配置已复制到剪贴板！\n\n实例: ${instance.name}\n端点: ${instance.endpoint}\n\n配置预览：\n${configJson}\n\n💡 将此配置粘贴到 Cursor、NewmindChat 或其他 MCP 客户端的配置文件中。`);
             } catch (error) {
-                alert(`复制失败: ${error.message}`);
+                // 如果剪贴板API失败，使用备用方案
+                const textarea = document.createElement('textarea');
+                textarea.value = configJson;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                alert(`✅ MCP 客户端配置已复制！\n\n${configJson}`);
             }
         }
         
