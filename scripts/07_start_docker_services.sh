@@ -30,6 +30,22 @@ else
 fi
 echo ""
 
+# 导入 NewFlow Docs 镜像（如果尚未导入）
+echo "📦 检查 NewFlow Docs 镜像..."
+if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newflow-docs:"; then
+    NEWFLOW_DOCS_TAR=$(ls installers/newflow-docs-*.tar 2>/dev/null | head -1)
+    if [ -n "$NEWFLOW_DOCS_TAR" ]; then
+        echo "📦 导入 NewFlow Docs 镜像: $NEWFLOW_DOCS_TAR"
+        docker load -i "$NEWFLOW_DOCS_TAR"
+        echo "✅ NewFlow Docs 镜像导入成功"
+    else
+        echo "⚠️  找不到 NewFlow Docs 镜像文件（installers/newflow-docs-*.tar）"
+    fi
+else
+    echo "✅ NewFlow Docs 镜像已存在，跳过导入"
+fi
+echo ""
+
 # 检查docker-compose
 if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null 2>&1; then
     echo "❌ docker-compose未安装"
@@ -84,6 +100,25 @@ else
 fi
 
 echo ""
+
+# 启动 NewFlow Docs 容器（独立于 docker-compose）
+echo "📚 启动 NewFlow API 文档服务..."
+if docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newflow-docs:"; then
+    # 停止旧容器（如果存在）
+    docker stop newflow-docs 2>/dev/null || true
+    docker rm newflow-docs 2>/dev/null || true
+    
+    # 启动新容器
+    if docker run -d --name newflow-docs -p ${NEWFLOW_DOCS_PORT:-8001}:8001 newflow-docs:1.0 2>/dev/null; then
+        echo "✅ NewFlow API 文档已启动: http://localhost:${NEWFLOW_DOCS_PORT:-8001}"
+    else
+        echo "⚠️  NewFlow API 文档启动失败"
+    fi
+else
+    echo "⚠️  NewFlow Docs 镜像不存在，跳过文档服务启动"
+fi
+echo ""
+
 echo "✅ Docker服务启动完成！"
 echo ""
 echo "🔗 服务访问地址："
@@ -91,4 +126,5 @@ echo "   Elasticsearch: http://localhost:${ES_PORT_1:-9200} (elastic / ${ELASTIC
 echo "   Kibana: http://localhost:${KIBANA_PORT:-5601}"
 echo "   Logstash: http://localhost:${LOGSTASH_PORT:-5044}"
 echo "   NewFlow: http://localhost:${NEWFLOW_PORT:-5677}"
+echo "   NewFlow API 文档: http://localhost:${NEWFLOW_DOCS_PORT:-8001}"
 
