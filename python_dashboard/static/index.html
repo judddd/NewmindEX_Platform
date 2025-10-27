@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewMind AI Platform - Management Dashboard</title>
+    <title>NewmindEx AI - Management Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -60,6 +60,21 @@
         @keyframes backgroundScroll {
             0% { transform: translate(0, 0); }
             100% { transform: translate(50px, 50px); }
+        }
+        
+        /* Intro section responsive grid to keep right column fixed on large screens */
+        @media (min-width: 992px) {
+            .intro-row {
+                display: grid !important;
+                grid-template-columns: 2fr 1fr;
+                column-gap: 1.25rem;
+                align-items: start;
+            }
+            .intro-row > [class*="col-"] {
+                width: auto !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
         }
         
         .dashboard-container {
@@ -1108,7 +1123,7 @@
             <!-- Header -->
             <div class="row mb-4">
                 <div class="col-md-8">
-                    <h1 class="logo"><i class="fas fa-brain"></i> NewMind AI Platform</h1>
+                    <h1 class="logo"><i class="fas fa-brain"></i> NewmindEx AI</h1>
                     <p class="text-muted">
                         <i class="fas fa-desktop" style="color: var(--accent-cyan);"></i> Apple Mac Studio 企业级 AI 一体机 · 智能分析与自动化管理平台
                     </p>
@@ -1125,21 +1140,20 @@
                 <div class="col-12">
                     <div class="card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.08) 100%); border: 1px solid rgba(59, 130, 246, 0.2);">
                         <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
+                            <div class="row intro-row">
+                                <div class="col-lg-8 col-md-12">
                                     <h5 style="color: var(--accent-cyan); font-weight: 700; margin-bottom: 1rem;">
-                                        <i class="fas fa-info-circle"></i> 关于 NewMind AI Platform
+                                        <i class="fas fa-info-circle"></i> 关于
                                     </h5>
                                     <p style="color: var(--text-primary); line-height: 1.8; margin-bottom: 0.5rem;">
-                                        <strong>NewMind AI Platform</strong> 是基于 <strong style="color: var(--accent-cyan);">Apple Mac Studio</strong> 的企业级 AI 智能分析一体机解决方案，
-                                        集成了日志分析、工作流编排、AI 对话等核心能力，为企业提供从数据采集、分析到智能决策的全链路服务。
+                                        <strong>企业级 AI 智能分析一体机解决方案</strong>，集成了日志分析、工作流编排、AI 对话等核心能力，为企业提供从数据采集、分析到智能决策的全链路服务。
                                     </p>
                                     <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem;">
                                         <i class="fas fa-microchip" style="color: var(--accent-cyan);"></i> 
                                         硬件一体机方案 · 开箱即用 · 本地部署 · 数据安全 · 无需云端依赖
                                     </p>
                                     <div class="row g-3">
-                                        <div class="col-md-6">
+                                        <div class="col-sm-6">
                                             <div style="padding: 0.75rem; background: rgba(59, 130, 246, 0.05); border-radius: 8px; border-left: 3px solid var(--accent-blue);">
                                                 <h6 style="color: var(--accent-blue); font-size: 0.9rem; margin-bottom: 0.5rem;">
                                                     <i class="fas fa-database"></i> 数据层
@@ -1149,7 +1163,7 @@
                                                 </p>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-sm-6">
                                             <div style="padding: 0.75rem; background: rgba(139, 92, 246, 0.05); border-radius: 8px; border-left: 3px solid var(--accent-purple);">
                                                 <h6 style="color: var(--accent-purple); font-size: 0.9rem; margin-bottom: 0.5rem;">
                                                     <i class="fas fa-chart-line"></i> 可视化层
@@ -1159,7 +1173,7 @@
                                                 </p>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-sm-6">
                                             <div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.05); border-radius: 8px; border-left: 3px solid var(--accent-cyan);">
                                                 <h6 style="color: var(--accent-cyan); font-size: 0.9rem; margin-bottom: 0.5rem;">
                                                     <i class="fas fa-project-diagram"></i> 自动化层
@@ -1169,19 +1183,19 @@
                                                 </p>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-sm-6">
                                             <div style="padding: 0.75rem; background: rgba(236, 72, 153, 0.05); border-radius: 8px; border-left: 3px solid var(--accent-pink);">
                                                 <h6 style="color: var(--accent-pink); font-size: 0.9rem; margin-bottom: 0.5rem;">
                                                     <i class="fas fa-robot"></i> AI 交互层
                                                 </h6>
                                                 <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">
-                                                    <strong>NewmindChat</strong> - AI 对话客户端与本地 LLM，支持自然语言查询与智能分析
+                                                    <strong>NewChat</strong> - AI 对话客户端与本地 LLM，支持自然语言查询与智能分析
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-lg-4 col-md-12 mt-3 mt-lg-0">
                                     <div style="padding: 1.5rem; background: rgba(59, 130, 246, 0.08); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2);">
                                         <h6 style="color: var(--accent-cyan); font-weight: 700; margin-bottom: 0.5rem; text-align: center;">
                                             <i class="fas fa-server"></i> 一体机核心优势
@@ -1192,7 +1206,7 @@
                                         <ul style="color: var(--text-primary); font-size: 0.88rem; line-height: 2; margin: 0; padding-left: 1.2rem;">
                                             <li><strong>硬件集成</strong> - Mac Studio 高性能一体化设计</li>
                                             <li><strong>统一管理</strong> - 一站式管理所有服务组件</li>
-                                            <li><strong>本地算力</strong> - M2 Ultra 芯片支持本地 AI 推理</li>
+                                            <li><strong>本地算力</strong> - M3/M4 Ultra 芯片支持本地 AI 推理</li>
                                             <li><strong>数据安全</strong> - 企业数据本地存储，不出网</li>
                                             <li><strong>离线运行</strong> - 无需云端，独立运行</li>
                                             <li><strong>开箱即用</strong> - 预配置工作流与连接器</li>
@@ -1262,12 +1276,12 @@
                 <div class="col">
                     <div class="card status-card">
                         <div class="card-body">
-                            <h6 class="card-subtitle mb-2 text-muted">NewmindChat</h6>
-                            <h3 class="card-title" id="newmindchat-status">
+                            <h6 class="card-subtitle mb-2 text-muted">NewChat</h6>
+                            <h3 class="card-title" id="newchat-status">
                                 <span class="badge badge-stopped">离线</span>
                             </h3>
                             <div class="d-flex gap-2 mt-3">
-                                <button onclick="openNewmindChat()" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                <button onclick="openNewChat()" class="btn btn-sm btn-outline-primary flex-grow-1">
                                     <i class="fas fa-external-link-alt"></i> 打开
                                 </button>
                             </div>
@@ -1365,10 +1379,10 @@
                 <div class="col-md-4">
                     <div class="card">
                         <div class="card-header">
-                            <h6><i class="fas fa-download"></i> NewMindChat配置</h6>
+                            <h6><i class="fas fa-download"></i> NewChat 配置</h6>
                         </div>
                         <div class="card-body">
-                            <button class="btn btn-success w-100" onclick="downloadNewMindChatConfig()">
+                            <button class="btn btn-success w-100" onclick="downloadNewChatConfig()">
                                 <i class="fas fa-download"></i> 导出配置
                             </button>
                             <small class="text-muted d-block mt-2">导出运行中的MCP配置</small>
@@ -1420,12 +1434,12 @@
                                     </div>
                                 </div>
 
-                                <!-- NewmindChat 文档 -->
+                                <!-- NewChat 文档 -->
                                 <div class="col-md-4">
                                     <div class="card h-100" style="background: rgba(255,255,255,0.95);">
                                         <div class="card-body">
                                             <h6 class="card-title" style="color: #1e293b !important; font-weight: 600;">
-                                                <i class="fas fa-comments text-info"></i> NewmindChat 文档
+                                                <i class="fas fa-comments text-info"></i> NewChat 文档
                                             </h6>
                                             <p class="card-text small" style="color: #64748b !important;">
                                                 AI对话客户端使用文档，配置指南和功能介绍
@@ -1466,7 +1480,7 @@
             <div class="row mt-4">
                 <div class="col-12 text-center text-muted">
                     <p class="mb-0">
-                        <i class="fas fa-heart text-danger"></i> NewMind AI Platform v1.0.0
+                        <i class="fas fa-heart text-danger"></i> NewmindEx AI v1.0.0
                     </p>
                 </div>
             </div>
@@ -1527,10 +1541,10 @@
             document.getElementById('lm-status').innerHTML = 
                 `<span class="badge badge-${lmStatus ? 'running' : 'stopped'}">${lmStatus ? '运行中' : '离线'}</span>`;
             
-            // 更新NewmindChat状态
-            const newmindchatStatus = status.newmindchat?.status === 'running';
-            document.getElementById('newmindchat-status').innerHTML = 
-                `<span class="badge badge-${newmindchatStatus ? 'running' : 'stopped'}">${newmindchatStatus ? '运行中' : '离线'}</span>`;
+            // 更新NewChat状态
+            const newchatStatus = status.newmindchat?.status === 'running';
+            document.getElementById('newchat-status').innerHTML = 
+                `<span class="badge badge-${newchatStatus ? 'running' : 'stopped'}">${newchatStatus ? '运行中' : '离线'}</span>`;
             
             // 更新NewFlow状态和按钮
             const newflowStatus = status.newflow?.status === 'running';
@@ -1841,7 +1855,7 @@
             
             const instance = await response.json();
             
-            // 生成 MCP 客户端配置（适用于 Cursor、NewmindChat 等）
+            // 生成 MCP 客户端配置（适用于 Cursor、NewChat 等）
             const mcpConfig = {
                 mcpServers: {}
             };
@@ -1899,7 +1913,7 @@
                                 </div>
                                 <div class="alert" style="background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 10px; color: var(--text-primary);">
                                     <i class="fas fa-info-circle" style="color: var(--accent-cyan);"></i> <strong>使用说明：</strong><br>
-                                    将以上配置粘贴到 <strong>Cursor</strong>、<strong>NewmindChat</strong> 或其他 MCP 客户端的配置文件中。
+                                    将以上配置粘贴到 <strong>Cursor</strong>、<strong>NewChat</strong> 或其他 MCP 客户端的配置文件中。
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -2086,7 +2100,7 @@
             }
         }
         
-        async function openNewmindChat() {
+        async function openNewChat() {
             const button = event.target.closest('button');
             const originalText = button.innerHTML;
             
@@ -2198,14 +2212,14 @@
                 `<div class="alert alert-info mt-2">类型: ${license.license?.type || 'unknown'}</div>`;
         }
         
-        async function downloadNewMindChatConfig() {
+        async function downloadNewChatConfig() {
             const response = await fetch('/api/mcp/newmindchat-config');
             const config = await response.json();
             const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'newmindchat-config.json';
+            a.download = 'newchat-config.json';
             a.click();
         }
         

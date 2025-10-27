@@ -1,8 +1,8 @@
-# NewMind AI Platform - Mac M芯片部署方案
+# NewmindEx AI Platform - Mac M芯片部署方案
 
 <div align="center">
 
-![NewMind AI](https://img.shields.io/badge/NewMind-AI%20Platform-blueviolet?style=for-the-badge)
+![NewmindEx AI](https://img.shields.io/badge/NewmindEx-AI%20Platform-blueviolet?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/platform-macOS%20ARM64-blue?style=for-the-badge)
 
@@ -101,7 +101,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ### 📊 Kibana可视化
 - **自定义品牌**：支持Logo和主题定制
-- **NewMind AI主题**：预配置企业级UI
+- **NewmindEx AI主题**：预配置企业级UI
 - **ML Connector**：集成本地Qwen大模型
 
 ### 🔄 NewFlow工作流
@@ -131,7 +131,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  NewMind AI Platform                         │
+│                  NewmindEx AI Platform                       │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │

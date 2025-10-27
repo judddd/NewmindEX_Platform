@@ -1,5 +1,5 @@
 """
-NewMind AI Platform Management Dashboard
+NewmindEx AI Platform Management Dashboard
 FastAPI主应用 - 提供管理API和Web界面
 """
 
@@ -50,7 +50,7 @@ init_db()
 
 # 创建FastAPI应用
 app = FastAPI(
-    title="NewMind AI Platform Dashboard",
+    title="NewmindEx AI Platform Dashboard",
     description="管理ELK、LM Studio、NewFlow和MCP服务器",
     version="1.0.0"
 )
@@ -73,7 +73,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.on_event("startup")
 async def startup_event():
     """应用启动时执行的任务"""
-    print("🚀 NewMind AI Platform Dashboard 启动中...")
+    print("🚀 NewmindEx AI Platform Dashboard 启动中...")
     
     # 等待 NewFlow 服务启动（最多等待30秒）
     newflow_url = f"http://localhost:{os.getenv('NEWFLOW_PORT', '5677')}"
@@ -189,7 +189,7 @@ async def get_status():
     # 检查LM Studio
     lm_status = await get_lm_status()
     
-    # 检查NewmindChat - 通过端口 61990
+    # 检查NewChat - 通过端口 61990
     newmindchat_running = await check_port_open('localhost', 61990)
     
     # 检查MCP实例
@@ -325,12 +325,12 @@ async def open_lmstudio():
 
 @app.post("/api/open-newmindchat")
 async def open_newmindchat():
-    """打开NewmindChat应用"""
+    """打开NewChat应用"""
     import subprocess
     try:
         # macOS上使用open命令打开应用
         subprocess.Popen(['open', '-a', 'NewmindChat'])
-        return {"success": True, "message": "NewmindChat应用已启动"}
+        return {"success": True, "message": "NewChat应用已启动"}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -666,7 +666,7 @@ async def mcp_get_templates():
 
 @app.get("/api/mcp/newmindchat-config")
 async def mcp_newmindchat_config():
-    """生成NewMindChat配置"""
+    """生成NewChat配置"""
     instances = get_all_instances()
     # 只包含运行中的实例
     running_instances = [i for i in instances if check_mcp_health(i['id'])]
@@ -717,7 +717,7 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.on_event("startup")
 async def startup_event():
     """应用启动时执行"""
-    print("🚀 NewMind AI Platform Dashboard 启动")
+    print("🚀 NewmindEx AI Platform Dashboard 启动")
     print("=" * 50)
     print(f"📊 Dashboard: http://localhost:{os.getenv('DASHBOARD_PORT', '8000')}")
     print(f"📚 API文档: http://localhost:{os.getenv('DASHBOARD_PORT', '8000')}/docs")
