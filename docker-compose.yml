@@ -120,6 +120,7 @@ services:
       - N8N_RUNNERS_ENABLED=true
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
+      - N8N_SECURE_COOKIE=false
     volumes:
       - ./newflow_data:/home/node/.newflow
     extra_hosts:
