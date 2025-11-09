@@ -44,7 +44,9 @@ newflow_data/binaryData/
 .env.local
 .env.*.local
 copy.enva
-env.copy
+
+# 保留 env.copy 作为环境变量配置模板
+# env.copy - 不忽略，作为配置示例
 
 # Mac
 .DS_Store
