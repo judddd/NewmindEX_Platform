@@ -16,13 +16,30 @@ fi
 echo "🐳 停止Docker容器..."
 $COMPOSE_CMD down
 
+# 停止其他独立容器（newchat-docs, newflow-docs等）
+echo "📦 停止文档容器..."
+docker ps -a --format "{{.Names}}" | grep -E "(newchat-docs|newflow-docs|newmindchat-docs)" | while read container; do
+    echo "   停止容器: $container"
+    docker stop "$container" 2>/dev/null || true
+    docker rm "$container" 2>/dev/null || true
+done
+
 # 停止LM Studio
 echo "🤖 停止LM Studio服务..."
 pkill -f "lms server" || true
 
 # 停止Python Dashboard
 echo "🐍 停止Python Dashboard..."
-pkill -f "uvicorn main:app" || true
+if [ -f "python_dashboard/dashboard.pid" ]; then
+    pid=$(cat python_dashboard/dashboard.pid)
+    if ps -p $pid > /dev/null 2>&1; then
+        echo "   停止Dashboard进程: $pid"
+        kill $pid || true
+    fi
+    rm -f python_dashboard/dashboard.pid
+else
+    pkill -f "uvicorn main:app" || true
+fi
 
 # 停止所有MCP服务器
 echo "🔌 停止MCP服务器..."

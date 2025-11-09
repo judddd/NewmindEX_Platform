@@ -43,10 +43,18 @@ from lmstudio_manager import (
 from newflow_importer import (
     get_workflow_files, import_workflow, import_all_workflows, list_workflows
 )
-from mcp_templates import list_templates, get_template, generate_newmindchat_config
+from mcp_templates import list_templates, get_template, generate_newchat_config
+from audit_logger import (
+    setup_loggers, log_operation, log_audit, log_mcp_call, log_dashboard,
+    get_operation_logs, get_mcp_call_logs, get_audit_logs, get_dashboard_logs
+)
 
 # 初始化数据库
 init_db()
+
+# 初始化日志系统
+setup_loggers()
+log_audit("SYSTEM_INIT", "Dashboard initializing", {"version": "1.0.0"})
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -64,6 +72,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 请求日志中间件
+import time
+from starlette.requests import Request
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """记录API请求日志"""
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time
+    
+    # 记录MCP相关API调用
+    if request.url.path.startswith("/api/mcp"):
+        log_operation(
+            action="API_CALL",
+            user="system",
+            details={
+                "method": request.method,
+                "path": request.url.path,
+                "duration": f"{duration:.3f}s",
+                "status": response.status_code
+            }
+        )
+    
+    return response
+
 # 挂载静态文件
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -74,6 +108,34 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def startup_event():
     """应用启动时执行的任务"""
     print("🚀 NewmindEx AI Platform Dashboard 启动中...")
+    log_audit("SYSTEM_START", "Dashboard started", {"version": "1.0.0"})
+    
+    # 等待 Docker 服务启动
+    print("⏳ 等待 Docker 服务...")
+    await asyncio.sleep(5)
+    
+    # 自动重启所有之前运行的MCP实例
+    print("🔄 检查并重启MCP实例...")
+    instances = get_all_instances()
+    restarted_count = 0
+    for instance in instances:
+        # 检查容器是否存在
+        is_healthy = check_mcp_health(instance['id'])
+        
+        # 如果实例标记为running但容器不健康，尝试重启
+        if instance.get('status') == 'running' and not is_healthy:
+            print(f"  • 重启MCP实例: {instance['name']} ({instance['id']})")
+            success = start_mcp_server(instance['id'])
+            if success:
+                restarted_count += 1
+                print(f"    ✅ 已重启")
+            else:
+                print(f"    ⚠️  重启失败")
+    
+    if restarted_count > 0:
+        print(f"✅ 成功重启 {restarted_count} 个MCP实例")
+    else:
+        print("ℹ️  无需重启MCP实例")
     
     # 等待 NewFlow 服务启动（最多等待30秒）
     newflow_url = f"http://localhost:{os.getenv('NEWFLOW_PORT', '5677')}"
@@ -95,6 +157,7 @@ async def startup_event():
             await asyncio.sleep(1)
     else:
         print(f"⚠️  NewFlow 服务未启动，跳过工作流自动导入")
+        print("🎉 Dashboard 启动完成！")
         return
     
     # 自动导入工作流
@@ -190,7 +253,7 @@ async def get_status():
     lm_status = await get_lm_status()
     
     # 检查NewChat - 通过端口 61990
-    newmindchat_running = await check_port_open('localhost', 61990)
+    newchat_running = await check_port_open('localhost', 61990)
     
     # 检查MCP实例
     mcp_instances = get_all_instances()
@@ -210,8 +273,8 @@ async def get_status():
             "status": "running" if lm_status else "stopped",
             "port": int(os.getenv('LMSTUDIO_PORT', '1234'))
         },
-        "newmindchat": {
-            "status": "running" if newmindchat_running else "stopped",
+        "newchat": {
+            "status": "running" if newchat_running else "stopped",
             "port": 61990
         },
         "newflow": {
@@ -323,13 +386,13 @@ async def open_lmstudio():
         return {"success": False, "error": str(e)}
 
 
-@app.post("/api/open-newmindchat")
-async def open_newmindchat():
+@app.post("/api/open-newchat")
+async def open_newchat():
     """打开NewChat应用"""
     import subprocess
     try:
         # macOS上使用open命令打开应用
-        subprocess.Popen(['open', '-a', 'NewmindChat'])
+        subprocess.Popen(['open', '-a', 'NewChat'])
         return {"success": True, "message": "NewChat应用已启动"}
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -512,6 +575,14 @@ async def mcp_create_instance(data: MCPInstanceCreate):
     # 生成ID
     instance_id = f"mcp-{data.type}-{uuid.uuid4().hex[:8]}"
     
+    # 记录操作日志
+    log_operation("create_mcp", "system", {
+        "instance_id": instance_id,
+        "name": data.name,
+        "type": data.type,
+        "port": data.port
+    })
+    
     # 分配端口
     if data.port:
         port = data.port
@@ -533,7 +604,13 @@ async def mcp_create_instance(data: MCPInstanceCreate):
     # 保存到数据库
     success = create_instance(instance)
     if success:
+        log_operation("create_mcp_success", "system", {"instance_id": instance_id})
+        log_audit("MCP_CREATE", f"Created MCP instance: {data.name}", {
+            "instance_id": instance_id,
+            "type": data.type
+        })
         return instance
+    log_operation("create_mcp_failed", "system", {"instance_id": instance_id})
     raise HTTPException(status_code=500, detail="创建实例失败")
 
 
@@ -590,6 +667,8 @@ async def mcp_update_instance(instance_id: str, data: MCPInstanceUpdate):
 @app.delete("/api/mcp/instances/{instance_id}")
 async def mcp_delete_instance(instance_id: str):
     """删除MCP实例"""
+    log_operation("delete_mcp", "system", {"instance_id": instance_id})
+    log_audit("MCP_DELETE", f"Deleting MCP instance", {"instance_id": instance_id})
     # 先停止
     stop_mcp_server(instance_id)
     
@@ -603,8 +682,10 @@ async def mcp_delete_instance(instance_id: str):
 @app.post("/api/mcp/instances/{instance_id}/start")
 async def mcp_start_instance(instance_id: str):
     """启动MCP服务"""
+    log_operation("start_mcp", "system", {"instance_id": instance_id})
     success = start_mcp_server(instance_id)
     if success:
+        log_operation("start_mcp_success", "system", {"instance_id": instance_id})
         # 广播最新状态并返回最新实例信息
         try:
             status = await get_status()
@@ -620,8 +701,10 @@ async def mcp_start_instance(instance_id: str):
 @app.post("/api/mcp/instances/{instance_id}/stop")
 async def mcp_stop_instance(instance_id: str):
     """停止MCP服务"""
+    log_operation("stop_mcp", "system", {"instance_id": instance_id})
     success = stop_mcp_server(instance_id)
     if success:
+        log_operation("stop_mcp_success", "system", {"instance_id": instance_id})
         # 广播最新状态并返回最新实例信息
         try:
             status = await get_status()
@@ -653,9 +736,74 @@ async def mcp_instance_status(instance_id: str):
 
 @app.get("/api/mcp/instances/{instance_id}/logs")
 async def mcp_instance_logs(instance_id: str, lines: int = 100):
-    """获取MCP服务日志"""
+    """获取MCP服务日志（Docker容器日志）"""
     logs = get_mcp_logs(instance_id, lines)
     return {"logs": logs}
+
+
+# ==================== 日志查询API ====================
+
+@app.get("/api/logs/operations")
+async def get_operations_log(lines: int = 100, filter: Optional[str] = None):
+    """
+    获取操作日志
+    
+    Args:
+        lines: 返回的行数（默认100）
+        filter: 过滤文本（可选）
+    """
+    log_lines = get_operation_logs(lines, filter)
+    return {
+        "logs": [line.strip() for line in log_lines],
+        "count": len(log_lines)
+    }
+
+
+@app.get("/api/logs/mcp-calls")
+async def get_mcp_calls_log(lines: int = 100, instance_id: Optional[str] = None):
+    """
+    获取MCP调用日志
+    
+    Args:
+        lines: 返回的行数（默认100）
+        instance_id: 过滤特定实例ID（可选）
+    """
+    log_lines = get_mcp_call_logs(lines, instance_id)
+    return {
+        "logs": [line.strip() for line in log_lines],
+        "count": len(log_lines),
+        "filter": {"instance_id": instance_id} if instance_id else None
+    }
+
+
+@app.get("/api/logs/audit")
+async def get_audits_log(lines: int = 50):
+    """
+    获取审计日志（敏感操作）
+    
+    Args:
+        lines: 返回的行数（默认50）
+    """
+    log_lines = get_audit_logs(lines)
+    return {
+        "logs": [line.strip() for line in log_lines],
+        "count": len(log_lines)
+    }
+
+
+@app.get("/api/logs/dashboard")
+async def get_dashboard_log(lines: int = 100):
+    """
+    获取Dashboard日志
+    
+    Args:
+        lines: 返回的行数（默认100）
+    """
+    log_lines = get_dashboard_logs(lines)
+    return {
+        "logs": [line.strip() for line in log_lines],
+        "count": len(log_lines)
+    }
 
 
 @app.get("/api/mcp/templates")
@@ -664,13 +812,13 @@ async def mcp_get_templates():
     return list_templates()
 
 
-@app.get("/api/mcp/newmindchat-config")
-async def mcp_newmindchat_config():
+@app.get("/api/mcp/newchat-config")
+async def mcp_newchat_config():
     """生成NewChat配置"""
     instances = get_all_instances()
     # 只包含运行中的实例
     running_instances = [i for i in instances if check_mcp_health(i['id'])]
-    config = generate_newmindchat_config(running_instances)
+    config = generate_newchat_config(running_instances)
     return config
 
 

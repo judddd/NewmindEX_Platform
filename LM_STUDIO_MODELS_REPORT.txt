@@ -1,0 +1,157 @@
+================================================================================
+                    LM Studio 模型库报告
+================================================================================
+
+📍 模型存储位置: ~/.lmstudio/models/
+
+================================================================================
+📊 已下载的模型（非空）
+================================================================================
+
+✅ Qwen3-Coder-30B (MLX 8-bit) - 30GB
+   路径: lmstudio-community/Qwen3-Coder-30B-A3B-Instruct-MLX-8bit
+   推荐用途: 代码生成、代码补全
+   格式: MLX (Apple Silicon优化)
+   
+✅ Qwen3-30B (MLX 8-bit) - 30GB
+   路径: lmstudio-community/Qwen3-30B-A3B-Instruct-2507-MLX-8bit
+   推荐用途: 通用对话、指令遵循
+   格式: MLX
+   
+✅ Qwen3-32B (MLX 8-bit) - 32GB
+   路径: lmstudio-community/Qwen3-32B-MLX-8bit
+   推荐用途: 通用对话
+   格式: MLX
+   
+✅ Qwen3-Next-80B (MLX 4-bit) - 42GB
+   路径: lmstudio-community/Qwen3-Next-80B-A3B-Instruct-MLX-4bit
+   推荐用途: 高质量对话、复杂任务
+   格式: MLX (4-bit量化，内存占用少)
+   
+✅ Seed-OSS-36B (MLX 4-bit) - 19GB
+   路径: lmstudio-community/Seed-OSS-36B-Instruct-MLX-4bit
+   推荐用途: 开源通用模型
+   格式: MLX
+
+🔥 超大模型（占用大量空间）
+   
+✅ Qwen3-235B (MLX 8-bit) - 233GB ⚠️
+   路径: lmstudio-community/Qwen3-235B-A22B-Instruct-2507-MLX-8bit
+   推荐用途: 最高质量对话、研究
+   格式: MLX
+   
+✅ Qwen3-Coder-480B (MLX 4-bit) - 252GB ⚠️
+   路径: lmstudio-community/Qwen3-Coder-480B-A35B-Instruct-MLX-4bit
+   推荐用途: 企业级代码生成
+   格式: MLX
+
+================================================================================
+📦 空目录（已在LM Studio中添加但未下载完成）
+================================================================================
+
+⚠️ 以下模型目录存在但为空（可能正在下载或下载失败）:
+   - Hunyuan-A13B-Instruct-MXFP4_MOE
+   - Qwen3-Embedding-8B-GGUF
+   - hunyuanimage-gguf
+   - DeepSeek-R1-0528-Qwen3-8B-MLX-8bit
+   - Devstral-Small-2507-MLX-bf16
+   - Hermes-4-70B-MLX-4bit
+   - Hunyuan-A13B-Instruct-GGUF
+   - Qwen3-Coder-480B-A35B-Instruct-MLX-6bit
+   - gpt-oss-120b-mlx-8bit
+   - Qwen3-235B-A22B-8bit
+   - gemma-3-12b-it-qat-4bit
+   - Kimi-Dev-72B-GGUF
+   - Kimi-K2-Instruct-GGUF
+
+================================================================================
+💾 磁盘使用统计
+================================================================================
+
+已下载模型总大小: ~638GB
+
+推荐用于离线安装包的模型:
+   ✅ Qwen3-Coder-30B (30GB) - 最佳代码模型，适中大小
+   ✅ Qwen3-32B (32GB) - 通用对话，适中大小
+   ⚠️ Qwen3-Next-80B (42GB) - 高质量，但较大
+
+不推荐打包的超大模型:
+   ❌ Qwen3-235B (233GB) - 太大
+   ❌ Qwen3-Coder-480B (252GB) - 太大
+
+================================================================================
+📋 复制到离线安装包的建议
+================================================================================
+
+方案1: 最小化（推荐新手）
+   只复制: Qwen3-Coder-30B (30GB)
+   用途: 专注代码场景
+   命令:
+   cp -R ~/.lmstudio/models/lmstudio-community/Qwen3-Coder-30B-A3B-Instruct-MLX-8bit \
+         installers/models/qwen3-coder-30b/
+
+方案2: 平衡（推荐）
+   复制: Qwen3-Coder-30B + Qwen3-32B (62GB)
+   用途: 代码 + 通用对话
+   命令:
+   cp -R ~/.lmstudio/models/lmstudio-community/Qwen3-Coder-30B-A3B-Instruct-MLX-8bit \
+         installers/models/qwen3-coder-30b/
+   cp -R ~/.lmstudio/models/lmstudio-community/Qwen3-32B-MLX-8bit \
+         installers/models/qwen3-32b/
+
+方案3: 全功能（土豪配置）
+   复制: 所有30-42GB的模型 (134GB)
+   包括: Qwen3-Coder-30B, Qwen3-30B, Qwen3-32B, Qwen3-Next-80B, Seed-OSS-36B
+   用途: 完整体验
+   命令:
+   cp -R ~/.lmstudio/models/lmstudio-community/Qwen3* installers/models/
+   cp -R ~/.lmstudio/models/lmstudio-community/Seed-OSS* installers/models/
+
+================================================================================
+🚀 快速复制命令（推荐方案2）
+================================================================================
+
+# 创建模型目录
+mkdir -p installers/models/qwen3-coder-30b
+mkdir -p installers/models/qwen3-32b
+
+# 复制代码模型（30GB）
+echo "复制Qwen3-Coder-30B (代码生成专用)..."
+cp -R ~/.lmstudio/models/lmstudio-community/Qwen3-Coder-30B-A3B-Instruct-MLX-8bit/* \
+      installers/models/qwen3-coder-30b/
+
+# 复制通用模型（32GB）
+echo "复制Qwen3-32B (通用对话)..."
+cp -R ~/.lmstudio/models/lmstudio-community/Qwen3-32B-MLX-8bit/* \
+      installers/models/qwen3-32b/
+
+echo "✅ 模型复制完成！总大小: 62GB"
+
+================================================================================
+⚠️ 重要提示
+================================================================================
+
+1. MLX格式说明:
+   - MLX格式是Apple Silicon (M1/M2/M3)专用优化格式
+   - 性能最好但只能在Mac上使用
+   - 如果需要跨平台，建议下载GGUF格式
+
+2. 磁盘空间:
+   - 方案1需要: 30GB + 2.5GB(系统) = 32.5GB
+   - 方案2需要: 62GB + 2.5GB(系统) = 64.5GB (推荐64GB U盘)
+   - 方案3需要: 134GB + 2.5GB(系统) = 136.5GB (需要256GB U盘)
+
+3. 传输时间估算:
+   - USB 3.0 (约100MB/s): 方案2约10-15分钟
+   - USB 2.0 (约30MB/s): 方案2约30-40分钟
+
+4. 安装后验证:
+   - 打开LM Studio
+   - 点击 "My Models"
+   - 应该能看到复制的模型
+
+================================================================================
+生成时间: 2025-11-07
+总模型数: 7个有效模型
+总大小: ~638GB
+================================================================================

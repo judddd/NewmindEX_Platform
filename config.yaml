@@ -1,0 +1,239 @@
+# NewMind AI Platform - 配置清单
+# 版本: 1.0
+
+# 系统依赖
+system:
+  python:
+    file: "installers/system/python-3.11.7-macos11.pkg"
+    version: "3.11.7"
+    description: "独立Python解释器，不依赖系统Python"
+  docker:
+    file: "installers/Docker.dmg"
+    version: "latest"
+  nodejs:
+    file: "installers/system/node-v20.18.1.pkg"
+    version: "20.18.1"
+  uv:
+    file: "installers/system/uv-installer.sh"
+    version: "latest"
+
+# 应用程序
+applications:
+  lmstudio:
+    file: "installers/LM-Studio-0.3.30-1-arm64.dmg"
+    version: "0.3.30-1"
+    install_path: "/Applications/LM Studio.app"
+  newchat:
+    file: "installers/NewChat-1.0.1-mac-arm64.dmg"
+    version: "1.0.1"
+    install_path: "/Applications/NewChat.app"
+
+# Docker镜像
+docker_images:
+  elasticsearch:
+    file: "installers/docker_images/elasticsearch-8.17.3.tar"
+    image: "docker.elastic.co/elasticsearch/elasticsearch:8.17.3"
+    version: "8.17.3"
+  kibana:
+    file: "installers/docker_images/kibana-8.17.3.tar"
+    image: "docker.elastic.co/kibana/kibana:8.17.3"
+    version: "8.17.3"
+  logstash:
+    file: "installers/docker_images/logstash-8.17.3.tar"
+    image: "docker.elastic.co/logstash/logstash:8.17.3"
+    version: "8.17.3"
+  newflow:
+    file: "installers/newflow-1.0.0-1.tar"
+    image: "newflow:1.0.0"
+    version: "1.0.0-1"
+  newflow_docs:
+    file: "installers/newflow-docs-1.0.tar"
+    image: "newflow-docs:1.0"
+    version: "1.0"
+  newchat_docs:
+    file: "installers/newchat-docs-1.0.1.tar"
+    image: "newchat-docs:1.0.1"
+    version: "1.0.1"
+  mcp_elasticsearch:
+    file: "installers/newmind-mcp-elasticsearch-1.0.0.tar"
+    image: "newmind-mcp-elasticsearch:1.0.0"
+    version: "1.0.0"
+  mcp_kibana:
+    file: "installers/newmind-mcp-kibana-1.0.0.tar"
+    image: "newmind-mcp-kibana:1.0.0"
+    version: "1.0.0"
+  mcp_newflow:
+    file: "installers/newmind-mcp-newflow-1.0.0.tar"
+    image: "newmind-mcp-newflow:1.0.0"
+    version: "1.0.0"
+
+# AI模型（永不删除）
+ai_models:
+  base_path: "installers/models"
+  runtime_path: "~/.lmstudio/models"
+  models:
+    - name: "Qwen3-Coder-30B"
+      path: "installers/models/qwen3-coder-30b"
+      size: "30GB"
+      description: "代码生成和补全专用模型"
+    - name: "Qwen3-Next-80B"
+      path: "installers/models/qwen3-next-80b"
+      size: "42GB"
+      description: "最强性能通用模型"
+
+# Python依赖
+python:
+  requirements: "installers/python_deps/requirements.txt"
+  wheels: "installers/python_deps/wheels/"
+  venv_path: "python_dashboard/.venv"
+
+# 数据目录
+data:
+  elasticsearch: "elasticsearch/node*"
+  newflow: "newflow_data/"
+  mcp: "python_dashboard/mcp_instances.db"
+  logs: "logs/"
+  dashboard_logs: "python_dashboard/*.log"
+
+# 端口配置
+ports:
+  dashboard: 8000
+  elasticsearch: 9200
+  kibana: 5601
+  newflow: 5677
+  lmstudio: 1234
+  newchat: 61990
+  mcp_elasticsearch: 3001
+  mcp_kibana: 3002
+  mcp_newflow: 3003
+
+# 临时文件（可安全删除）
+temporary_files:
+  - ".install_state"
+  - "logs/*.log"
+  - "python_dashboard/dashboard.pid"
+  - "python_dashboard/dashboard.log"
+  - "python_dashboard/mcp_logs/*"
+  - "python_dashboard/mcp_pids/*"
+  - "python_dashboard/.venv"
+  - "newflow_data/*.sqlite*"
+  - "newflow_data/*.log"
+  - "elasticsearch/node*/*"
+
+# 下载源配置
+download_sources:
+  base_url: "https://xiaopenges.tocharian.eu/download"
+  server_path: "/var/www/newmind-download"
+  
+  # 系统依赖
+  system:
+    docker:
+      remote: "Docker.dmg"
+      local: "installers/Docker.dmg"
+      size: "543M"
+      md5: ""
+      required: true
+    nodejs:
+      remote: "node-v20.18.1.pkg"
+      local: "installers/system/node-v20.18.1.pkg"
+      size: "71M"
+      md5: ""
+      required: true
+    uv_installer:
+      remote: "uv-installer.sh"
+      local: "installers/system/uv-installer.sh"
+      size: "~1K"
+      md5: ""
+      required: false
+  
+  # 应用程序
+  applications:
+    newchat:
+      remote: "NewChat-1.0.1-mac-arm64.dmg"
+      local: "installers/NewChat-1.0.1-mac-arm64.dmg"
+      size: "294M"
+      md5: ""
+      required: true
+    lmstudio:
+      remote: "LM-Studio-0.3.30-1-arm64.dmg"
+      local: "installers/LM-Studio-0.3.30-1-arm64.dmg"
+      size: "508M"
+      md5: ""
+      required: true
+  
+  # Docker镜像
+  docker_images:
+    elasticsearch:
+      remote: "elasticsearch-8.17.3.tar"
+      local: "installers/docker_images/elasticsearch-8.17.3.tar"
+      size: "521M"
+      md5: ""
+      required: true
+    kibana:
+      remote: "kibana-8.17.3.tar"
+      local: "installers/docker_images/kibana-8.17.3.tar"
+      size: "415M"
+      md5: ""
+      required: true
+    logstash:
+      remote: "logstash-8.17.3.tar"
+      local: "installers/docker_images/logstash-8.17.3.tar"
+      size: "511M"
+      md5: ""
+      required: true
+    newflow:
+      remote: "newflow-1.0.0-1.tar"
+      local: "installers/newflow-1.0.0-1.tar"
+      size: "256M"
+      md5: ""
+      required: true
+    newflow_docs:
+      remote: "newflow-docs-1.0.tar"
+      local: "installers/newflow-docs-1.0.tar"
+      size: "84M"
+      md5: ""
+      required: false
+    newchat_docs:
+      remote: "newchat-docs-1.0.1.tar"
+      local: "installers/newchat-docs-1.0.1.tar"
+      size: "84M"
+      md5: ""
+      required: false
+    mcp_elasticsearch:
+      remote: "newmind-mcp-elasticsearch-1.0.0.tar"
+      local: "installers/newmind-mcp-elasticsearch-1.0.0.tar"
+      size: "81M"
+      md5: ""
+      required: true
+    mcp_kibana:
+      remote: "newmind-mcp-kibana-1.0.0.tar"
+      local: "installers/newmind-mcp-kibana-1.0.0.tar"
+      size: "90M"
+      md5: ""
+      required: true
+    mcp_newflow:
+      remote: "newmind-mcp-newflow-1.0.0.tar"
+      local: "installers/newmind-mcp-newflow-1.0.0.tar"
+      size: "93M"
+      md5: ""
+      required: true
+  
+  # AI模型（压缩包）
+  ai_models:
+    qwen3_coder_30b:
+      remote: "qwen3-coder-30b.tar.gz"
+      local: "installers/models/qwen3-coder-30b"
+      compressed_size: "~29G"
+      uncompressed_size: "30G"
+      md5: ""
+      required: false
+      description: "代码生成和补全专用模型"
+    qwen3_next_80b:
+      remote: "qwen3-next-80b.tar.gz"
+      local: "installers/models/qwen3-next-80b"
+      compressed_size: "~38G"
+      uncompressed_size: "42G"
+      md5: ""
+      required: false
+      description: "最强性能通用模型"
+

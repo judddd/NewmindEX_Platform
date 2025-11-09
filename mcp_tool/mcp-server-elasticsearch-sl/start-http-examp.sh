@@ -7,10 +7,10 @@ echo "🚀 Starting Elasticsearch MCP Server (HTTP Streamable Mode)"
 echo "============================================================"
 
 # Elasticsearch Configuration
-export ES_URL="https://localhost:9201"
-export ES_USERNAME="elastic"
-export ES_PASSWORD="1234!"
-export NODE_TLS_REJECT_UNAUTHORIZED="0"
+export ES_URL="http://localhost:9200"
+#export ES_USERNAME="elastic"
+#export ES_PASSWORD="1234!"
+#export NODE_TLS_REJECT_UNAUTHORIZED="0"
 
 # MCP Transport Configuration
 export MCP_TRANSPORT="http"

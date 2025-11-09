@@ -12,6 +12,23 @@ echo ""
 # 进入项目根目录
 cd "$(dirname "$0")/.."
 
+# 检查是否首次运行（检查安装状态）
+if [ ! -f ".install_state" ] && [ ! -d "python_dashboard/.venv" ]; then
+    echo "⚠️  检测到这是首次运行"
+    echo ""
+    echo "建议使用安装脚本进行完整安装："
+    echo "  ./install.sh"
+    echo ""
+    echo "如果您确定已手动安装所有组件，可以继续运行此脚本。"
+    echo ""
+    read -p "是否继续? [y/N] " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "已取消。请运行: ./install.sh"
+        exit 1
+    fi
+fi
+
 # 步骤0：检查依赖
 echo "步骤 1/11: 检查系统依赖"
 bash scripts/00_check_dependencies.sh

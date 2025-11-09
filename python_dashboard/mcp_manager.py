@@ -11,6 +11,14 @@ import time
 
 from database import update_instance, get_instance
 
+try:
+    from audit_logger import log_operation, log_audit, log_dashboard
+except ImportError:
+    # 如果audit_logger还未初始化，提供空函数
+    def log_operation(*args, **kwargs): pass
+    def log_audit(*args, **kwargs): pass
+    def log_dashboard(*args, **kwargs): pass
+
 # Docker客户端
 try:
     docker_client = docker.from_env()
@@ -21,6 +29,7 @@ except DockerException as e:
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
 MCP_LOGS_DIR = Path(__file__).parent / "mcp_logs"
+LOGS_DIR = PROJECT_ROOT / "logs"
 
 # MCP镜像名称映射
 MCP_IMAGES = {
@@ -50,8 +59,11 @@ def start_mcp_server(instance_id: str) -> bool:
     Returns:
         bool: 是否启动成功
     """
+    log_operation("mcp_start_attempt", "system", {"instance_id": instance_id})
+    
     if not docker_client:
         print("❌ Docker客户端未初始化")
+        log_dashboard("ERROR", f"Docker client not initialized for {instance_id}")
         return False
     
     ensure_directories()
@@ -60,6 +72,7 @@ def start_mcp_server(instance_id: str) -> bool:
     instance = get_instance(instance_id)
     if not instance:
         print(f"实例不存在: {instance_id}")
+        log_dashboard("ERROR", f"Instance not found: {instance_id}")
         return False
     
     mcp_type = instance['type']
@@ -90,7 +103,13 @@ def start_mcp_server(instance_id: str) -> bool:
     
     # 根据类型添加配置
     if mcp_type == "elasticsearch":
-        environment["ES_URL"] = config.get("es_url", "http://host.docker.internal:9200")
+        # 默认使用Docker内部服务名，自动转换localhost为es01
+        es_url = config.get("es_url", "http://es01:9200")
+        if "localhost" in es_url:
+            es_url = es_url.replace("localhost:9200", "es01:9200")
+            es_url = es_url.replace("localhost:9201", "es02:9200")
+            es_url = es_url.replace("localhost:9202", "es03:9200")
+        environment["ES_URL"] = es_url
         
         if config.get("es_api_key"):
             environment["ES_API_KEY"] = config["es_api_key"]
@@ -104,7 +123,11 @@ def start_mcp_server(instance_id: str) -> bool:
             environment["ES_CA_CERT"] = config["es_ca_cert"]
     
     elif mcp_type == "kibana":
-        environment["KIBANA_URL"] = config.get("kibana_url", "http://host.docker.internal:5601")
+        # 默认使用Docker内部服务名，自动转换localhost为kibana
+        kibana_url = config.get("kibana_url", "http://kibana:5601")
+        if "localhost" in kibana_url:
+            kibana_url = kibana_url.replace("localhost:5601", "kibana:5601")
+        environment["KIBANA_URL"] = kibana_url
         environment["KIBANA_DEFAULT_SPACE"] = config.get("kibana_space", "default")
         
         if config.get("kibana_cookies"):
@@ -125,20 +148,38 @@ def start_mcp_server(instance_id: str) -> bool:
     
     elif mcp_type == "newflow":
         api_key = config.get("newflow_api_key") or ""
-        environment["N8N_BASE_URL"] = config.get("newflow_url", "http://host.docker.internal:5677")
-        environment["N8N_API_KEY"] = api_key
+        # 默认使用Docker内部服务名，自动转换localhost为newflow
+        newflow_url = config.get("newflow_url", "http://newflow:5677")
+        if "localhost" in newflow_url:
+            newflow_url = newflow_url.replace("localhost:5677", "newflow:5677")
+        
+        # 确保URL包含 /api/v1 后缀（NewFlow MCP Server要求）
+        if not newflow_url.endswith("/api/v1"):
+            # 移除可能存在的尾部斜杠
+            newflow_url = newflow_url.rstrip("/")
+            newflow_url = f"{newflow_url}/api/v1"
+        
+        environment["NEWFLOW_API_URL"] = newflow_url
+        environment["NEWFLOW_API_KEY"] = api_key
+    
+    # 创建日志目录（用于容器日志挂载）
+    container_log_dir = LOGS_DIR / "mcp_containers" / instance_id
+    container_log_dir.mkdir(parents=True, exist_ok=True)
     
     try:
         # 删除已存在的同名容器
         try:
             old_container = docker_client.containers.get(container_name)
             print(f"⚠️  删除旧容器: {container_name}")
+            log_dashboard("INFO", f"Removing old container: {container_name}")
             old_container.remove(force=True)
         except NotFound:
             pass
         
         # 创建并启动容器
         print(f"🚀 启动容器: {container_name}")
+        
+        # 先用默认网络创建容器，然后连接到正确的网络
         container = docker_client.containers.run(
             image=image_name,
             name=container_name,
@@ -146,9 +187,38 @@ def start_mcp_server(instance_id: str) -> bool:
             ports={'3000/tcp': port},  # 容器内3000映射到主机port
             detach=True,
             remove=False,
+            network='bridge',  # 先用默认网络创建
             extra_hosts={'host.docker.internal': 'host-gateway'},
-            network_mode='bridge'
+            # 挂载日志目录
+            volumes={
+                str(container_log_dir): {'bind': '/var/log/mcp', 'mode': 'rw'}
+            },
+            # 配置Docker日志驱动
+            log_config={
+                'type': 'json-file',
+                'config': {
+                    'max-size': '10m',
+                    'max-file': '5',
+                    'labels': f'mcp_instance={instance_id}'
+                }
+            }
         )
+        
+        # 连接到docker-compose的elastic网络
+        try:
+            compose_network = docker_client.networks.get('deploy_newmind_elastic')
+            compose_network.connect(container)
+            print(f"✓ 已连接到docker-compose网络: deploy_newmind_elastic")
+            
+            # 断开bridge网络（可选）
+            try:
+                bridge_network = docker_client.networks.get('bridge')
+                bridge_network.disconnect(container)
+            except:
+                pass
+        except NotFound:
+            print("⚠️  docker-compose网络不存在，使用默认bridge网络")
+            print("   提示：请先启动docker-compose服务")
         
         # 等待容器启动
         print(f"⏳ 等待容器启动...")
@@ -186,6 +256,17 @@ def start_mcp_server(instance_id: str) -> bool:
         print(f"  端点: http://localhost:{port}/mcp")
         print(f"  健康检查: {health_url}")
         
+        log_operation("mcp_start_success", "system", {
+            "instance_id": instance_id,
+            "container_name": container_name,
+            "port": port,
+            "type": mcp_type
+        })
+        log_audit("MCP_START", f"MCP instance started: {instance.get('name')}", {
+            "instance_id": instance_id,
+            "type": mcp_type
+        })
+        
         return True
         
     except APIError as e:
@@ -195,6 +276,13 @@ def start_mcp_server(instance_id: str) -> bool:
         print(f"❌ 启动MCP服务器失败: {e}")
         import traceback
         traceback.print_exc()
+        
+        log_operation("mcp_start_failed", "system", {
+            "instance_id": instance_id,
+            "error": str(e)
+        })
+        log_dashboard("ERROR", f"Failed to start MCP {instance_id}: {e}")
+        
         return False
 
 
@@ -208,8 +296,11 @@ def stop_mcp_server(instance_id: str) -> bool:
     Returns:
         bool: 是否停止成功
     """
+    log_operation("mcp_stop_attempt", "system", {"instance_id": instance_id})
+    
     if not docker_client:
         print("❌ Docker客户端未初始化")
+        log_dashboard("ERROR", f"Docker client not initialized for stop {instance_id}")
         return False
     
     container_name = get_container_name(instance_id)
@@ -227,6 +318,10 @@ def stop_mcp_server(instance_id: str) -> bool:
         update_instance(instance_id, {"status": "stopped", "pid": None})
         
         print(f"✅ MCP服务器已停止: {instance_id}")
+        
+        log_operation("mcp_stop_success", "system", {"instance_id": instance_id})
+        log_audit("MCP_STOP", f"MCP instance stopped", {"instance_id": instance_id})
+        
         return True
         
     except NotFound:
@@ -242,6 +337,13 @@ def stop_mcp_server(instance_id: str) -> bool:
         print(f"❌ 停止MCP服务器失败: {e}")
         import traceback
         traceback.print_exc()
+        
+        log_operation("mcp_stop_failed", "system", {
+            "instance_id": instance_id,
+            "error": str(e)
+        })
+        log_dashboard("ERROR", f"Failed to stop MCP {instance_id}: {e}")
+        
         return False
 
 

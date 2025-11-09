@@ -6,10 +6,10 @@ echo "🚀 Starting Kibana MCP Server (HTTP Streamable Mode)"
 echo "===================================================="
 
 # Kibana Configuration
-export KIBANA_URL="http://xiaopenges.tocharian.eu:5602"
-export KIBANA_USERNAME="elastic"
-export KIBANA_PASSWORD="tocharian!"
-export NODE_TLS_REJECT_UNAUTHORIZED="0"
+export KIBANA_URL="http://localhost:5601"
+#export KIBANA_USERNAME="elastic"
+#export KIBANA_PASSWORD="123456"
+#export NODE_TLS_REJECT_UNAUTHORIZED="0"
 
 # MCP Transport Configuration
 export MCP_TRANSPORT="http"

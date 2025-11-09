@@ -75,7 +75,7 @@
     },
     {
       "parameters": {
-        "endpointUrl": "http://192.168.1.5:3008/mcp",
+        "endpointUrl": "http://host.docker.internal:3008/mcp",
         "serverTransport": "httpStreamable",
         "include": "selected",
         "includeTools": [
@@ -94,7 +94,7 @@
     },
     {
       "parameters": {
-        "endpointUrl": "http://192.168.1.5:3009/mcp",
+        "endpointUrl": "http://host.docker.internal:3009/mcp",
         "serverTransport": "httpStreamable",
         "include": "selected",
         "includeTools": [

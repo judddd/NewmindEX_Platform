@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "endpointUrl": "http://192.168.1.5:3001/mcp",
+        "endpointUrl": "http://host.docker.internal:3001/mcp",
         "serverTransport": "httpStreamable",
         "include": "selected",
         "includeTools": [
@@ -25,7 +25,7 @@
       "parameters": {
         "toolDescription": "获取索引Mappings结构分析。\n\n输入参数（JSON格式）：\n- index: 索引名（必需，支持通配符如 logs-*）\n- include_sample: 是否包含样本数据 (true/false，默认false)\n\n示例：{\"index\":\"logs-endpoint.events.network-*\",\"include_sample\":false}\n\n返回：\n- structure_analysis: 字段分类统计\n- field_details: 字段详细信息\n- index_purpose: 推断的索引用途\n- data_characteristics: 数据特征\n- sample_data: 样本数据（如果请求）\n\n用于深入了解索引字段结构和数据特征。",
         "method": "POST",
-        "url": "http://localhost:5677/webhook/custom-mappings",
+        "url": "http://127.0.0.1:5677/webhook/custom-mappings",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\"index\":\"employees\"}"
@@ -43,7 +43,7 @@
       "parameters": {
         "toolDescription": "获取ES索引分类摘要（支持自适应策略）。\n\n输入参数（可选，JSON格式）：\n- focus: 着重类型 (network/security/alerts/process/file/metrics/logs/custom)\n- detail_level: 详细程度 (summary/detailed)\n- include_system: 是否包含系统索引 (true/false)\n- max_patterns: 每类最大模式数 (默认5)\n\n示例：{\"focus\":\"network\",\"detail_level\":\"detailed\"}\n\n返回：\n- summary: 分类的索引模式\n- stats: 总数和分类统计（含strategy_used）\n- data_sources: 检测到的数据源\n- focus_details: 如果指定focus，返回详细信息\n\n这是第一个应该调用的工具，用于了解ES环境全局。",
         "method": "POST",
-        "url": "http://localhost:5677/webhook/index-summary",
+        "url": "http://127.0.0.1:5677/webhook/index-summary",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={}"
@@ -114,7 +114,7 @@
     },
     {
       "parameters": {
-        "endpointUrl": "http://192.168.1.5:3001/mcp",
+        "endpointUrl": "http://host.docker.internal:3001/mcp",
         "serverTransport": "httpStreamable",
         "include": "selected",
         "includeTools": [
@@ -259,7 +259,7 @@
     },
     {
       "parameters": {
-        "endpointUrl": "http://192.168.1.5:3001/mcp",
+        "endpointUrl": "http://host.docker.internal:3001/mcp",
         "serverTransport": "httpStreamable",
         "include": "selected",
         "includeTools": [

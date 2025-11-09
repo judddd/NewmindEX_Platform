@@ -46,19 +46,19 @@ else
 fi
 echo ""
 
-# 导入 NewmindChat Docs 镜像（如果尚未导入）
-echo "📦 检查 NewmindChat Docs 镜像..."
-if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newmindchat-docs:"; then
-    NEWMINDCHAT_DOCS_TAR=$(ls installers/newmindchat-docs-*.tar 2>/dev/null | head -1)
-    if [ -n "$NEWMINDCHAT_DOCS_TAR" ]; then
-        echo "📦 导入 NewmindChat Docs 镜像: $NEWMINDCHAT_DOCS_TAR"
-        docker load -i "$NEWMINDCHAT_DOCS_TAR"
-        echo "✅ NewmindChat Docs 镜像导入成功"
+# 导入 NewChat Docs 镜像（如果尚未导入）
+echo "📦 检查 NewChat Docs 镜像..."
+if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newchat-docs:"; then
+    NEWCHAT_DOCS_TAR=$(ls installers/newchat-docs-*.tar 2>/dev/null | head -1)
+    if [ -n "$NEWCHAT_DOCS_TAR" ]; then
+        echo "📦 导入 NewChat Docs 镜像: $NEWCHAT_DOCS_TAR"
+        docker load -i "$NEWCHAT_DOCS_TAR"
+        echo "✅ NewChat Docs 镜像导入成功"
     else
-        echo "⚠️  找不到 NewmindChat Docs 镜像文件（installers/newmindchat-docs-*.tar）"
+        echo "⚠️  找不到 NewChat Docs 镜像文件（installers/newchat-docs-*.tar）"
     fi
 else
-    echo "✅ NewmindChat Docs 镜像已存在，跳过导入"
+    echo "✅ NewChat Docs 镜像已存在，跳过导入"
 fi
 echo ""
 
@@ -119,13 +119,19 @@ echo ""
 
 # 启动 NewFlow Docs 容器（独立于 docker-compose）
 echo "📚 启动 NewFlow API 文档服务..."
-if docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newflow-docs:"; then
+
+# 自动查找可用的 newflow-docs 镜像版本
+NEWFLOW_DOCS_IMAGE=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep -E "^newflow-docs:" | head -1)
+
+if [ -n "$NEWFLOW_DOCS_IMAGE" ]; then
+    echo "📦 使用镜像: $NEWFLOW_DOCS_IMAGE"
+    
     # 停止旧容器（如果存在）
     docker stop newflow-docs 2>/dev/null || true
     docker rm newflow-docs 2>/dev/null || true
     
     # 启动新容器
-    if docker run -d --name newflow-docs -p ${NEWFLOW_DOCS_PORT:-8001}:8001 newflow-docs:1.0 2>/dev/null; then
+    if docker run -d --name newflow-docs -p ${NEWFLOW_DOCS_PORT:-8001}:8001 "$NEWFLOW_DOCS_IMAGE" 2>/dev/null; then
         echo "✅ NewFlow API 文档已启动: http://localhost:${NEWFLOW_DOCS_PORT:-8001}"
     else
         echo "⚠️  NewFlow API 文档启动失败"
@@ -135,21 +141,27 @@ else
 fi
 echo ""
 
-# 启动 NewmindChat Docs 容器（独立于 docker-compose）
-echo "📚 启动 NewmindChat 文档服务..."
-if docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newmindchat-docs:"; then
+# 启动 NewChat Docs 容器（独立于 docker-compose）
+echo "📚 启动 NewChat 文档服务..."
+
+# 自动查找可用的 newchat-docs 镜像版本
+NEWCHAT_IMAGE=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep -E "^newchat-docs:" | head -1)
+
+if [ -n "$NEWCHAT_IMAGE" ]; then
+    echo "📦 使用镜像: $NEWCHAT_IMAGE"
+    
     # 停止旧容器（如果存在）
-    docker stop newmindchat-docs 2>/dev/null || true
-    docker rm newmindchat-docs 2>/dev/null || true
+    docker stop newchat-docs 2>/dev/null || true
+    docker rm newchat-docs 2>/dev/null || true
     
     # 启动新容器
-    if docker run -d --name newmindchat-docs -p ${NEWMINDCHAT_DOCS_PORT:-8002}:8002 newmindchat-docs:1.0 2>/dev/null; then
-        echo "✅ NewmindChat 文档已启动: http://localhost:${NEWMINDCHAT_DOCS_PORT:-8002}"
+    if docker run -d --name newchat-docs -p ${NEWCHAT_DOCS_PORT:-8002}:8002 "$NEWCHAT_IMAGE" 2>/dev/null; then
+        echo "✅ NewChat 文档已启动: http://localhost:${NEWCHAT_DOCS_PORT:-8002}"
     else
-        echo "⚠️  NewmindChat 文档启动失败"
+        echo "⚠️  NewChat 文档启动失败"
     fi
 else
-    echo "⚠️  NewmindChat Docs 镜像不存在，跳过文档服务启动"
+    echo "⚠️  NewChat Docs 镜像不存在，跳过文档服务启动"
 fi
 echo ""
 
@@ -161,5 +173,5 @@ echo "   Kibana: http://localhost:${KIBANA_PORT:-5601}"
 echo "   Logstash: http://localhost:${LOGSTASH_PORT:-5044}"
 echo "   NewFlow: http://localhost:${NEWFLOW_PORT:-5677}"
 echo "   NewFlow API 文档: http://localhost:${NEWFLOW_DOCS_PORT:-8001}"
-echo "   NewmindChat 文档: http://localhost:${NEWMINDCHAT_DOCS_PORT:-8002}"
+echo "   NewChat 文档: http://localhost:${NEWCHAT_DOCS_PORT:-8002}"
 

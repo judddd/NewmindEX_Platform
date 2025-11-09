@@ -8,21 +8,43 @@ __pycache__/
 # Node
 node_modules/
 *.log
-dist/
-build/
+
+# MCP Server - 忽略构建产物但保留源代码
+mcp_tool/*/dist/
+mcp_tool/*/build/
+mcp_tool/*/*.tgz
+mcp_tool/*/*.tar
+mcp_tool/*/*.tar.gz
+
+# 但保留MCP源代码和配置
+!mcp_tool/*/src/
+!mcp_tool/*/package.json
+!mcp_tool/*/tsconfig.json
+!mcp_tool/*/README*.md
+!mcp_tool/*/Dockerfile
+!mcp_tool/*/*.sh
 
 # Data & Volumes
 elasticsearch/node*/
-# newflow_data/ - 保留用户数据和配置（离线环境设计）
+elasticsearch_data/
+kibana_data/
+logstash_data/
+
+# newflow_data/ - 保留配置但忽略运行时数据
 newflow_data/*.log
 newflow_data/n8nEventLog-*.log
 newflow_data/crash.journal
 newflow_data/execution_data/
 newflow_data/logs/
+newflow_data/database.sqlite*
+newflow_data/binaryData/
 
 # Environment
+.env
 .env.local
 .env.*.local
+copy.enva
+env.copy
 
 # Mac
 .DS_Store
@@ -34,10 +56,39 @@ newflow_data/logs/
 # MCP Runtime
 python_dashboard/mcp_pids/
 python_dashboard/mcp_logs/
+python_dashboard/mcp_instances.db
+python_dashboard/dashboard.pid
+python_dashboard/dashboard.log
 mcp_tool/instances/*/logs/
 mcp_tool/instances/*/pids/
 
+# Logs directory
+logs/
+*.log
+*.log.*
+*.gz
+
 # Installers (too large for git, downloaded on demand)
-installers/*.dmg
-installers/*.tar
+installers/
+!installers/README*.md
+!installers/example-configs/
+
+# 但保留installers目录结构说明
+!installers/.gitkeep
+
+# Upload artifacts
+upload_manifest.txt
+upload_checksums.txt
+upload_log.txt
+server_manifest.yaml
+temp_upload/
+
+# Installation state and temporary files
+.install_state
+test_*.sh
+LOGGING_IMPLEMENTATION_SUMMARY.txt
+
+# Keep plan files
+!.plan.md
+!mcp-.plan.md
 

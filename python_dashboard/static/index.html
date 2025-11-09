@@ -1557,7 +1557,7 @@
                 `<span class="badge badge-${lmStatus ? 'running' : 'stopped'}">${lmStatus ? '运行中' : '离线'}</span>`;
             
             // 更新NewChat状态
-            const newchatStatus = status.newmindchat?.status === 'running';
+            const newchatStatus = status.newchat?.status === 'running';
             document.getElementById('newchat-status').innerHTML = 
                 `<span class="badge badge-${newchatStatus ? 'running' : 'stopped'}">${newchatStatus ? '运行中' : '离线'}</span>`;
             
@@ -1593,7 +1593,7 @@
                     <td><code>${inst.endpoint}</code></td>
                     <td>
                         <button class="btn btn-sm btn-${inst.is_healthy ? 'danger' : 'success'}" 
-                                onclick="${inst.is_healthy ? 'stopMCP' : 'startMCP'}('${inst.id}')">
+                                onclick="${inst.is_healthy ? 'stopMCP' : 'startMCP'}('${inst.id}', event)">
                             <i class="fas fa-${inst.is_healthy ? 'stop' : 'play'}"></i>
                         </button>
                         <button class="btn btn-sm btn-primary" onclick="editMCP('${inst.id}')">
@@ -1618,11 +1618,16 @@
             } catch {}
         }
 
-        async function startMCP(instanceId) {
-            const btn = event.target.closest('button');
-            const oldHtml = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        async function startMCP(instanceId, event = null) {
+            let btn = null;
+            let oldHtml = '';
+            
+            if (event) {
+                btn = event.target.closest('button');
+                oldHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
             
             const response = await fetch(`/api/mcp/instances/${instanceId}/start`, { method: 'POST' });
             if (response.ok) {
@@ -1631,15 +1636,22 @@
             } else {
                 alert('启动失败');
             }
-            btn.disabled = false;
-            btn.innerHTML = oldHtml;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            }
         }
         
-        async function stopMCP(instanceId) {
-            const btn = event.target.closest('button');
-            const oldHtml = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        async function stopMCP(instanceId, event = null) {
+            let btn = null;
+            let oldHtml = '';
+            
+            if (event) {
+                btn = event.target.closest('button');
+                oldHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
             
             try {
                 const response = await fetch(`/api/mcp/instances/${instanceId}/stop`, { method: 'POST' });
@@ -1652,8 +1664,10 @@
             } catch (error) {
                 alert(`停止失败: ${error.message}`);
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = oldHtml;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = oldHtml;
+                }
             }
         }
         
@@ -2123,7 +2137,7 @@
                 button.disabled = true;
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 启动中...';
                 
-                const response = await fetch('/api/open-newmindchat', { method: 'POST' });
+                const response = await fetch('/api/open-newchat', { method: 'POST' });
                 const result = await response.json();
                 
                 if (result.success) {
@@ -2228,7 +2242,7 @@
         }
         
         async function downloadNewChatConfig() {
-            const response = await fetch('/api/mcp/newmindchat-config');
+            const response = await fetch('/api/mcp/newchat-config');
             const config = await response.json();
             const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
