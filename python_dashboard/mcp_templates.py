@@ -5,19 +5,19 @@ MCP模板预设
 
 MCP_TEMPLATES = {
     "local_es_cluster": {
-        "name": "本地ES集群（Docker内部）",
+        "name": "本地ES集群（推荐）",
         "type": "elasticsearch",
-        "description": "MCP容器通过Docker服务名访问ES（推荐）",
+        "description": "MCP Docker容器通过host.docker.internal访问宿主机ES",
         "config": {
-            "es_url": "http://es01:9200",
+            "es_url": "http://host.docker.internal:9200",
             "es_username": "elastic",
             "es_password": "changeme123"
         }
     },
-    "local_es_host": {
-        "name": "本地ES集群（主机访问）",
+    "local_es_localhost": {
+        "name": "本地ES集群（localhost）",
         "type": "elasticsearch",
-        "description": "通过localhost访问ES（会自动转换为es01）",
+        "description": "适用于MCP Node模式或测试环境",
         "config": {
             "es_url": "http://localhost:9200",
             "es_username": "elastic",
@@ -25,20 +25,20 @@ MCP_TEMPLATES = {
         }
     },
     "local_kibana": {
-        "name": "本地Kibana（Docker内部）",
+        "name": "本地Kibana（推荐）",
         "type": "kibana",
-        "description": "MCP容器通过Docker服务名访问Kibana（推荐）",
+        "description": "MCP Docker容器通过host.docker.internal访问宿主机Kibana",
         "config": {
-            "kibana_url": "http://kibana:5601",
+            "kibana_url": "http://host.docker.internal:5601",
             "kibana_username": "elastic",
             "kibana_password": "changeme123",
             "kibana_space": "default"
         }
     },
-    "local_kibana_host": {
-        "name": "本地Kibana（主机访问）",
+    "local_kibana_localhost": {
+        "name": "本地Kibana（localhost）",
         "type": "kibana",
-        "description": "通过localhost访问Kibana（会自动转换为kibana）",
+        "description": "适用于MCP Node模式或测试环境",
         "config": {
             "kibana_url": "http://localhost:5601",
             "kibana_username": "elastic",
@@ -47,18 +47,18 @@ MCP_TEMPLATES = {
         }
     },
     "local_newflow": {
-        "name": "本地NewFlow（Docker内部）",
+        "name": "本地NewFlow（推荐）",
         "type": "newflow",
-        "description": "MCP容器通过Docker服务名访问NewFlow（推荐）",
+        "description": "MCP Docker容器通过host.docker.internal访问宿主机NewFlow",
         "config": {
-            "newflow_url": "http://newflow:5677/api/v1",
+            "newflow_url": "http://host.docker.internal:5677/api/v1",
             "newflow_api_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYTg3YzdkOS1kYTk2LTQ3NDMtOGEwOS0wYzBhMWI5YWRiZjYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwMzc4OTYwfQ.AeMI20moNigjQwcMTi8FRaaOgupTuZ3Apso3jNyQg5Q"
         }
     },
-    "local_newflow_host": {
-        "name": "本地NewFlow（主机访问）",
+    "local_newflow_localhost": {
+        "name": "本地NewFlow（localhost）",
         "type": "newflow",
-        "description": "通过localhost访问NewFlow（会自动转换为newflow）",
+        "description": "适用于MCP Node模式或测试环境",
         "config": {
             "newflow_url": "http://localhost:5677",
             "newflow_api_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYTg3YzdkOS1kYTk2LTQ3NDMtOGEwOS0wYzBhMWI5YWRiZjYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwMzc4OTYwfQ.AeMI20moNigjQwcMTi8FRaaOgupTuZ3Apso3jNyQg5Q"

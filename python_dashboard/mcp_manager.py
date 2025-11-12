@@ -103,12 +103,11 @@ def start_mcp_server(instance_id: str) -> bool:
     
     # 根据类型添加配置
     if mcp_type == "elasticsearch":
-        # 默认使用Docker内部服务名，自动转换localhost为es01
-        es_url = config.get("es_url", "http://es01:9200")
+        # MCP Docker模式：localhost需要转换为host.docker.internal
+        # 因为MCP容器和ES容器不在同一网络，无法通过容器名访问
+        es_url = config.get("es_url", "http://host.docker.internal:9200")
         if "localhost" in es_url:
-            es_url = es_url.replace("localhost:9200", "es01:9200")
-            es_url = es_url.replace("localhost:9201", "es02:9200")
-            es_url = es_url.replace("localhost:9202", "es03:9200")
+            es_url = es_url.replace("localhost", "host.docker.internal")
         environment["ES_URL"] = es_url
         
         if config.get("es_api_key"):
@@ -123,10 +122,10 @@ def start_mcp_server(instance_id: str) -> bool:
             environment["ES_CA_CERT"] = config["es_ca_cert"]
     
     elif mcp_type == "kibana":
-        # 默认使用Docker内部服务名，自动转换localhost为kibana
-        kibana_url = config.get("kibana_url", "http://kibana:5601")
+        # MCP Docker模式：localhost需要转换为host.docker.internal
+        kibana_url = config.get("kibana_url", "http://host.docker.internal:5601")
         if "localhost" in kibana_url:
-            kibana_url = kibana_url.replace("localhost:5601", "kibana:5601")
+            kibana_url = kibana_url.replace("localhost", "host.docker.internal")
         environment["KIBANA_URL"] = kibana_url
         environment["KIBANA_DEFAULT_SPACE"] = config.get("kibana_space", "default")
         
@@ -148,10 +147,10 @@ def start_mcp_server(instance_id: str) -> bool:
     
     elif mcp_type == "newflow":
         api_key = config.get("newflow_api_key") or ""
-        # 默认使用Docker内部服务名，自动转换localhost为newflow
-        newflow_url = config.get("newflow_url", "http://newflow:5677")
+        # MCP Docker模式：localhost需要转换为host.docker.internal
+        newflow_url = config.get("newflow_url", "http://host.docker.internal:5677")
         if "localhost" in newflow_url:
-            newflow_url = newflow_url.replace("localhost:5677", "newflow:5677")
+            newflow_url = newflow_url.replace("localhost", "host.docker.internal")
         
         # 确保URL包含 /api/v1 后缀（NewFlow MCP Server要求）
         if not newflow_url.endswith("/api/v1"):

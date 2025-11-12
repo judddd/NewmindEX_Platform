@@ -187,8 +187,8 @@ else
 fi
 
 # 3. NewFlow Docker镜像
-NEWFLOW_TAR="installers/newflow-1.0.0-1.tar"
-NEWFLOW_URL="${DOWNLOAD_BASE_URL}/newflow-1.0.0-1.tar"
+NEWFLOW_TAR="installers/newflow-1.0.3.tar"
+NEWFLOW_URL="${DOWNLOAD_BASE_URL}/newflow-1.0.3.tar"
 
 # 检查是否已有newflow镜像文件
 if ls installers/newflow-1.0.*.tar 1> /dev/null 2>&1; then

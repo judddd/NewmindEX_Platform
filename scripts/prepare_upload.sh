@@ -191,7 +191,7 @@ echo "# ═══════════════ Docker镜像 ════�
 add_to_manifest "installers/docker_images/elasticsearch-8.17.3.tar" "elasticsearch-8.17.3.tar"
 add_to_manifest "installers/docker_images/kibana-8.17.3.tar" "kibana-8.17.3.tar"
 add_to_manifest "installers/docker_images/logstash-8.17.3.tar" "logstash-8.17.3.tar"
-add_to_manifest "installers/newflow-1.0.0-1.tar" "newflow-1.0.0-1.tar"
+add_to_manifest "installers/newflow-1.0.3.tar" "newflow-1.0.3.tar"
 add_to_manifest "installers/newflow-docs-1.0.tar" "newflow-docs-1.0.tar"
 add_to_manifest "installers/newchat-docs-1.0.1.tar" "newchat-docs-1.0.1.tar"
 add_to_manifest "installers/newmind-mcp-elasticsearch-1.0.0.tar" "newmind-mcp-elasticsearch-1.0.0.tar"
