@@ -50,7 +50,7 @@ else
         "type": "elasticsearch",
         "port": 3001,
         "config": {
-          "es_url": "http://es01:9200",
+          "es_url": "http://host.docker.internal:9200",
           "es_username": "elastic",
           "es_password": "'"${ELASTIC_PASSWORD:-changeme123}"'",
           "disable_tls": true
@@ -84,7 +84,7 @@ else
         "type": "kibana",
         "port": 3002,
         "config": {
-          "kibana_url": "http://kibana:5601",
+          "kibana_url": "http://host.docker.internal:5601",
           "kibana_username": "elastic",
           "kibana_password": "'"${ELASTIC_PASSWORD:-changeme123}"'",
           "kibana_space": "default",
@@ -111,11 +111,11 @@ if instance_exists "本地NewFlow"; then
     echo "ℹ️  NewFlow MCP实例已存在，检查状态..."
     INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地NewFlow']; print(matches[0] if matches else '')")
 else
-    # MCP容器在Docker内部，直接使用服务名访问
-    NEWFLOW_URL="http://newflow:5677/api/v1"
+    # MCP Docker容器通过host.docker.internal访问宿主机上的NewFlow
+    NEWFLOW_URL="http://host.docker.internal:5677/api/v1"
     
     echo "ℹ️  NewFlow URL: $NEWFLOW_URL"
-    echo "ℹ️  (MCP容器通过Docker服务名访问NewFlow)"
+    echo "ℹ️  (MCP容器通过host.docker.internal访问宿主机NewFlow)"
     
     # 🔑 自动提取NewFlow生成的API Key
     echo "🔑 从NewFlow提取API Key..."
@@ -183,19 +183,20 @@ echo "   curl http://localhost:3002/health"
 echo "   curl http://localhost:3003/health"
 echo ""
 echo "📍 网络架构说明："
-echo "   🐳 Docker容器服务："
-echo "      • Elasticsearch:  localhost:9200 (容器内: es01:9200)"
-echo "      • Kibana:         localhost:5601 (容器内: kibana:5601)"
-echo "      • NewFlow:        localhost:5677 (容器内: newflow:5677)"
+echo "   🐳 Docker Compose服务（elastic网络）："
+echo "      • Elasticsearch:  localhost:9200"
+echo "      • Kibana:         localhost:5601"
+echo "      • NewFlow:        localhost:5677"
 echo ""
 echo "   🖥️  宿主机服务："
 echo "      • LM Studio:      localhost:1234"
 echo "      • Dashboard:      localhost:8000"
-echo "      • MCP Servers:    localhost:3001-3003"
+echo "      • MCP Servers:    localhost:3001-3003 (独立Docker容器)"
 echo ""
-echo "   ⚠️  重要："
-echo "      • MCP服务器在宿主机，连接Docker服务用 localhost:端口"
-echo "      • NewFlow工作流在Docker内，连接LM Studio用 host.docker.internal:1234"
+echo "   ⚠️  网络访问规则："
+echo "      • MCP Docker容器访问宿主机服务: host.docker.internal:端口"
+echo "      • MCP Docker容器 ✗ 无法通过容器名访问docker-compose服务（不同网络）"
+echo "      • NewFlow工作流访问LM Studio: host.docker.internal:1234"
 echo ""
 echo "📝 NewChat配置示例："
 echo '   {
