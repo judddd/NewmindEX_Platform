@@ -107,7 +107,7 @@ services:
       - elastic
 
   newflow:
-    image: newflow:1.0.0
+    image: newflow:1.0.3
     container_name: newflow
     restart: unless-stopped
     ports:

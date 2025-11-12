@@ -41,8 +41,8 @@ else
     pkill -f "uvicorn main:app" || true
 fi
 
-# 停止所有MCP服务器
-echo "🔌 停止MCP服务器..."
+# 停止所有MCP服务器（Node模式）
+echo "🔌 停止MCP服务器（Node模式）..."
 if [ -d "python_dashboard/mcp_pids" ]; then
     for pid_file in python_dashboard/mcp_pids/*.pid; do
         if [ -f "$pid_file" ]; then
@@ -53,6 +53,14 @@ if [ -d "python_dashboard/mcp_pids" ]; then
         fi
     done
 fi
+
+# 停止所有MCP Docker容器
+echo "🔌 停止MCP Docker容器..."
+docker ps --format "{{.Names}}" | grep "^mcp-" | while read container; do
+    echo "   停止容器: $container"
+    docker stop "$container" 2>/dev/null || true
+    docker rm "$container" 2>/dev/null || true
+done
 
 echo "✅ 所有服务已停止！"
 

@@ -43,9 +43,9 @@ docker_images:
     image: "docker.elastic.co/logstash/logstash:8.17.3"
     version: "8.17.3"
   newflow:
-    file: "installers/newflow-1.0.0-1.tar"
-    image: "newflow:1.0.0"
-    version: "1.0.0-1"
+    file: "installers/newflow-1.0.3.tar"
+    image: "newflow:1.0.3"
+    version: "1.0.3"
   newflow_docs:
     file: "installers/newflow-docs-1.0.tar"
     image: "newflow-docs:1.0"

@@ -14,19 +14,25 @@ fi
 
 # 导入 NewFlow 镜像（如果尚未导入）
 echo "📦 检查 NewFlow 镜像..."
-# 精确匹配 "newflow" 开头且版本为 1.0.x（排除 newflow-docs 等）
-if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newflow:1\.0"; then
-    NEWFLOW_TAR=$(ls installers/newflow-1.0.*.tar 2>/dev/null | head -1)
-    if [ -n "$NEWFLOW_TAR" ]; then
-        echo "📦 导入 NewFlow 镜像: $NEWFLOW_TAR"
+# 从 config.yaml 读取需要的版本，或使用默认版本
+REQUIRED_VERSION=$(grep -A2 "newflow:" config.yaml | grep "version:" | awk '{print $2}' | tr -d '"' | head -1)
+if [ -z "$REQUIRED_VERSION" ]; then
+    REQUIRED_VERSION="1.0.3"
+fi
+
+# 检查是否已有所需版本的镜像
+if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newflow:${REQUIRED_VERSION}$"; then
+    NEWFLOW_TAR="installers/newflow-${REQUIRED_VERSION}.tar"
+    if [ -f "$NEWFLOW_TAR" ]; then
+        echo "📦 导入 NewFlow 镜像: $NEWFLOW_TAR (版本 ${REQUIRED_VERSION})"
         docker load -i "$NEWFLOW_TAR"
         echo "✅ NewFlow 镜像导入成功"
     else
-        echo "⚠️  找不到 NewFlow 镜像文件（installers/newflow-1.0.*.tar）"
+        echo "⚠️  找不到 NewFlow 镜像文件: $NEWFLOW_TAR"
         echo "   将尝试从 Docker Hub 拉取（可能失败）"
     fi
 else
-    echo "✅ NewFlow 镜像已存在，跳过导入"
+    echo "✅ NewFlow 镜像 (${REQUIRED_VERSION}) 已存在，跳过导入"
 fi
 echo ""
 
