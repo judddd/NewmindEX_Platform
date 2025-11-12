@@ -78,7 +78,7 @@ export class ListExecutionsHandler extends BaseExecutionToolHandler {
 export function getListExecutionsToolDefinition(): ToolDefinition {
   return {
     name: 'list_executions',
-    description: 'Retrieve a list of workflow executions from n8n',
+    description: 'Retrieve a list of workflow executions from Newmind Flow',
     inputSchema: {
       type: 'object',
       properties: {

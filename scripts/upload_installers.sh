@@ -117,7 +117,7 @@ add_to_manifest "installers/uv-aarch64-apple-darwin.tar.gz" "uv-aarch64-apple-da
 echo ""
 echo -e "${BLUE}【应用程序】${NC}"
 add_to_manifest "installers/LM-Studio-0.3.30-1-arm64.dmg" "LM-Studio-0.3.30-1-arm64.dmg"
-add_to_manifest "installers/NewChat-1.0.1-mac-arm64.dmg" "NewChat-1.0.1-mac-arm64.dmg"
+add_to_manifest "installers/NewChat-1.0.3-mac-arm64.dmg" "NewChat-1.0.3-mac-arm64.dmg"
 
 echo ""
 echo -e "${BLUE}【Docker镜像】${NC}"

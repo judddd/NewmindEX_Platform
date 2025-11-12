@@ -8,7 +8,7 @@ import axios from 'axios';
 import { z } from 'zod';
 import { ToolCallResult } from '../../types/index.js';
 import { BaseExecutionToolHandler } from './base-handler.js';
-import { N8nApiError } from '../../errors/index.js';
+import { NewflowApiError } from '../../errors/index.js';
 import { getEnvConfig } from '../../config/environment.js';
 import { URL } from 'url';
 
@@ -31,12 +31,12 @@ export class RunWebhookHandler extends BaseExecutionToolHandler {
   public static readonly inputSchema = runWebhookSchema;
 
   /**
-   * Extract N8N base URL from N8N API URL by removing /api/v1
-   * @returns N8N base URL
+   * Extract Newmind Flow base URL from Newmind Flow API URL by removing /api/v1
+   * @returns Newmind Flow base URL
    */
-  private getN8nBaseUrl(): string {
+  private getNewflowBaseUrl(): string {
     const config = getEnvConfig();
-    const apiUrl = new URL(config.n8nApiUrl);
+    const apiUrl = new URL(config.newflowApiUrl);
     
     // Remove /api/v1 if it exists in the path
     let path = apiUrl.pathname;
@@ -64,8 +64,8 @@ export class RunWebhookHandler extends BaseExecutionToolHandler {
       const config = getEnvConfig();
 
       // Check if webhook credentials are provided, as they are required for this tool
-      if (!config.n8nWebhookUsername || !config.n8nWebhookPassword) {
-        throw new N8nApiError(
+      if (!config.newflowWebhookUsername || !config.newflowWebhookPassword) {
+        throw new NewflowApiError(
           'Webhook username and password are required for run_webhook tool. ' +
           'Please set NEWFLOW_WEBHOOK_USERNAME and NEWFLOW_WEBHOOK_PASSWORD environment variables.',
           400 // Bad Request, as it's a client-side configuration issue for this specific tool
@@ -74,7 +74,7 @@ export class RunWebhookHandler extends BaseExecutionToolHandler {
       
       try {
         // Get the webhook URL with the proper prefix
-        const baseUrl = this.getN8nBaseUrl();
+        const baseUrl = this.getNewflowBaseUrl();
         const webhookPath = `webhook/${params.workflowName}`;
         const webhookUrl = new URL(webhookPath, baseUrl).toString();
         
@@ -85,8 +85,8 @@ export class RunWebhookHandler extends BaseExecutionToolHandler {
             ...(params.headers || {})
           },
           auth: {
-            username: config.n8nWebhookUsername,
-            password: config.n8nWebhookPassword
+            username: config.newflowWebhookUsername,
+            password: config.newflowWebhookPassword
           }
         };
 
@@ -111,14 +111,14 @@ export class RunWebhookHandler extends BaseExecutionToolHandler {
           if (error.response) {
             errorMessage = `Webhook execution failed with status ${error.response.status}: ${error.response.statusText}`;
             if (error.response.data) {
-              return this.formatError(new N8nApiError(
+              return this.formatError(new NewflowApiError(
                 `${errorMessage}\n\n${JSON.stringify(error.response.data, null, 2)}`,
                 error.response.status
               ));
             }
           }
           
-          return this.formatError(new N8nApiError(errorMessage, error.response?.status || 500));
+          return this.formatError(new NewflowApiError(errorMessage, error.response?.status || 500));
         }
         
         throw error; // Re-throw non-axios errors for the handler to catch
@@ -135,7 +135,7 @@ export class RunWebhookHandler extends BaseExecutionToolHandler {
 export function getRunWebhookToolDefinition() {
   return {
     name: 'run_webhook',
-    description: 'Execute a workflow via webhook with optional input data',
+    description: 'Execute a Newmind Flow workflow via webhook with optional input data',
     inputSchema: {
       type: 'object',
       properties: {

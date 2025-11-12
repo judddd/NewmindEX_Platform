@@ -5,7 +5,7 @@
  */
 
 import { ToolCallResult } from '../../types/index.js';
-import { N8nApiError } from '../../errors/index.js';
+import { NewflowApiError } from '../../errors/index.js';
 import {
   ListWorkflowsHandler,
   GetWorkflowHandler,
@@ -52,10 +52,10 @@ export default async function workflowHandler(
         return await new DeactivateWorkflowHandler().execute(args);
         
       default:
-        throw new N8nApiError(`Unknown workflow tool: ${toolName}`);
+        throw new NewflowApiError(`Unknown workflow tool: ${toolName}`);
     }
   } catch (error) {
-    if (error instanceof N8nApiError) {
+    if (error instanceof NewflowApiError) {
       return {
         content: [
           {

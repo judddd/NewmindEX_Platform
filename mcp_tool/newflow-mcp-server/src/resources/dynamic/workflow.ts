@@ -5,7 +5,7 @@
  * detailed workflow information by ID.
  */
 
-import { N8nApiService } from '../../api/n8n-client.js';
+import { NewflowApiService } from '../../api/n8n-client.js';
 import { formatWorkflowDetails, formatResourceUri } from '../../utils/resource-formatter.js';
 import { McpError, ErrorCode } from '../../errors/index.js';
 
@@ -16,7 +16,7 @@ import { McpError, ErrorCode } from '../../errors/index.js';
  * @param workflowId Workflow ID
  * @returns Formatted workflow resource data
  */
-export async function getWorkflowResource(apiService: N8nApiService, workflowId: string): Promise<string> {
+export async function getWorkflowResource(apiService: NewflowApiService, workflowId: string): Promise<string> {
   try {
     // Get the specific workflow from the API
     const workflow = await apiService.getWorkflow(workflowId);
@@ -32,7 +32,7 @@ export async function getWorkflowResource(apiService: N8nApiService, workflowId:
       _links: {
         self: formatResourceUri('workflow', workflowId),
         // Include links to related resources
-        executions: `n8n://executions?workflowId=${workflowId}`,
+        executions: `newflow://executions?workflowId=${workflowId}`,
       },
       lastUpdated: new Date().toISOString(),
     };
@@ -59,7 +59,7 @@ export async function getWorkflowResource(apiService: N8nApiService, workflowId:
  * @returns Formatted resource template URI
  */
 export function getWorkflowResourceTemplateUri(): string {
-  return 'n8n://workflows/{id}';
+  return 'newflow://workflows/{id}';
 }
 
 /**
@@ -70,7 +70,7 @@ export function getWorkflowResourceTemplateUri(): string {
 export function getWorkflowResourceTemplateMetadata(): Record<string, any> {
   return {
     uriTemplate: getWorkflowResourceTemplateUri(),
-    name: 'n8n Workflow Details',
+    name: 'Newmind Flow Workflow Details',
     mimeType: 'application/json',
     description: 'Detailed information about a specific Newmind Flow workflow including all nodes, connections, and settings',
   };
@@ -83,6 +83,6 @@ export function getWorkflowResourceTemplateMetadata(): Record<string, any> {
  * @returns Workflow ID or null if URI format is invalid
  */
 export function extractWorkflowIdFromUri(uri: string): string | null {
-  const match = uri.match(/^n8n:\/\/workflows\/([^/]+)$/);
+  const match = uri.match(/^newflow:\/\/workflows\/([^/]+)$/);
   return match ? match[1] : null;
 }

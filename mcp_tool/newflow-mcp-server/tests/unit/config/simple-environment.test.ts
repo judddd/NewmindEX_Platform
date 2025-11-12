@@ -11,25 +11,25 @@ function validateEnvironment(env: Record<string, string | undefined>): {
   debug: boolean;
 } {
   // Check required variables
-  if (!env.N8N_API_URL) {
-    throw new Error('Missing required environment variable: N8N_API_URL');
+  if (!env.NEWFLOW_API_URL) {
+    throw new Error('Missing required environment variable: NEWFLOW_API_URL');
   }
   
-  if (!env.N8N_API_KEY) {
-    throw new Error('Missing required environment variable: N8N_API_KEY');
+  if (!env.NEWFLOW_API_KEY) {
+    throw new Error('Missing required environment variable: NEWFLOW_API_KEY');
   }
   
   // Validate URL format
   try {
-    new URL(env.N8N_API_URL);
+    new URL(env.NEWFLOW_API_URL);
   } catch (error) {
-    throw new Error(`Invalid URL format for N8N_API_URL: ${env.N8N_API_URL}`);
+    throw new Error(`Invalid URL format for NEWFLOW_API_URL: ${env.NEWFLOW_API_URL}`);
   }
   
   // Return parsed config
   return {
-    newmindflowApiUrl: env.N8N_API_URL,
-    newmindflowApiKey: env.N8N_API_KEY,
+    newmindflowApiUrl: env.NEWFLOW_API_URL,
+    newmindflowApiKey: env.NEWFLOW_API_KEY,
     debug: env.DEBUG?.toLowerCase() === 'true'
   };
 }
@@ -38,8 +38,8 @@ describe('Environment Configuration', () => {
   describe('validateEnvironment', () => {
     it('should return a valid config when all required variables are present', () => {
       const env = {
-        N8N_API_URL: 'https://newmindflow.example.com/api/v1',
-        N8N_API_KEY: 'test-api-key'
+        NEWFLOW_API_URL: 'https://newmindflow.example.com/api/v1',
+        NEWFLOW_API_KEY: 'test-api-key'
       };
       
       const config = validateEnvironment(env);
@@ -53,8 +53,8 @@ describe('Environment Configuration', () => {
     
     it('should set debug to true when DEBUG=true', () => {
       const env = {
-        N8N_API_URL: 'https://newmindflow.example.com/api/v1',
-        N8N_API_KEY: 'test-api-key',
+        NEWFLOW_API_URL: 'https://newmindflow.example.com/api/v1',
+        NEWFLOW_API_KEY: 'test-api-key',
         DEBUG: 'true'
       };
       
@@ -63,34 +63,34 @@ describe('Environment Configuration', () => {
       expect(config.debug).toBe(true);
     });
     
-    it('should throw an error when N8N_API_URL is missing', () => {
+    it('should throw an error when NEWFLOW_API_URL is missing', () => {
       const env = {
-        N8N_API_KEY: 'test-api-key'
+        NEWFLOW_API_KEY: 'test-api-key'
       };
       
       expect(() => validateEnvironment(env)).toThrow(
-        'Missing required environment variable: N8N_API_URL'
+        'Missing required environment variable: NEWFLOW_API_URL'
       );
     });
     
-    it('should throw an error when N8N_API_KEY is missing', () => {
+    it('should throw an error when NEWFLOW_API_KEY is missing', () => {
       const env = {
-        N8N_API_URL: 'https://newmindflow.example.com/api/v1'
+        NEWFLOW_API_URL: 'https://newmindflow.example.com/api/v1'
       };
       
       expect(() => validateEnvironment(env)).toThrow(
-        'Missing required environment variable: N8N_API_KEY'
+        'Missing required environment variable: NEWFLOW_API_KEY'
       );
     });
     
-    it('should throw an error when N8N_API_URL is not a valid URL', () => {
+    it('should throw an error when NEWFLOW_API_URL is not a valid URL', () => {
       const env = {
-        N8N_API_URL: 'invalid-url',
-        N8N_API_KEY: 'test-api-key'
+        NEWFLOW_API_URL: 'invalid-url',
+        NEWFLOW_API_KEY: 'test-api-key'
       };
       
       expect(() => validateEnvironment(env)).toThrow(
-        'Invalid URL format for N8N_API_URL: invalid-url'
+        'Invalid URL format for NEWFLOW_API_URL: invalid-url'
       );
     });
   });

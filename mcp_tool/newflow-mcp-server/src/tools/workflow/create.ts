@@ -6,7 +6,7 @@
 
 import { BaseWorkflowToolHandler } from './base-handler.js';
 import { ToolCallResult, ToolDefinition } from '../../types/index.js';
-import { N8nApiError } from '../../errors/index.js';
+import { NewflowApiError } from '../../errors/index.js';
 
 /**
  * Handler for the create_workflow tool
@@ -23,17 +23,17 @@ export class CreateWorkflowHandler extends BaseWorkflowToolHandler {
       const { name, nodes, connections, active, tags } = args;
       
       if (!name) {
-        throw new N8nApiError('Missing required parameter: name');
+        throw new NewflowApiError('Missing required parameter: name');
       }
       
       // Validate nodes if provided
       if (nodes && !Array.isArray(nodes)) {
-        throw new N8nApiError('Parameter "nodes" must be an array');
+        throw new NewflowApiError('Parameter "nodes" must be an array');
       }
       
       // Validate connections if provided
       if (connections && typeof connections !== 'object') {
-        throw new N8nApiError('Parameter "connections" must be an object');
+        throw new NewflowApiError('Parameter "connections" must be an object');
       }
       
       // Prepare workflow object
@@ -70,7 +70,7 @@ export class CreateWorkflowHandler extends BaseWorkflowToolHandler {
 export function getCreateWorkflowToolDefinition(): ToolDefinition {
   return {
     name: 'create_workflow',
-    description: 'Create a new workflow in n8n',
+    description: 'Create a new workflow in Newmind Flow',
     inputSchema: {
       type: 'object',
       properties: {

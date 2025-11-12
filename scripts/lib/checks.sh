@@ -239,7 +239,7 @@ check_all_installers() {
     # 检查应用程序
     echo -e "${CYAN}应用程序:${NC}"
     check_installer_exists "installers/LM-Studio-0.3.30-1-arm64.dmg" "LM Studio" || all_ok=false
-    check_installer_exists "installers/NewChat-1.0.1-mac-arm64.dmg" "NewChat" || all_ok=false
+    check_installer_exists "installers/NewChat-1.0.3-mac-arm64.dmg" "NewChat" || all_ok=false
     
     echo ""
     

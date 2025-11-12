@@ -16,7 +16,7 @@ export { ErrorCode } from './error-codes.js';
 /**
  * Newmind Flow API Error class for handling errors from the Newmind Flow API
  */
-export class N8nApiError extends SdkMcpError {
+export class NewflowApiError extends SdkMcpError {
   constructor(message: string, statusCode?: number, details?: unknown) {
     // Map HTTP status codes to appropriate MCP error codes
     let errorCode = ErrorCode.InternalError;
@@ -74,13 +74,13 @@ export function safeJsonParse(text: string): any {
 }
 
 /**
- * Handle axios errors and convert them to N8nApiError
+ * Handle axios errors and convert them to NewflowApiError
  * 
  * @param error Error object from axios
  * @param defaultMessage Default error message
- * @returns N8nApiError with appropriate details
+ * @returns NewflowApiError with appropriate details
  */
-export function handleAxiosError(error: any, defaultMessage = 'Newmind Flow API request failed'): N8nApiError {
+export function handleAxiosError(error: any, defaultMessage = 'Newmind Flow API request failed'): NewflowApiError {
   // Handle axios error responses
   if (error.response) {
     const statusCode = error.response.status;
@@ -91,12 +91,12 @@ export function handleAxiosError(error: any, defaultMessage = 'Newmind Flow API 
       errorMessage = responseData.message;
     }
     
-    return new N8nApiError(errorMessage, statusCode, responseData);
+    return new NewflowApiError(errorMessage, statusCode, responseData);
   }
   
   // Handle request errors (e.g., network issues)
   if (error.request) {
-    return new N8nApiError(
+    return new NewflowApiError(
       'Network error connecting to Newmind Flow API', 
       undefined, 
       error.message
@@ -104,7 +104,7 @@ export function handleAxiosError(error: any, defaultMessage = 'Newmind Flow API 
   }
   
   // Handle other errors
-  return new N8nApiError(error.message || defaultMessage);
+  return new NewflowApiError(error.message || defaultMessage);
 }
 
 /**

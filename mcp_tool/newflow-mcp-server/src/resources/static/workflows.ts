@@ -4,7 +4,7 @@
  * This module provides the MCP resource implementation for listing all workflows.
  */
 
-import { N8nApiService } from '../../api/n8n-client.js';
+import { NewflowApiService } from '../../api/n8n-client.js';
 import { formatWorkflowSummary, formatResourceUri } from '../../utils/resource-formatter.js';
 import { McpError, ErrorCode } from '../../errors/index.js';
 
@@ -14,7 +14,7 @@ import { McpError, ErrorCode } from '../../errors/index.js';
  * @param apiService Newmind Flow API service
  * @returns Formatted workflows resource data
  */
-export async function getWorkflowsResource(apiService: N8nApiService): Promise<string> {
+export async function getWorkflowsResource(apiService: NewflowApiService): Promise<string> {
   try {
     // Get all workflows from the API
     const workflows = await apiService.getWorkflows();
@@ -60,8 +60,8 @@ export function getWorkflowsResourceUri(): string {
 export function getWorkflowsResourceMetadata(): Record<string, any> {
   return {
     uri: getWorkflowsResourceUri(),
-    name: 'n8n Workflows',
+    name: 'Newmind Flow Workflows',
     mimeType: 'application/json',
-    description: 'List of all workflows in the n8n instance with their basic information',
+    description: 'List of all workflows in the Newmind Flow instance with their basic information',
   };
 }

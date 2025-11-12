@@ -166,8 +166,8 @@ echo -e "${BLUE}║         开始检查安装包                     ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════╝${NC}"
 
 # 1. NewChat (新名称)
-NEWCHAT_DMG="installers/NewChat-1.0.1-mac-arm64.dmg"
-NEWCHAT_URL="${DOWNLOAD_BASE_URL}/NewChat-1.0.1-mac-arm64.dmg"
+NEWCHAT_DMG="installers/NewChat-1.0.3-mac-arm64.dmg"
+NEWCHAT_URL="${DOWNLOAD_BASE_URL}/NewChat-1.0.3-mac-arm64.dmg"
 check_or_download "$NEWCHAT_DMG" "$NEWCHAT_URL" || echo -e "${YELLOW}⚠️  NewChat 将稍后手动安装${NC}"
 
 # 2. LM Studio

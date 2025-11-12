@@ -6,7 +6,7 @@
 
 import { BaseWorkflowToolHandler } from './base-handler.js';
 import { ToolCallResult, ToolDefinition } from '../../types/index.js';
-import { N8nApiError } from '../../errors/index.js';
+import { NewflowApiError } from '../../errors/index.js';
 
 /**
  * Handler for the delete_workflow tool
@@ -23,7 +23,7 @@ export class DeleteWorkflowHandler extends BaseWorkflowToolHandler {
       const { workflowId } = args;
       
       if (!workflowId) {
-        throw new N8nApiError('Missing required parameter: workflowId');
+        throw new NewflowApiError('Missing required parameter: workflowId');
       }
       
       // Get the workflow info first for the confirmation message
@@ -49,7 +49,7 @@ export class DeleteWorkflowHandler extends BaseWorkflowToolHandler {
 export function getDeleteWorkflowToolDefinition(): ToolDefinition {
   return {
     name: 'delete_workflow',
-    description: 'Delete a workflow from n8n',
+    description: 'Delete a workflow from Newmind Flow',
     inputSchema: {
       type: 'object',
       properties: {

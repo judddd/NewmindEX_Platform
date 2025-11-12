@@ -51,7 +51,7 @@ export class DeleteExecutionHandler extends BaseExecutionToolHandler {
 export function getDeleteExecutionToolDefinition(): ToolDefinition {
   return {
     name: 'delete_execution',
-    description: 'Delete a specific workflow execution from n8n',
+    description: 'Delete a specific workflow execution from Newmind Flow',
     inputSchema: {
       type: 'object',
       properties: {

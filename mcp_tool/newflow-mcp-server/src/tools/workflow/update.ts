@@ -6,7 +6,7 @@
 
 import { BaseWorkflowToolHandler } from './base-handler.js';
 import { ToolCallResult, ToolDefinition } from '../../types/index.js';
-import { N8nApiError } from '../../errors/index.js';
+import { NewflowApiError } from '../../errors/index.js';
 
 /**
  * Handler for the update_workflow tool
@@ -23,17 +23,17 @@ export class UpdateWorkflowHandler extends BaseWorkflowToolHandler {
       const { workflowId, name, nodes, connections, active, tags } = args;
       
       if (!workflowId) {
-        throw new N8nApiError('Missing required parameter: workflowId');
+        throw new NewflowApiError('Missing required parameter: workflowId');
       }
       
       // Validate nodes if provided
       if (nodes && !Array.isArray(nodes)) {
-        throw new N8nApiError('Parameter "nodes" must be an array');
+        throw new NewflowApiError('Parameter "nodes" must be an array');
       }
       
       // Validate connections if provided
       if (connections && typeof connections !== 'object') {
-        throw new N8nApiError('Parameter "connections" must be an object');
+        throw new NewflowApiError('Parameter "connections" must be an object');
       }
       
       // Get the current workflow to update
@@ -96,7 +96,7 @@ export class UpdateWorkflowHandler extends BaseWorkflowToolHandler {
 export function getUpdateWorkflowToolDefinition(): ToolDefinition {
   return {
     name: 'update_workflow',
-    description: 'Update an existing workflow in n8n',
+    description: 'Update an existing workflow in Newmind Flow',
     inputSchema: {
       type: 'object',
       properties: {

@@ -15,8 +15,8 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}💬 安装/升级 NewChat...${NC}"
 echo ""
 
-# 检查DMG文件
-NEWCHAT_DMG=$(ls installers/NewChat-*-mac-arm64.dmg 2>/dev/null | head -1)
+# 检查DMG文件（使用版本排序，选择最新版本）
+NEWCHAT_DMG=$(ls installers/NewChat-*-mac-arm64.dmg 2>/dev/null | sort -V | tail -1)
 
 if [ -z "$NEWCHAT_DMG" ]; then
     echo -e "${RED}❌ NewChat安装包不存在: installers/NewChat-*-mac-arm64.dmg${NC}"
@@ -61,8 +61,8 @@ sleep 2
 # 查找挂载点 - 改进逻辑以处理各种挂载点名称
 MOUNT_POINT=""
 
-# 方法1: 尝试找 "NewChat" 相关挂载点
-for possible_mount in "/Volumes/NewChat" "/Volumes/newchat" "/Volumes/NewChat-1.0.1" "/Volumes/NewChat 1.0.1"; do
+# 方法1: 尝试找 "NewChat" 相关挂载点（支持各种版本号）
+for possible_mount in "/Volumes/NewChat" "/Volumes/newchat" "/Volumes/NewChat-1.0.3" "/Volumes/NewChat 1.0.3" "/Volumes/NewChat-1.0.1" "/Volumes/NewChat 1.0.1"; do
     if [ -d "$possible_mount" ]; then
         MOUNT_POINT="$possible_mount"
         break
@@ -134,13 +134,17 @@ echo ""
 echo -e "${BLUE}📝 版本信息:${NC}"
 echo -e "   • 已安装版本: ${VERSION}"
 echo ""
-echo -e "${BLUE}🚀 使用方式:${NC}"
-echo -e "   • 启动应用: open -a NewChat"
+echo -e "${YELLOW}⚠️  注意: NewChat 已安装但未自动启动${NC}"
+echo -e "${YELLOW}   请在需要时手动启动应用${NC}"
+echo ""
+echo -e "${BLUE}🚀 手动启动方式:${NC}"
+echo -e "   • 命令行启动: ${GREEN}open -a NewChat${NC}"
 echo -e "   • 或从Launchpad/应用程序文件夹启动"
 echo -e "   • 端口: 61990"
 echo ""
 echo -e "${YELLOW}💡 提示:${NC}"
 echo -e "   • 下次运行此脚本将自动升级到最新版本"
 echo -e "   • 用户数据和配置通常会保留"
+echo -e "   • 应用不会在安装时自动启动"
 echo ""
 

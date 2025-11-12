@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Status
 
-This appears to be a new/empty repository for an n8n MCP (Model Context Protocol) server project.
+This is a Newmind Flow MCP (Model Context Protocol) server project.
 
 ## Getting Started
 
@@ -19,6 +19,6 @@ When this project is initialized, common commands to look for:
 
 This will be populated once the project structure is established. Key areas to document:
 - MCP server implementation details
-- n8n integration patterns
+- Newmind Flow integration patterns
 - Configuration management
 - API endpoints and protocols

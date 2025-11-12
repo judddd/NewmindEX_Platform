@@ -6,12 +6,12 @@
 
 import axios, { AxiosInstance } from 'axios';
 import { EnvConfig } from '../config/environment.js';
-import { handleAxiosError, N8nApiError } from '../errors/index.js';
+import { handleAxiosError, NewflowApiError } from '../errors/index.js';
 
 /**
  * Newmind Flow API Client class for making requests to the Newmind Flow API
  */
-export class N8nApiClient {
+export class NewflowApiClient {
   private axiosInstance: AxiosInstance;
   private config: EnvConfig;
 
@@ -23,9 +23,9 @@ export class N8nApiClient {
   constructor(config: EnvConfig) {
     this.config = config;
     this.axiosInstance = axios.create({
-      baseURL: config.n8nApiUrl,
+      baseURL: config.newflowApiUrl,
       headers: {
-        'X-N8N-API-KEY': config.n8nApiKey,
+        'X-N8N-API-KEY': config.newflowApiKey,  // Keep n8n header for server compatibility
         'Accept': 'application/json',
       },
       timeout: 10000, // 10 seconds
@@ -49,7 +49,7 @@ export class N8nApiClient {
    * Check connectivity to the Newmind Flow API
    * 
    * @returns Promise that resolves if connectivity check succeeds
-   * @throws N8nApiError if connectivity check fails
+   * @throws NewflowApiError if connectivity check fails
    */
   async checkConnectivity(): Promise<void> {
     try {
@@ -57,14 +57,14 @@ export class N8nApiClient {
       const response = await this.axiosInstance.get('/workflows');
       
       if (response.status !== 200) {
-        throw new N8nApiError(
+        throw new NewflowApiError(
           'Newmind Flow API connectivity check failed',
           response.status
         );
       }
       
       if (this.config.debug) {
-        console.error(`[DEBUG] Successfully connected to Newmind Flow API at ${this.config.n8nApiUrl}`);
+        console.error(`[DEBUG] Successfully connected to Newmind Flow API at ${this.config.newflowApiUrl}`);
         console.error(`[DEBUG] Found ${response.data.data?.length || 0} workflows`);
       }
     } catch (error) {
@@ -82,7 +82,7 @@ export class N8nApiClient {
   }
 
   /**
-   * Get all workflows from n8n
+   * Get all workflows from Newmind Flow
    * 
    * @returns Array of workflow objects
    */
@@ -291,6 +291,6 @@ export class N8nApiClient {
  * @param config Environment configuration
  * @returns Newmind Flow API client instance
  */
-export function createApiClient(config: EnvConfig): N8nApiClient {
-  return new N8nApiClient(config);
+export function createApiClient(config: EnvConfig): NewflowApiClient {
+  return new NewflowApiClient(config);
 }

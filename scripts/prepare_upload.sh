@@ -175,7 +175,7 @@ add_to_manifest() {
 
 # 添加应用程序
 echo "# ═══════════════ 应用程序 ═══════════════" >> "$MANIFEST_FILE"
-add_to_manifest "installers/NewChat-1.0.1-mac-arm64.dmg" "NewChat-1.0.1-mac-arm64.dmg"
+add_to_manifest "installers/NewChat-1.0.3-mac-arm64.dmg" "NewChat-1.0.3-mac-arm64.dmg"
 add_to_manifest "installers/LM-Studio-0.3.30-1-arm64.dmg" "LM-Studio-0.3.30-1-arm64.dmg"
 add_to_manifest "installers/Docker.dmg" "Docker.dmg"
 

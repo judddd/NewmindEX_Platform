@@ -127,7 +127,7 @@ export function formatExecutionStats(executions: Execution[]): Record<string, an
 }
 
 /**
- * Format resource URI for n8n resources
+ * Format resource URI for Newmind Flow resources
  * 
  * @param resourceType Type of resource (workflow or execution)
  * @param id Optional resource ID for specific resources
@@ -141,7 +141,7 @@ export function formatResourceUri(
     const base = ['workflow', 'execution'].includes(resourceType)
       ? `${resourceType}s`
       : resourceType;
-    return `n8n://${base}/${id}`;
+    return `newflow://${base}/${id}`;
   }
-  return `n8n://${resourceType}`;
+  return `newflow://${resourceType}`;
 }

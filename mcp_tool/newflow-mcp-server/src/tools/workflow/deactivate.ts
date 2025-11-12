@@ -6,7 +6,7 @@
 
 import { BaseWorkflowToolHandler } from './base-handler.js';
 import { ToolCallResult, ToolDefinition } from '../../types/index.js';
-import { N8nApiError } from '../../errors/index.js';
+import { NewflowApiError } from '../../errors/index.js';
 
 /**
  * Handler for the deactivate_workflow tool
@@ -23,7 +23,7 @@ export class DeactivateWorkflowHandler extends BaseWorkflowToolHandler {
       const { workflowId } = args;
       
       if (!workflowId) {
-        throw new N8nApiError('Missing required parameter: workflowId');
+        throw new NewflowApiError('Missing required parameter: workflowId');
       }
       
       // Deactivate the workflow
@@ -49,7 +49,7 @@ export class DeactivateWorkflowHandler extends BaseWorkflowToolHandler {
 export function getDeactivateWorkflowToolDefinition(): ToolDefinition {
   return {
     name: 'deactivate_workflow',
-    description: 'Deactivate a workflow in n8n',
+    description: 'Deactivate a workflow in Newmind Flow',
     inputSchema: {
       type: 'object',
       properties: {

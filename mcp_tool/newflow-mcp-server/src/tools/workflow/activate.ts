@@ -6,7 +6,7 @@
 
 import { BaseWorkflowToolHandler } from './base-handler.js';
 import { ToolCallResult, ToolDefinition } from '../../types/index.js';
-import { N8nApiError } from '../../errors/index.js';
+import { NewflowApiError } from '../../errors/index.js';
 
 /**
  * Handler for the activate_workflow tool
@@ -23,7 +23,7 @@ export class ActivateWorkflowHandler extends BaseWorkflowToolHandler {
       const { workflowId } = args;
       
       if (!workflowId) {
-        throw new N8nApiError('Missing required parameter: workflowId');
+        throw new NewflowApiError('Missing required parameter: workflowId');
       }
       
       // Activate the workflow
@@ -49,7 +49,7 @@ export class ActivateWorkflowHandler extends BaseWorkflowToolHandler {
 export function getActivateWorkflowToolDefinition(): ToolDefinition {
   return {
     name: 'activate_workflow',
-    description: 'Activate a workflow in n8n',
+    description: 'Activate a workflow in Newmind Flow',
     inputSchema: {
       type: 'object',
       properties: {

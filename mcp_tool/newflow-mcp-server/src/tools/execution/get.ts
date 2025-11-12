@@ -53,7 +53,7 @@ export class GetExecutionHandler extends BaseExecutionToolHandler {
 export function getGetExecutionToolDefinition(): ToolDefinition {
   return {
     name: 'get_execution',
-    description: 'Retrieve detailed information about a specific workflow execution',
+    description: 'Retrieve detailed information about a specific workflow execution from Newmind Flow',
     inputSchema: {
       type: 'object',
       properties: {

@@ -5,7 +5,7 @@
  * detailed execution information by ID.
  */
 
-import { N8nApiService } from '../../api/n8n-client.js';
+import { NewflowApiService } from '../../api/n8n-client.js';
 import { formatExecutionDetails } from '../../utils/execution-formatter.js';
 import { formatResourceUri } from '../../utils/resource-formatter.js';
 import { McpError, ErrorCode } from '../../errors/index.js';
@@ -17,7 +17,7 @@ import { McpError, ErrorCode } from '../../errors/index.js';
  * @param executionId Execution ID
  * @returns Formatted execution resource data
  */
-export async function getExecutionResource(apiService: N8nApiService, executionId: string): Promise<string> {
+export async function getExecutionResource(apiService: NewflowApiService, executionId: string): Promise<string> {
   try {
     // Get the specific execution from the API
     const execution = await apiService.getExecution(executionId);
@@ -33,7 +33,7 @@ export async function getExecutionResource(apiService: N8nApiService, executionI
       _links: {
         self: formatResourceUri('execution', executionId),
         // Include link to related workflow
-        workflow: `n8n://workflows/${execution.workflowId}`,
+        workflow: `newflow://workflows/${execution.workflowId}`,
       },
       lastUpdated: new Date().toISOString(),
     };
@@ -60,7 +60,7 @@ export async function getExecutionResource(apiService: N8nApiService, executionI
  * @returns Formatted resource template URI
  */
 export function getExecutionResourceTemplateUri(): string {
-  return 'n8n://executions/{id}';
+  return 'newflow://executions/{id}';
 }
 
 /**
@@ -71,7 +71,7 @@ export function getExecutionResourceTemplateUri(): string {
 export function getExecutionResourceTemplateMetadata(): Record<string, any> {
   return {
     uriTemplate: getExecutionResourceTemplateUri(),
-    name: 'n8n Execution Details',
+    name: 'Newmind Flow Execution Details',
     mimeType: 'application/json',
     description: 'Detailed information about a specific Newmind Flow workflow execution including node results and error information',
   };
@@ -84,6 +84,6 @@ export function getExecutionResourceTemplateMetadata(): Record<string, any> {
  * @returns Execution ID or null if URI format is invalid
  */
 export function extractExecutionIdFromUri(uri: string): string | null {
-  const match = uri.match(/^n8n:\/\/executions\/([^/]+)$/);
+  const match = uri.match(/^newflow:\/\/executions\/([^/]+)$/);
   return match ? match[1] : null;
 }

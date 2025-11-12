@@ -13,9 +13,9 @@ RUN npm ci
 # 清理devDependencies减小镜像大小
 RUN npm prune --production
 
-# 健康检查
+# 健康检查（使用127.0.0.1避免IPv6解析问题）
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${MCP_HTTP_PORT:-3000}/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:${MCP_HTTP_PORT:-3000}/health || exit 1
 
 # 暴露端口
 EXPOSE 3000

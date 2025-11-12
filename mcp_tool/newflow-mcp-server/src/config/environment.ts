@@ -22,10 +22,10 @@ export const ENV_VARS = {
 
 // Interface for validated environment variables
 export interface EnvConfig {
-  n8nApiUrl: string;
-  n8nApiKey: string;
-  n8nWebhookUsername?: string; // Made optional
-  n8nWebhookPassword?: string; // Made optional
+  newflowApiUrl: string;
+  newflowApiKey: string;
+  newflowWebhookUsername?: string; // Made optional
+  newflowWebhookPassword?: string; // Made optional
   debug: boolean;
 }
 
@@ -61,21 +61,21 @@ export function loadEnvironmentVariables(): void {
  * @throws {McpError} If required environment variables are missing
  */
 export function getEnvConfig(): EnvConfig {
-  const n8nApiUrl = process.env[ENV_VARS.NEWFLOW_API_URL];
-  const n8nApiKey = process.env[ENV_VARS.NEWFLOW_API_KEY];
-  const n8nWebhookUsername = process.env[ENV_VARS.NEWFLOW_WEBHOOK_USERNAME];
-  const n8nWebhookPassword = process.env[ENV_VARS.NEWFLOW_WEBHOOK_PASSWORD];
+  const newflowApiUrl = process.env[ENV_VARS.NEWFLOW_API_URL];
+  const newflowApiKey = process.env[ENV_VARS.NEWFLOW_API_KEY];
+  const newflowWebhookUsername = process.env[ENV_VARS.NEWFLOW_WEBHOOK_USERNAME];
+  const newflowWebhookPassword = process.env[ENV_VARS.NEWFLOW_WEBHOOK_PASSWORD];
   const debug = process.env[ENV_VARS.DEBUG]?.toLowerCase() === 'true';
 
   // Validate required core environment variables
-  if (!n8nApiUrl) {
+  if (!newflowApiUrl) {
     throw new McpError(
       ErrorCode.InitializationError,
       `Missing required environment variable: ${ENV_VARS.NEWFLOW_API_URL}`
     );
   }
 
-  if (!n8nApiKey) {
+  if (!newflowApiKey) {
     throw new McpError(
       ErrorCode.InitializationError,
       `Missing required environment variable: ${ENV_VARS.NEWFLOW_API_KEY}`
@@ -87,19 +87,19 @@ export function getEnvConfig(): EnvConfig {
 
   // Validate URL format
   try {
-    new URL(n8nApiUrl);
+    new URL(newflowApiUrl);
   } catch (error) {
     throw new McpError(
       ErrorCode.InitializationError,
-      `Invalid URL format for ${ENV_VARS.NEWFLOW_API_URL}: ${n8nApiUrl}`
+      `Invalid URL format for ${ENV_VARS.NEWFLOW_API_URL}: ${newflowApiUrl}`
     );
   }
 
   return {
-    n8nApiUrl,
-    n8nApiKey,
-    n8nWebhookUsername: n8nWebhookUsername || undefined, // Ensure undefined if empty
-    n8nWebhookPassword: n8nWebhookPassword || undefined, // Ensure undefined if empty
+    newflowApiUrl,
+    newflowApiKey,
+    newflowWebhookUsername: newflowWebhookUsername || undefined, // Ensure undefined if empty
+    newflowWebhookPassword: newflowWebhookPassword || undefined, // Ensure undefined if empty
     debug,
   };
 }

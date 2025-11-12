@@ -45,7 +45,7 @@ export class ListWorkflowsHandler extends BaseWorkflowToolHandler {
 export function getListWorkflowsToolDefinition(): ToolDefinition {
   return {
     name: 'list_workflows',
-    description: 'Retrieve a list of all workflows available in n8n',
+    description: 'Retrieve a list of all workflows available in Newmind Flow',
     inputSchema: {
       type: 'object',
       properties: {

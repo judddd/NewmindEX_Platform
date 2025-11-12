@@ -5,7 +5,7 @@
  */
 
 import { ToolCallResult } from '../../types/index.js';
-import { N8nApiError } from '../../errors/index.js';
+import { NewflowApiError } from '../../errors/index.js';
 import { createApiService } from '../../api/n8n-client.js';
 import { getEnvConfig } from '../../config/environment.js';
 
@@ -79,7 +79,7 @@ export abstract class BaseExecutionToolHandler {
     try {
       return await handler(args);
     } catch (error) {
-      if (error instanceof N8nApiError) {
+      if (error instanceof NewflowApiError) {
         return this.formatError(error.message);
       }
       

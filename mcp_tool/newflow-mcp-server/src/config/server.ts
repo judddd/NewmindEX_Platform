@@ -35,7 +35,7 @@ export async function configureServer(): Promise<Server> {
   try {
     console.error('Verifying Newmind Flow API connectivity...');
     await apiService.checkConnectivity();
-    console.error(`Successfully connected to Newmind Flow API at ${envConfig.n8nApiUrl}`);
+    console.error(`Successfully connected to Newmind Flow API at ${envConfig.newflowApiUrl}`);
   } catch (error) {
     console.error('ERROR: Failed to connect to Newmind Flow API:', error instanceof Error ? error.message : error);
     throw error;
@@ -44,8 +44,8 @@ export async function configureServer(): Promise<Server> {
   // Create server instance
   const server = new Server(
     {
-      name: 'n8n-mcp-server',
-      version: '0.1.0',
+      name: 'newmind-flow-mcp-server',
+      version: '1.0.0',
     },
     {
       capabilities: {
@@ -94,7 +94,7 @@ function setupToolCallRequestHandler(server: Server): void {
 
     try {
       // Handle "prompts/list" as a special case, returning an empty success response
-      // This is to address client calls for a method not central to n8n-mcp-server's direct n8n integration.
+      // This is to address client calls for a method not central to newmind-flow-mcp-server's direct Newmind Flow integration.
       if (toolName === 'prompts/list') {
         return {
           content: [{ type: 'text', text: 'Prompts list acknowledged.' }], // Or an empty array: content: []

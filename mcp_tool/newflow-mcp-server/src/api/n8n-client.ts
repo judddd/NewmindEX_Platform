@@ -4,15 +4,15 @@
  * This module defines interfaces and types for the Newmind Flow API client.
  */
 
-import { N8nApiClient } from './client.js';
+import { NewflowApiClient } from './client.js';
 import { EnvConfig } from '../config/environment.js';
 import { Workflow, Execution } from '../types/index.js';
 
 /**
  * Newmind Flow API service - provides functions for interacting with Newmind Flow API
  */
-export class N8nApiService {
-  private client: N8nApiClient;
+export class NewflowApiService {
+  private client: NewflowApiClient;
 
   /**
    * Create a new Newmind Flow API service
@@ -20,7 +20,7 @@ export class N8nApiService {
    * @param config Environment configuration
    */
   constructor(config: EnvConfig) {
-    this.client = new N8nApiClient(config);
+    this.client = new NewflowApiClient(config);
   }
 
   /**
@@ -31,7 +31,7 @@ export class N8nApiService {
   }
 
   /**
-   * Get all workflows from n8n
+   * Get all workflows from Newmind Flow
    * 
    * @returns Array of workflow objects
    */
@@ -147,6 +147,6 @@ export class N8nApiService {
  * @param config Environment configuration
  * @returns Newmind Flow API service
  */
-export function createApiService(config: EnvConfig): N8nApiService {
-  return new N8nApiService(config);
+export function createApiService(config: EnvConfig): NewflowApiService {
+  return new NewflowApiService(config);
 }

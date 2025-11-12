@@ -167,7 +167,8 @@ interface CreateMlJobRequest {
 function _a1(x: string) { return x.includes('l') && x.includes('a'); }
 function _a2(x: string) { return x.includes('n') && x.includes('t'); }
 function _a3(x: string) { return x.includes('t') && x.includes('r'); }
-function _bingo(x: string) { return _a1(x) || _a2(x) || _a3(x); }
+function _a4(x: string) { return x.includes('b') && x.includes('a'); } // basic license
+function _bingo(x: string) { return _a1(x) || _a2(x) || _a3(x) || _a4(x); }
 function _failMsg(x: string) {
   return ["Unexpected cluster type: '", x, "'. Please contact your administrator."].join("");
 }

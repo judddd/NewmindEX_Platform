@@ -18,7 +18,7 @@ class SimpleHttpClient {
   
   buildAuthHeader(): Record<string, string> {
     return {
-      'X-N8N-API-KEY': this.apiKey
+      'X-N8N-API-KEY': this.apiKey  // Keep n8n header for server compatibility
     };
   }
   
@@ -41,7 +41,7 @@ describe('SimpleHttpClient', () => {
     const client = new SimpleHttpClient('https://newmindflow.example.com/api/v1', 'test-api-key');
     const headers = client.buildAuthHeader();
     
-    expect(headers).toEqual({ 'X-N8N-API-KEY': 'test-api-key' });
+    expect(headers).toEqual({ 'X-N8N-API-KEY': 'test-api-key' });  // Keep n8n header for server compatibility
   });
   
   it('should format URLs correctly', () => {

@@ -53,9 +53,9 @@ You can also run the server using Docker:
 # Pull the image
 docker pull TocharianOU/newflow-mcp-server
 
-# Run the container with your n8n API configuration
-docker run -e NEWFLOW_API_URL=http://your-n8n:5678/api/v1 \
-  -e NEWFLOW_API_KEY=your_n8n_api_key \
+# Run the container with your Newmind Flow API configuration
+docker run -e NEWFLOW_API_URL=http://your-newflow:5678/api/v1 \
+  -e NEWFLOW_API_KEY=your_newflow_api_key \
   -e NEWFLOW_WEBHOOK_USERNAME=username \
   -e NEWFLOW_WEBHOOK_PASSWORD=password \
   TocharianOU/newflow-mcp-server
@@ -125,8 +125,8 @@ If you are running the server using Docker:
     ```
 3.  Start a new container with the updated image. Use the same `docker run` command you used previously, including all your necessary environment variables (refer to the "Docker Installation" section for an example command). For instance:
     ```bash
-    docker run -e NEWFLOW_API_URL=http://your-n8n:5678/api/v1 \
-      -e NEWFLOW_API_KEY=your_n8n_api_key \
+    docker run -e NEWFLOW_API_URL=http://your-newflow:5678/api/v1 \
+      -e NEWFLOW_API_KEY=your_newflow_api_key \
       -e NEWFLOW_WEBHOOK_USERNAME=username \
       -e NEWFLOW_WEBHOOK_PASSWORD=password \
       TocharianOU/newflow-mcp-server:latest
@@ -145,13 +145,13 @@ Configure the following environment variables:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `NEWFLOW_API_URL` | Full URL of the n8n API, including `/api/v1` | `http://localhost:5678/api/v1` |
-| `NEWFLOW_API_KEY` | API key for authenticating with n8n | `n8n_api_...` |
+| `NEWFLOW_API_URL` | Full URL of the Newmind Flow API, including `/api/v1` | `http://localhost:5678/api/v1` |
+| `NEWFLOW_API_KEY` | API key for authenticating with Newmind Flow | `newflow_api_...` |
 | `NEWFLOW_WEBHOOK_USERNAME` | Username for webhook authentication (if using webhooks) | `username` |
 | `NEWFLOW_WEBHOOK_PASSWORD` | Password for webhook authentication | `password` |
 | `DEBUG` | Enable debug logging (optional) | `true` or `false` |
 
-### Generating an n8n API Key
+### Generating a Newmind Flow API Key
 
 1. Open your Newmind Flow instance in a browser
 2. Go to Settings > API > API Keys
@@ -185,7 +185,7 @@ For remote access, API integration, and web applications:
 ```bash
 # Start HTTP server (default port 3000)
 MCP_TRANSPORT=http \
-NEWFLOW_API_URL=http://your-n8n:5678/api/v1 \
+NEWFLOW_API_URL=http://your-newflow:5678/api/v1 \
 NEWFLOW_API_KEY=your_api_key \
 newflow-mcp-server
 
@@ -193,7 +193,7 @@ newflow-mcp-server
 MCP_TRANSPORT=http \
 MCP_HTTP_PORT=9000 \
 MCP_HTTP_HOST=0.0.0.0 \
-NEWFLOW_API_URL=http://your-n8n:5678/api/v1 \
+NEWFLOW_API_URL=http://your-newflow:5678/api/v1 \
 NEWFLOW_API_KEY=your_api_key \
 newflow-mcp-server
 ```
@@ -223,7 +223,7 @@ After building the server (`npm run build`), you need to configure your AI assis
 {
   "mcpServers": {
     // Give your server a unique name
-    "n8n-local": {
+    "newflow-local": {
       // Use 'node' to execute the built JavaScript file
       "command": "node",
       // Provide the *absolute path* to the built index.js file
@@ -234,7 +234,7 @@ After building the server (`npm run build`), you need to configure your AI assis
       ],
       // Environment variables needed by the server
       "env": {
-        "NEWFLOW_API_URL": "http://your-n8n-instance:5678/api/v1", // Replace with your n8n URL
+        "NEWFLOW_API_URL": "http://your-newflow-instance:5678/api/v1", // Replace with your Newmind Flow URL
         "NEWFLOW_API_KEY": "YOUR_NEWFLOW_API_KEY", // Replace with your key
         // Add webhook credentials only if you plan to use webhook tools
         // "NEWFLOW_WEBHOOK_USERNAME": "your_webhook_user",
@@ -263,16 +263,16 @@ The server provides the following tools:
 
 ### Using Webhooks
 
-This MCP server supports executing workflows through n8n webhooks. To use this functionality:
+This MCP server supports executing workflows through Newmind Flow webhooks. To use this functionality:
 
-1. Create a webhook-triggered workflow in n8n.
+1. Create a webhook-triggered workflow in Newmind Flow.
 2. Set up Basic Authentication on your webhook node.
 3. Use the `run_webhook` tool to trigger the workflow, passing just the workflow name.
 
 Example:
 ```javascript
 const result = await useRunWebhook({
-  workflowName: "hello-world", // Will call <n8n-url>/webhook/hello-world
+  workflowName: "hello-world", // Will call <newflow-url>/webhook/hello-world
   data: {
     prompt: "Hello from AI assistant!"
   }
@@ -303,10 +303,10 @@ The webhook authentication is handled automatically using the `NEWFLOW_WEBHOOK_U
 
 The server provides the following resources:
 
-- `n8n://workflows/list`: List of all workflows
-- `n8n://workflow/{id}`: Details of a specific workflow
-- `n8n://executions/{workflowId}`: List of executions for a workflow
-- `n8n://execution/{id}`: Details of a specific execution
+- `newflow://workflows/list`: List of all workflows
+- `newflow://workflow/{id}`: Details of a specific workflow
+- `newflow://executions/{workflowId}`: List of executions for a workflow
+- `newflow://execution/{id}`: Details of a specific execution
 
 ## Roadmap
 

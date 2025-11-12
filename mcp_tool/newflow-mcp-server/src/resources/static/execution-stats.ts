@@ -4,7 +4,7 @@
  * This module provides the MCP resource implementation for execution statistics.
  */
 
-import { N8nApiService } from '../../api/n8n-client.js';
+import { NewflowApiService } from '../../api/n8n-client.js';
 import { formatExecutionStats, formatResourceUri } from '../../utils/resource-formatter.js';
 import { McpError, ErrorCode } from '../../errors/index.js';
 
@@ -14,7 +14,7 @@ import { McpError, ErrorCode } from '../../errors/index.js';
  * @param apiService Newmind Flow API service
  * @returns Formatted execution statistics resource data
  */
-export async function getExecutionStatsResource(apiService: N8nApiService): Promise<string> {
+export async function getExecutionStatsResource(apiService: NewflowApiService): Promise<string> {
   try {
     // Get executions from the API
     const executions = await apiService.getExecutions();
@@ -58,8 +58,8 @@ export function getExecutionStatsResourceUri(): string {
 export function getExecutionStatsResourceMetadata(): Record<string, any> {
   return {
     uri: getExecutionStatsResourceUri(),
-    name: 'n8n Execution Statistics',
+    name: 'Newmind Flow Execution Statistics',
     mimeType: 'application/json',
-    description: 'Summary statistics of workflow executions including success rates, average duration, and trends',
+    description: 'Summary statistics of workflow executions including success rates, average duration, and trends from Newmind Flow',
   };
 }
