@@ -301,10 +301,10 @@ source ~/.zshrc
 cd python_dashboard
 
 # 使用离线wheel包安装
-uv pip install --no-index --find-links=../installers/python-deps/wheels -r pyproject.toml
+uv pip install --no-index --find-links=../installers/python_deps/wheels -r pyproject.toml
 
 # 或使用系统pip
-python3 -m pip install --no-index --find-links=../installers/python-deps/wheels -r ../installers/python-deps/requirements-frozen.txt
+python3 -m pip install --no-index --find-links=../installers/python_deps/wheels -r ../installers/python_deps/requirements.txt
 ```
 
 ### 问题6: Docker镜像加载失败
