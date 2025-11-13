@@ -81,6 +81,15 @@ else
     COMPOSE_CMD="docker-compose"
 fi
 
+# 启动前检查 Newflow 初始化状态
+echo "🔍 检查 Newflow 初始化状态..."
+if [ -f "scripts/check_newflow_init.sh" ]; then
+    bash scripts/check_newflow_init.sh
+else
+    echo "⚠️  跳过 Newflow 初始化检查（脚本不存在）"
+fi
+echo ""
+
 echo "📦 启动容器..."
 $COMPOSE_CMD up -d
 
@@ -173,6 +182,18 @@ echo ""
 
 echo "✅ Docker服务启动完成！"
 echo ""
+
+# Newflow 启动后自动配置
+echo "🔧 等待 Newflow 初始化并自动配置..."
+if [ -f "scripts/post_newflow_init.sh" ]; then
+    # 在后台运行，不阻塞启动流程
+    bash scripts/post_newflow_init.sh &
+    echo "ℹ️  Newflow 初始化检查已在后台运行"
+else
+    echo "⚠️  跳过 Newflow 初始化后检查（脚本不存在）"
+fi
+echo ""
+
 echo "🔗 服务访问地址："
 echo "   Elasticsearch: http://localhost:${ES_PORT_1:-9200} (elastic / ${ELASTIC_PASSWORD:-changeme123})"
 echo "   Kibana: http://localhost:${KIBANA_PORT:-5601}"
