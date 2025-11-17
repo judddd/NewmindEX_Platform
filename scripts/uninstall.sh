@@ -130,7 +130,13 @@ if command -v docker &> /dev/null; then
         
         if [ -d "newflow_data" ]; then
             echo "  • 删除 NewFlow 数据"
-            rm -rf newflow_data/*.sqlite* newflow_data/*.log
+            # 删除所有 NewFlow 数据文件
+            rm -rf newflow_data/*.sqlite* 
+            rm -rf newflow_data/*.log
+            rm -rf newflow_data/.initialized
+            rm -rf newflow_data/crash.journal
+            rm -rf newflow_data/config
+            rm -rf newflow_data/binaryData/*
         fi
     else
         echo "  • 保留 Docker 数据卷"
@@ -192,15 +198,19 @@ echo "步骤 6/7: 删除日志和临时文件..."
 
 if [ "$KEEP_DATA" = false ]; then
     echo "  • 删除日志文件"
-    rm -rf logs/*.log
+    rm -rf logs/*.log logs/*.log.* logs/*.txt
+    rm -rf logs/mcp_containers/*
     rm -rf python_dashboard/*.log
     rm -rf python_dashboard/mcp_logs/*
 fi
 
-echo "  • 删除临时文件"
+echo "  • 删除临时文件和缓存"
 rm -f .install_state
 rm -f python_dashboard/dashboard.pid
 rm -rf python_dashboard/mcp_pids/*
+rm -rf python_dashboard/__pycache__
+find . -type f -name ".DS_Store" -delete 2>/dev/null || true
+find . -type f -name "*.pyc" -delete 2>/dev/null || true
 
 echo -e "${GREEN}✓ 临时文件已清理${NC}"
 echo ""

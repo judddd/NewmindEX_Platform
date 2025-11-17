@@ -89,6 +89,59 @@ echo "步骤 11/12: 配置ES Connector"
 bash scripts/10_configure_es_connector.sh || echo "⚠️  Connector配置跳过"
 echo ""
 
+# 等待所有关键服务就绪
+echo "⏳ 等待所有服务就绪..."
+echo ""
+
+# 检查 ES 是否就绪
+ES_READY=false
+for i in {1..30}; do
+    if curl -s http://localhost:${ES_PORT_1:-9200}/_cluster/health > /dev/null 2>&1; then
+        echo "✅ Elasticsearch 已就绪"
+        ES_READY=true
+        break
+    fi
+    sleep 2
+done
+
+if [ "$ES_READY" = "false" ]; then
+    echo "⚠️  警告：Elasticsearch 未就绪，Dashboard 可能无法正常工作"
+fi
+
+# 检查 Kibana 是否就绪
+KIBANA_READY=false
+for i in {1..30}; do
+    if curl -s http://localhost:${KIBANA_PORT:-5601}/api/status > /dev/null 2>&1; then
+        echo "✅ Kibana 已就绪"
+        KIBANA_READY=true
+        break
+    fi
+    sleep 2
+done
+
+if [ "$KIBANA_READY" = "false" ]; then
+    echo "⚠️  警告：Kibana 未就绪，Dashboard 可能无法正常工作"
+fi
+
+# 检查 Newflow 是否就绪
+NEWFLOW_READY=false
+for i in {1..30}; do
+    if curl -s http://localhost:${NEWFLOW_PORT:-5677} > /dev/null 2>&1; then
+        echo "✅ Newflow 已就绪"
+        NEWFLOW_READY=true
+        break
+    fi
+    sleep 2
+done
+
+if [ "$NEWFLOW_READY" = "false" ]; then
+    echo "⚠️  警告：Newflow 未就绪，Dashboard 可能无法正常工作"
+fi
+
+echo ""
+echo "=========================================="
+echo ""
+
 # 启动Python Dashboard
 echo "步骤 12/12: 启动Python Dashboard..."
 cd python_dashboard

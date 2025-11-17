@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   es01:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-8.17.3}
     container_name: es01
     restart: unless-stopped
     environment:
@@ -11,9 +11,9 @@ services:
       - cluster.initial_master_nodes=es01,es02,es03
       - discovery.seed_hosts=es02,es03
       - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms31g -Xmx31g"
-      - xpack.security.enabled=false
-      - xpack.ml.enabled=true
+      - "ES_JAVA_OPTS=-Xms${ES_MEM:-31g} -Xmx${ES_MEM:-31g}"
+      - xpack.security.enabled=${ES_SECURITY_ENABLED:-false}
+      - xpack.ml.enabled=${ES_ML_ENABLED:-true}
     ulimits:
       memlock:
         soft: -1
@@ -21,7 +21,7 @@ services:
     volumes:
       - esdata01:/usr/share/elasticsearch/data
     ports:
-      - "9200:9200"
+      - "${ES_PORT_1:-9200}:9200"
     networks:
       - elastic
     healthcheck:
@@ -31,7 +31,7 @@ services:
       retries: 120
 
   es02:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-8.17.3}
     container_name: es02
     restart: unless-stopped
     environment:
@@ -40,9 +40,9 @@ services:
       - cluster.initial_master_nodes=es01,es02,es03
       - discovery.seed_hosts=es01,es03
       - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms31g -Xmx31g"
-      - xpack.security.enabled=false
-      - xpack.ml.enabled=true
+      - "ES_JAVA_OPTS=-Xms${ES_MEM:-31g} -Xmx${ES_MEM:-31g}"
+      - xpack.security.enabled=${ES_SECURITY_ENABLED:-false}
+      - xpack.ml.enabled=${ES_ML_ENABLED:-true}
     ulimits:
       memlock:
         soft: -1
@@ -50,12 +50,17 @@ services:
     volumes:
       - esdata02:/usr/share/elasticsearch/data
     ports:
-      - "9201:9200"
+      - "${ES_PORT_2:-9201}:9200"
     networks:
       - elastic
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
 
   es03:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-8.17.3}
     container_name: es03
     restart: unless-stopped
     environment:
@@ -64,9 +69,9 @@ services:
       - cluster.initial_master_nodes=es01,es02,es03
       - discovery.seed_hosts=es01,es02
       - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms31g -Xmx31g"
-      - xpack.security.enabled=false
-      - xpack.ml.enabled=true
+      - "ES_JAVA_OPTS=-Xms${ES_MEM:-31g} -Xmx${ES_MEM:-31g}"
+      - xpack.security.enabled=${ES_SECURITY_ENABLED:-false}
+      - xpack.ml.enabled=${ES_ML_ENABLED:-true}
     ulimits:
       memlock:
         soft: -1
@@ -74,18 +79,26 @@ services:
     volumes:
       - esdata03:/usr/share/elasticsearch/data
     ports:
-      - "9202:9200"
+      - "${ES_PORT_3:-9202}:9200"
     networks:
       - elastic
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.17.3
+    image: docker.elastic.co/kibana/kibana:${KIBANA_VERSION:-8.17.3}
     container_name: kibana
     restart: unless-stopped
     depends_on:
-      - es01
-      - es02
-      - es03
+      es01:
+        condition: service_healthy
+      es02:
+        condition: service_healthy
+      es03:
+        condition: service_healthy
     ports:
       - "${KIBANA_PORT:-5601}:5601"
     environment:
@@ -95,38 +108,59 @@ services:
       - ./kibana/branding:/usr/share/kibana/branding:ro
     networks:
       - elastic
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 60
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:8.17.3
+    image: docker.elastic.co/logstash/logstash:${LOGSTASH_VERSION:-8.17.3}
     container_name: logstash
     restart: unless-stopped
     ports:
       - "${LOGSTASH_PORT:-5044}:5044"
-      - "9600:9600"
+      - "${LOGSTASH_API_PORT:-9600}:9600"
     networks:
       - elastic
 
   newflow:
-    image: newflow:1.0.3
+    image: newflow:${NEWFLOW_VERSION:-1.0.3}
     container_name: newflow
     restart: unless-stopped
     ports:
       - "${NEWFLOW_PORT:-5677}:5677"
     environment:
+      # 基础配置
       - NEWFLOW_PORT=${NEWFLOW_PORT:-5677}
-      - NEWFLOW_LISTEN_ADDRESS=0.0.0.0
+      - N8N_PORT=${NEWFLOW_PORT:-5677}
+      - NEWFLOW_LISTEN_ADDRESS=${NEWFLOW_LISTEN_ADDRESS:-0.0.0.0}
+      - N8N_LISTEN_ADDRESS=${NEWFLOW_LISTEN_ADDRESS:-0.0.0.0}
+      
+      # 自动初始化
       - NEWFLOW_AUTO_SETUP_ENABLED=${NEWFLOW_AUTO_SETUP_ENABLED:-false}
       - NEWFLOW_AUTO_SETUP_EMAIL=${NEWFLOW_AUTO_SETUP_EMAIL:-admin@localhost.com}
       - NEWFLOW_AUTO_SETUP_PASSWORD=${NEWFLOW_AUTO_SETUP_PASSWORD:-admin123A}
       - NEWFLOW_PREDEFINED_API_KEY=${NEWFLOW_PREDEFINED_API_KEY}
+      
+      # AI 集成
       - CUSTOM_AI_BASE_URL=${NEWFLOW_CUSTOM_AI_BASE_URL}
       - CUSTOM_AI_API_KEY=${NEWFLOW_CUSTOM_AI_API_KEY}
       - CUSTOM_AI_MODEL=${NEWFLOW_CUSTOM_AI_MODEL}
-      - DB_SQLITE_POOL_SIZE=5
-      - NEWFLOW_RUNNERS_ENABLED=true
-      - NEWFLOW_BLOCK_ENV_ACCESS_IN_NODE=false
-      - NEWFLOW_GIT_NODE_DISABLE_BARE_REPOS=true
-      - NEWFLOW_SECURE_COOKIE=false
+      
+      # 高级配置（同时设置 NEWFLOW_ 和 N8N_ 前缀以兼容）
+      - DB_SQLITE_POOL_SIZE=${DB_SQLITE_POOL_SIZE:-5}
+      - NEWFLOW_RUNNERS_ENABLED=${NEWFLOW_RUNNERS_ENABLED:-true}
+      - N8N_RUNNERS_ENABLED=${NEWFLOW_RUNNERS_ENABLED:-true}
+      - NEWFLOW_BLOCK_ENV_ACCESS_IN_NODE=${NEWFLOW_BLOCK_ENV_ACCESS_IN_NODE:-false}
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=${NEWFLOW_BLOCK_ENV_ACCESS_IN_NODE:-false}
+      - NEWFLOW_GIT_NODE_DISABLE_BARE_REPOS=${NEWFLOW_GIT_NODE_DISABLE_BARE_REPOS:-true}
+      - N8N_GIT_NODE_DISABLE_BARE_REPOS=${NEWFLOW_GIT_NODE_DISABLE_BARE_REPOS:-true}
+      - NEWFLOW_SECURE_COOKIE=${NEWFLOW_SECURE_COOKIE:-false}
+      - N8N_SECURE_COOKIE=${NEWFLOW_SECURE_COOKIE:-false}
+      
+      # 文件权限强制执行
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
     volumes:
       - ./newflow_data:/home/node/.newflow
     extra_hosts:

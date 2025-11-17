@@ -62,7 +62,7 @@ sleep 2
 MOUNT_POINT=""
 
 # 方法1: 尝试找 "NewChat" 相关挂载点（支持各种版本号）
-for possible_mount in "/Volumes/NewChat" "/Volumes/newchat" "/Volumes/NewChat-1.0.3" "/Volumes/NewChat 1.0.3" "/Volumes/NewChat-1.0.1" "/Volumes/NewChat 1.0.1"; do
+for possible_mount in "/Volumes/NewChat" "/Volumes/newchat" "/Volumes/NewChat-1.0.4" "/Volumes/NewChat 1.0.4" "/Volumes/NewChat-1.0.3" "/Volumes/NewChat 1.0.3" "/Volumes/NewChat-1.0.1" "/Volumes/NewChat 1.0.1"; do
     if [ -d "$possible_mount" ]; then
         MOUNT_POINT="$possible_mount"
         break

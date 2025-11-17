@@ -7,10 +7,12 @@ set -e
 
 echo "📦 准备安装包..."
 
+# 加载配置读取库
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/config_reader.sh"
+
 # 加载环境变量
-if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
-fi
+load_env
 
 # 创建installers目录
 mkdir -p installers
@@ -22,8 +24,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# 下载服务器基础URL
-DOWNLOAD_BASE_URL="https://xiaopenges.tocharian.eu/download"
+# 下载服务器基础URL (从 config.yaml 读取)
+DOWNLOAD_BASE_URL=$(get_download_base_url)
 
 # ⚠️  注意：使用 -k 参数忽略SSL证书验证（用于自签名证书或开发环境）
 # 如果在生产环境中，建议使用有效的SSL证书
@@ -165,13 +167,15 @@ echo -e "${BLUE}╔════════════════════�
 echo -e "${BLUE}║         开始检查安装包                     ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════╝${NC}"
 
-# 1. NewChat (新名称)
-NEWCHAT_DMG="installers/NewChat-1.0.3-mac-arm64.dmg"
-NEWCHAT_URL="${DOWNLOAD_BASE_URL}/NewChat-1.0.3-mac-arm64.dmg"
+# 1. NewChat (从 config.yaml 读取)
+NEWCHAT_DMG=$(get_newchat_file)
+NEWCHAT_FILENAME=$(basename "$NEWCHAT_DMG")
+NEWCHAT_URL="${DOWNLOAD_BASE_URL}/${NEWCHAT_FILENAME}"
 check_or_download "$NEWCHAT_DMG" "$NEWCHAT_URL" || echo -e "${YELLOW}⚠️  NewChat 将稍后手动安装${NC}"
 
-# 2. LM Studio
-LMSTUDIO_DMG="installers/LM-Studio-0.3.30-1-arm64.dmg"
+# 2. LM Studio (从 config.yaml 读取)
+LMSTUDIO_DMG=$(get_lmstudio_file)
+LMSTUDIO_FILENAME=$(basename "$LMSTUDIO_DMG")
 LMSTUDIO_URL="${LMSTUDIO_DMG_URL:-}"
 if [ -n "$LMSTUDIO_URL" ]; then
     check_or_download "$LMSTUDIO_DMG" "$LMSTUDIO_URL" || echo -e "${YELLOW}⚠️  LM Studio 需要手动下载${NC}"
@@ -179,16 +183,17 @@ else
     if [ -f "$LMSTUDIO_DMG" ]; then
         echo ""
         echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo -e "${BLUE}检查: LM-Studio-0.3.30-1-arm64.dmg${NC}"
+        echo -e "${BLUE}检查: ${LMSTUDIO_FILENAME}${NC}"
         verify_file "$LMSTUDIO_DMG" && echo -e "${GREEN}✅ LM Studio 可用${NC}"
     else
         echo -e "${YELLOW}⚠️  LM Studio 未配置下载地址，请手动下载${NC}"
     fi
 fi
 
-# 3. NewFlow Docker镜像
-NEWFLOW_TAR="installers/newflow-1.0.3.tar"
-NEWFLOW_URL="${DOWNLOAD_BASE_URL}/newflow-1.0.3.tar"
+# 3. NewFlow Docker镜像 (从 .env 和 config.yaml 读取)
+NEWFLOW_VERSION=$(get_newflow_version)
+NEWFLOW_TAR="installers/newflow-${NEWFLOW_VERSION}.tar"
+NEWFLOW_URL="${DOWNLOAD_BASE_URL}/newflow-${NEWFLOW_VERSION}.tar"
 
 # 检查是否已有newflow镜像文件
 if ls installers/newflow-1.0.*.tar 1> /dev/null 2>&1; then
@@ -218,9 +223,10 @@ NEWFLOW_DOCS="installers/newflow-docs-1.0.tar"
 NEWFLOW_DOCS_URL="${DOWNLOAD_BASE_URL}/newflow-docs-1.0.tar"
 check_or_download "$NEWFLOW_DOCS" "$NEWFLOW_DOCS_URL" || echo -e "${YELLOW}⚠️  NewFlow Docs 可选${NC}"
 
-# 5. NewChat Docs
-NEWCHAT_DOCS="installers/newchat-docs-1.0.1.tar"
-NEWCHAT_DOCS_URL="${DOWNLOAD_BASE_URL}/newchat-docs-1.0.1.tar"
+# 5. NewChat Docs (从 config.yaml 读取)
+NEWCHAT_DOCS=$(get_newchat_docs_tar)
+NEWCHAT_DOCS_FILENAME=$(basename "$NEWCHAT_DOCS")
+NEWCHAT_DOCS_URL="${DOWNLOAD_BASE_URL}/${NEWCHAT_DOCS_FILENAME}"
 check_or_download "$NEWCHAT_DOCS" "$NEWCHAT_DOCS_URL" || echo -e "${YELLOW}⚠️  NewChat Docs 可选${NC}"
 
 # 6. MCP Elasticsearch

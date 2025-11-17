@@ -1,6 +1,10 @@
 #!/bin/bash
 
 # NewMind AI Platform - 系统检查函数库
+
+# 加载配置读取库
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/config_reader.sh"
 # 提供各种系统预检查功能
 
 # 加载工具函数
@@ -236,10 +240,12 @@ check_all_installers() {
     
     echo ""
     
-    # 检查应用程序
+    # 检查应用程序 (从 config.yaml 读取)
     echo -e "${CYAN}应用程序:${NC}"
-    check_installer_exists "installers/LM-Studio-0.3.30-1-arm64.dmg" "LM Studio" || all_ok=false
-    check_installer_exists "installers/NewChat-1.0.3-mac-arm64.dmg" "NewChat" || all_ok=false
+    local lmstudio_file=$(get_lmstudio_file)
+    local newchat_file=$(get_newchat_file)
+    check_installer_exists "$lmstudio_file" "LM Studio" || all_ok=false
+    check_installer_exists "$newchat_file" "NewChat" || all_ok=false
     
     echo ""
     

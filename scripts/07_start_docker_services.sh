@@ -158,11 +158,38 @@ if [ $ELAPSED -ge $MAX_WAIT ]; then
     echo "   集群可能仍在初始化，请检查日志: docker logs es01"
     LAST_RESPONSE=$(curl_es "$ES_URL" | head -c 200)
     echo "   最后响应: $LAST_RESPONSE"
+    exit 1
 else
     # 显示集群信息
     echo ""
     echo "📊 Elasticsearch集群信息："
     curl_es "http://localhost:${ES_PORT_1:-9200}/_cat/nodes?v"
+fi
+
+echo ""
+
+# 等待 Kibana 启动
+echo "⏳ 等待 Kibana 启动..."
+MAX_WAIT_KIBANA=120
+ELAPSED_KIBANA=0
+
+while [ $ELAPSED_KIBANA -lt $MAX_WAIT_KIBANA ]; do
+    if curl -s http://localhost:${KIBANA_PORT:-5601}/api/status > /dev/null 2>&1; then
+        echo "✅ Kibana 已就绪"
+        break
+    fi
+    sleep 5
+    ELAPSED_KIBANA=$((ELAPSED_KIBANA + 5))
+    if [ $((ELAPSED_KIBANA % 20)) -eq 0 ]; then
+        echo "⏳ 等待 Kibana... ($ELAPSED_KIBANA/${MAX_WAIT_KIBANA}秒)"
+    fi
+done
+
+if [ $ELAPSED_KIBANA -ge $MAX_WAIT_KIBANA ]; then
+    echo "⚠️  警告：Kibana 启动超时"
+    echo "   Kibana 可能仍在初始化，请检查日志: docker logs kibana"
+else
+    echo "✅ Kibana 启动成功: http://localhost:${KIBANA_PORT:-5601}"
 fi
 
 echo ""

@@ -15,16 +15,23 @@ import os
 import socket
 import httpx
 
-# 加载环境变量
+# 加载环境变量 (使用标准方式)
 from pathlib import Path
-env_file = Path(__file__).parent.parent / "copy.enva"
+
+# 优先使用 .env 文件，其次使用 copy.enva（兼容旧配置）
+env_file = Path(__file__).parent.parent / ".env"
+if not env_file.exists():
+    env_file = Path(__file__).parent.parent / "copy.enva"
+
 if env_file.exists():
     with open(env_file, 'r', encoding='utf-8') as f:
         for line in f:
             line = line.strip()
             if line and not line.startswith('#') and '=' in line:
                 key, value = line.split('=', 1)
-                os.environ[key] = value
+                # 只在环境变量不存在时设置（避免覆盖系统环境变量）
+                if key not in os.environ:
+                    os.environ[key] = value
 
 # 导入模块
 from database import (

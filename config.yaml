@@ -24,8 +24,8 @@ applications:
     version: "0.3.30-1"
     install_path: "/Applications/LM Studio.app"
   newchat:
-    file: "installers/NewChat-1.0.1-mac-arm64.dmg"
-    version: "1.0.1"
+    file: "installers/NewChat-1.0.4-mac-arm64.dmg"
+    version: "1.0.4"
     install_path: "/Applications/NewChat.app"
 
 # Docker镜像
@@ -43,9 +43,9 @@ docker_images:
     image: "docker.elastic.co/logstash/logstash:8.17.3"
     version: "8.17.3"
   newflow:
-    file: "installers/newflow-1.0.3.tar"
-    image: "newflow:1.0.3"
-    version: "1.0.3"
+    file: "installers/newflow-1.0.4.tar"
+    image: "newflow:1.0.4"
+    version: "1.0.4"
   newflow_docs:
     file: "installers/newflow-docs-1.0.tar"
     image: "newflow-docs:1.0"
@@ -149,8 +149,8 @@ download_sources:
   # 应用程序
   applications:
     newchat:
-      remote: "NewChat-1.0.1-mac-arm64.dmg"
-      local: "installers/NewChat-1.0.1-mac-arm64.dmg"
+      remote: "NewChat-1.0.4-mac-arm64.dmg"
+      local: "installers/NewChat-1.0.4-mac-arm64.dmg"
       size: "294M"
       md5: ""
       required: true
@@ -182,8 +182,8 @@ download_sources:
       md5: ""
       required: true
     newflow:
-      remote: "newflow-1.0.0-1.tar"
-      local: "installers/newflow-1.0.0-1.tar"
+      remote: "newflow-1.0.3.tar"
+      local: "installers/newflow-1.0.3.tar"
       size: "256M"
       md5: ""
       required: true
