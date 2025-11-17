@@ -106,14 +106,32 @@ echo "⏳ 等待Elasticsearch集群启动（可能需要几分钟）..."
 MAX_WAIT=300
 ELAPSED=0
 
+# 检查 ES 是否启用了安全认证（从 docker-compose.yml 读取）
+ES_SECURITY_ENABLED=$(grep "xpack.security.enabled" docker-compose.yml | grep -q "true" && echo "true" || echo "false")
+
+# 根据安全配置决定是否使用认证
+if [ "$ES_SECURITY_ENABLED" = "true" ]; then
+    ES_AUTH="-u elastic:${ELASTIC_PASSWORD:-changeme123}"
+else
+    ES_AUTH=""
+fi
+
 while [ $ELAPSED -lt $MAX_WAIT ]; do
-    if curl -s -u elastic:${ELASTIC_PASSWORD:-changeme123} http://localhost:${ES_PORT_1:-9200}/_cluster/health 2>/dev/null | grep -q '"status":"green"'; then
+    HEALTH_RESPONSE=$(curl -s $ES_AUTH http://localhost:${ES_PORT_1:-9200}/_cluster/health 2>&1)
+    HEALTH_STATUS=$(echo "$HEALTH_RESPONSE" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+    
+    if [ "$HEALTH_STATUS" = "green" ]; then
         echo "✅ Elasticsearch集群状态: green"
         break
-    elif curl -s -u elastic:${ELASTIC_PASSWORD:-changeme123} http://localhost:${ES_PORT_1:-9200}/_cluster/health 2>/dev/null | grep -q '"status":"yellow"'; then
+    elif [ "$HEALTH_STATUS" = "yellow" ]; then
         echo "⚠️  Elasticsearch集群状态: yellow (等待变为green...)"
+    elif [ -n "$HEALTH_STATUS" ]; then
+        echo "⏳ Elasticsearch集群状态: $HEALTH_STATUS (等待变为green...)"
     else
-        echo "⏳ Elasticsearch未就绪，继续等待..."
+        # 如果无法获取状态，显示错误信息（仅第一次和每30秒）
+        if [ $((ELAPSED % 30)) -eq 0 ]; then
+            echo "⏳ Elasticsearch未就绪，继续等待... (响应: ${HEALTH_RESPONSE:0:100})"
+        fi
     fi
     
     sleep 10
@@ -123,11 +141,12 @@ done
 if [ $ELAPSED -ge $MAX_WAIT ]; then
     echo "⚠️  警告：Elasticsearch集群启动超时"
     echo "   集群可能仍在初始化，请检查日志: docker logs es01"
+    echo "   最后响应: $(curl -s $ES_AUTH http://localhost:${ES_PORT_1:-9200}/_cluster/health 2>&1 | head -c 200)"
 else
     # 显示集群信息
     echo ""
     echo "📊 Elasticsearch集群信息："
-    curl -s -u elastic:${ELASTIC_PASSWORD:-changeme123} http://localhost:${ES_PORT_1:-9200}/_cat/nodes?v
+    curl -s $ES_AUTH http://localhost:${ES_PORT_1:-9200}/_cat/nodes?v
 fi
 
 echo ""
