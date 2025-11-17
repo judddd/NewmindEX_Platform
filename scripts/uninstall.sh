@@ -111,7 +111,7 @@ echo "步骤 2/7: 删除 Docker 资源..."
 if command -v docker &> /dev/null; then
     # 删除镜像
     echo "  • 删除 Docker 镜像"
-    docker images --format "{{.Repository}}:{{.Tag}}" | grep -E "(newflow|newmind|newchat|elasticsearch|kibana|logstash)" | while read image; do
+    docker images --format "{{.Repository}}:{{.Tag}}" | grep -E "(newflow|newmind|newchat)" | while read image; do
         docker rmi "$image" 2>/dev/null || true
     done
     

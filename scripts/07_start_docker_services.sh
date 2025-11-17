@@ -107,17 +107,30 @@ MAX_WAIT=300
 ELAPSED=0
 
 # 检查 ES 是否启用了安全认证（从 docker-compose.yml 读取）
-ES_SECURITY_ENABLED=$(grep "xpack.security.enabled" docker-compose.yml | grep -q "true" && echo "true" || echo "false")
-
-# 根据安全配置决定是否使用认证
-if [ "$ES_SECURITY_ENABLED" = "true" ]; then
-    ES_AUTH="-u elastic:${ELASTIC_PASSWORD:-changeme123}"
+# 兼容 zsh 和 bash：先检查是否存在，再检查值
+if grep -q "xpack.security.enabled.*true" docker-compose.yml 2>/dev/null; then
+    ES_SECURITY_ENABLED="true"
 else
-    ES_AUTH=""
+    ES_SECURITY_ENABLED="false"
 fi
 
+# 根据安全配置决定是否使用认证
+# 兼容 zsh 和 bash：使用条件判断而不是变量展开
+ES_URL="http://localhost:${ES_PORT_1:-9200}/_cluster/health"
+
+# 定义 curl 函数，根据安全配置选择参数
+curl_es() {
+    local url="$1"
+    if [ "$ES_SECURITY_ENABLED" = "true" ]; then
+        curl -s -u "elastic:${ELASTIC_PASSWORD:-changeme123}" "$url" 2>&1
+    else
+        curl -s "$url" 2>&1
+    fi
+}
+
 while [ $ELAPSED -lt $MAX_WAIT ]; do
-    HEALTH_RESPONSE=$(curl -s $ES_AUTH http://localhost:${ES_PORT_1:-9200}/_cluster/health 2>&1)
+    # 使用函数调用，确保 zsh 和 bash 都能正确处理
+    HEALTH_RESPONSE=$(curl_es "$ES_URL")
     HEALTH_STATUS=$(echo "$HEALTH_RESPONSE" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
     
     if [ "$HEALTH_STATUS" = "green" ]; then
@@ -130,7 +143,9 @@ while [ $ELAPSED -lt $MAX_WAIT ]; do
     else
         # 如果无法获取状态，显示错误信息（仅第一次和每30秒）
         if [ $((ELAPSED % 30)) -eq 0 ]; then
-            echo "⏳ Elasticsearch未就绪，继续等待... (响应: ${HEALTH_RESPONSE:0:100})"
+            # 兼容 zsh 和 bash 的子字符串截取
+            RESPONSE_PREVIEW=$(echo "$HEALTH_RESPONSE" | head -c 100)
+            echo "⏳ Elasticsearch未就绪，继续等待... (响应: $RESPONSE_PREVIEW)"
         fi
     fi
     
@@ -141,12 +156,13 @@ done
 if [ $ELAPSED -ge $MAX_WAIT ]; then
     echo "⚠️  警告：Elasticsearch集群启动超时"
     echo "   集群可能仍在初始化，请检查日志: docker logs es01"
-    echo "   最后响应: $(curl -s $ES_AUTH http://localhost:${ES_PORT_1:-9200}/_cluster/health 2>&1 | head -c 200)"
+    LAST_RESPONSE=$(curl_es "$ES_URL" | head -c 200)
+    echo "   最后响应: $LAST_RESPONSE"
 else
     # 显示集群信息
     echo ""
     echo "📊 Elasticsearch集群信息："
-    curl -s $ES_AUTH http://localhost:${ES_PORT_1:-9200}/_cat/nodes?v
+    curl_es "http://localhost:${ES_PORT_1:-9200}/_cat/nodes?v"
 fi
 
 echo ""
@@ -220,4 +236,3 @@ echo "   Logstash: http://localhost:${LOGSTASH_PORT:-5044}"
 echo "   NewFlow: http://localhost:${NEWFLOW_PORT:-5677}"
 echo "   NewFlow API 文档: http://localhost:${NEWFLOW_DOCS_PORT:-8001}"
 echo "   NewChat 文档: http://localhost:${NEWCHAT_DOCS_PORT:-8002}"
-
