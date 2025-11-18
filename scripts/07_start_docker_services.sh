@@ -13,7 +13,10 @@ source scripts/lib/config_reader.sh
 # 1. 先加载 .env 的运行配置（端口、内存等）
 # 注意：过滤掉版本号变量，版本号由 config.yaml 管理
 if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | grep -v '_VERSION=' | xargs)
+    # 安全地加载 .env 文件：只处理格式正确的变量行，过滤注释和版本号变量
+    set -a
+    source <(grep -v '^#' .env | grep -E '^[A-Z_][A-Z0-9_]*=' | grep -v '_VERSION=' | sed 's/#.*$//' | sed 's/[[:space:]]*$//')
+    set +a
 fi
 
 # 2. 再从 config.yaml 导出版本号（优先级最高，不会被覆盖）
