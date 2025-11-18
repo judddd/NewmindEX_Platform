@@ -38,11 +38,26 @@ read_config_yaml() {
         ".docker_images.newflow.file")
             grep -A5 "newflow:" "$config_file" | grep "file:" | head -1 | awk -F'"' '{print $2}'
             ;;
+        ".docker_images.newflow.version")
+            grep -A5 "docker_images:" "$config_file" -A 20 | grep -A3 "newflow:" | grep "version:" | head -1 | awk '{print $2}' | tr -d '"'
+            ;;
         ".docker_images.newflow_docs.file")
             grep -A5 "newflow_docs:" "$config_file" | grep "file:" | head -1 | awk -F'"' '{print $2}'
             ;;
         ".docker_images.newchat_docs.file")
             grep -A5 "newchat_docs:" "$config_file" | grep "file:" | head -1 | awk -F'"' '{print $2}'
+            ;;
+        ".docker_images.newchat_docs.version")
+            grep -A5 "docker_images:" "$config_file" -A 20 | grep -A3 "newchat_docs:" | grep "version:" | head -1 | awk '{print $2}' | tr -d '"'
+            ;;
+        ".docker_images.elasticsearch.version")
+            grep -A5 "docker_images:" "$config_file" -A 20 | grep -A3 "elasticsearch:" | grep "version:" | head -1 | awk '{print $2}' | tr -d '"'
+            ;;
+        ".docker_images.kibana.version")
+            grep -A5 "docker_images:" "$config_file" -A 20 | grep -A3 "kibana:" | grep "version:" | head -1 | awk '{print $2}' | tr -d '"'
+            ;;
+        ".docker_images.logstash.version")
+            grep -A5 "docker_images:" "$config_file" -A 20 | grep -A3 "logstash:" | grep "version:" | head -1 | awk '{print $2}' | tr -d '"'
             ;;
         ".download_sources.base_url")
             grep "base_url:" "$config_file" | head -1 | awk -F'"' '{print $2}'

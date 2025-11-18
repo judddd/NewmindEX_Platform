@@ -7,7 +7,22 @@ set -e
 
 echo "🐳 启动Docker服务..."
 
-# 加载环境变量
+# 加载配置读取函数
+source scripts/lib/config_reader.sh
+
+# 从 config.yaml 导出版本号环境变量
+export ES_VERSION=$(get_es_version)
+export KIBANA_VERSION=$(get_kibana_version)
+export LOGSTASH_VERSION=$(get_logstash_version)
+export NEWFLOW_VERSION=$(get_newflow_version)
+
+echo "📋 从 config.yaml 读取版本号:"
+echo "   Elasticsearch: $ES_VERSION"
+echo "   Kibana: $KIBANA_VERSION"
+echo "   Logstash: $LOGSTASH_VERSION"
+echo "   Newflow: $NEWFLOW_VERSION"
+
+# 加载其他环境变量（端口、内存等运行配置）
 if [ -f .env ]; then
     export $(cat .env | grep -v '^#' | xargs)
 fi
