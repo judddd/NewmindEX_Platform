@@ -18,10 +18,10 @@ import httpx
 # 加载环境变量 (使用标准方式)
 from pathlib import Path
 
-# 优先使用 .env 文件，其次使用 copy.enva（兼容旧配置）
+# 优先使用 .env 文件，其次使用 env.copy（兼容旧配置）
 env_file = Path(__file__).parent.parent / ".env"
 if not env_file.exists():
-    env_file = Path(__file__).parent.parent / "copy.enva"
+    env_file = Path(__file__).parent.parent / "env.copy"
 
 if env_file.exists():
     with open(env_file, 'r', encoding='utf-8') as f:

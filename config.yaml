@@ -182,8 +182,8 @@ download_sources:
       md5: ""
       required: true
     newflow:
-      remote: "newflow-1.0.3.tar"
-      local: "installers/newflow-1.0.3.tar"
+      remote: "newflow-1.0.4.tar"
+      local: "installers/newflow-1.0.4.tar"
       size: "256M"
       md5: ""
       required: true

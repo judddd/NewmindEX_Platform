@@ -93,8 +93,8 @@ load_env() {
     local env_file="${1:-.env}"
     
     if [ ! -f "$env_file" ]; then
-        # 如果 .env 不存在，尝试 copy.enva
-        env_file="copy.enva"
+        # 如果 .env 不存在，尝试 env.copy
+        env_file="env.copy"
         if [ ! -f "$env_file" ]; then
             return 1
         fi
@@ -108,23 +108,23 @@ load_env() {
 
 # 获取 Docker 版本配置
 get_es_version() {
-    echo "${ES_VERSION:-8.17.3}"
+    read_config_yaml ".docker_images.elasticsearch.version" || echo "8.17.3"
 }
 
 get_kibana_version() {
-    echo "${KIBANA_VERSION:-8.17.3}"
+    read_config_yaml ".docker_images.kibana.version" || echo "8.17.3"
 }
 
 get_logstash_version() {
-    echo "${LOGSTASH_VERSION:-8.17.3}"
+    read_config_yaml ".docker_images.logstash.version" || echo "8.17.3"
 }
 
 get_newflow_version() {
-    echo "${NEWFLOW_VERSION:-1.0.3}"
+    read_config_yaml ".docker_images.newflow.version" || echo "1.0.4"
 }
 
 get_newchat_docs_version() {
-    echo "${NEWCHAT_DOCS_VERSION:-1.0.1}"
+    read_config_yaml ".docker_images.newchat_docs.version" || echo "1.0.1"
 }
 
 # ==================== 下载地址配置 ====================

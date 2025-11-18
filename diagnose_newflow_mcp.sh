@@ -28,7 +28,7 @@ echo -e "\n7️⃣ 容器日志 (最近15行):"
 docker logs --tail 15 mcp-mcp-newflow-b3b7d204 2>&1 | tail -15
 
 echo -e "\n8️⃣ NewFlow API测试:"
-API_KEY=$(grep NEWFLOW_API_KEY copy.enva 2>/dev/null | cut -d'=' -f2)
+API_KEY=$(grep NEWFLOW_API_KEY env.copy 2>/dev/null | cut -d'=' -f2)
 if [ -z "$API_KEY" ]; then
     echo "❌ 未找到API Key配置"
 else

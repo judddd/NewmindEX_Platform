@@ -136,7 +136,7 @@ else
         
         # 更新配置文件以便后续使用
         echo "   📝 更新配置文件..."
-        sed -i '' "s|^NEWFLOW_API_KEY=.*|NEWFLOW_API_KEY=$NEWFLOW_API_KEY|" copy.enva 2>/dev/null || true
+        sed -i '' "s|^NEWFLOW_API_KEY=.*|NEWFLOW_API_KEY=$NEWFLOW_API_KEY|" env.copy 2>/dev/null || true
         sed -i '' "s|^NEWFLOW_API_KEY=.*|NEWFLOW_API_KEY=$NEWFLOW_API_KEY|" .env 2>/dev/null || true
     else
         echo "   ⚠️  未能提取API Key，使用环境变量中的值"

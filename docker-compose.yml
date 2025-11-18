@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   es01:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-8.17.3}
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
     container_name: es01
     restart: unless-stopped
     environment:
@@ -31,7 +31,7 @@ services:
       retries: 120
 
   es02:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-8.17.3}
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
     container_name: es02
     restart: unless-stopped
     environment:
@@ -60,7 +60,7 @@ services:
       retries: 120
 
   es03:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-8.17.3}
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
     container_name: es03
     restart: unless-stopped
     environment:
@@ -89,7 +89,7 @@ services:
       retries: 120
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:${KIBANA_VERSION:-8.17.3}
+    image: docker.elastic.co/kibana/kibana:8.17.3
     container_name: kibana
     restart: unless-stopped
     depends_on:
@@ -115,7 +115,7 @@ services:
       retries: 60
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:${LOGSTASH_VERSION:-8.17.3}
+    image: docker.elastic.co/logstash/logstash:8.17.3
     container_name: logstash
     restart: unless-stopped
     ports:
@@ -125,7 +125,7 @@ services:
       - elastic
 
   newflow:
-    image: newflow:${NEWFLOW_VERSION:-1.0.3}
+    image: newflow:1.0.4
     container_name: newflow
     restart: unless-stopped
     ports:
