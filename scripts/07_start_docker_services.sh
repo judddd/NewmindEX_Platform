@@ -10,7 +10,13 @@ echo "🐳 启动Docker服务..."
 # 加载配置读取函数
 source scripts/lib/config_reader.sh
 
-# 从 config.yaml 导出版本号环境变量
+# 1. 先加载 .env 的运行配置（端口、内存等）
+# 注意：过滤掉版本号变量，版本号由 config.yaml 管理
+if [ -f .env ]; then
+    export $(cat .env | grep -v '^#' | grep -v '_VERSION=' | xargs)
+fi
+
+# 2. 再从 config.yaml 导出版本号（优先级最高，不会被覆盖）
 export ES_VERSION=$(get_es_version)
 export KIBANA_VERSION=$(get_kibana_version)
 export LOGSTASH_VERSION=$(get_logstash_version)
@@ -21,11 +27,6 @@ echo "   Elasticsearch: $ES_VERSION"
 echo "   Kibana: $KIBANA_VERSION"
 echo "   Logstash: $LOGSTASH_VERSION"
 echo "   Newflow: $NEWFLOW_VERSION"
-
-# 加载其他环境变量（端口、内存等运行配置）
-if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
-fi
 
 # 导入 NewFlow 镜像（如果尚未导入）
 echo "📦 检查 NewFlow 镜像..."
