@@ -226,8 +226,8 @@ if [ -n "$NEWFLOW_DOCS_IMAGE" ]; then
     docker stop newflow-docs 2>/dev/null || true
     docker rm newflow-docs 2>/dev/null || true
     
-    # 启动新容器
-    if docker run -d --name newflow-docs -p ${NEWFLOW_DOCS_PORT:-8001}:8001 "$NEWFLOW_DOCS_IMAGE" 2>/dev/null; then
+    # 启动新容器（添加开机自启）
+    if docker run -d --name newflow-docs --restart=unless-stopped -p ${NEWFLOW_DOCS_PORT:-8001}:8001 "$NEWFLOW_DOCS_IMAGE" 2>/dev/null; then
         echo "✅ NewFlow API 文档已启动: http://localhost:${NEWFLOW_DOCS_PORT:-8001}"
     else
         echo "⚠️  NewFlow API 文档启动失败"
@@ -250,8 +250,8 @@ if [ -n "$NEWCHAT_IMAGE" ]; then
     docker stop newchat-docs 2>/dev/null || true
     docker rm newchat-docs 2>/dev/null || true
     
-    # 启动新容器
-    if docker run -d --name newchat-docs -p ${NEWCHAT_DOCS_PORT:-8002}:8002 "$NEWCHAT_IMAGE" 2>/dev/null; then
+    # 启动新容器（添加开机自启）
+    if docker run -d --name newchat-docs --restart=unless-stopped -p ${NEWCHAT_DOCS_PORT:-8002}:8002 "$NEWCHAT_IMAGE" 2>/dev/null; then
         echo "✅ NewChat 文档已启动: http://localhost:${NEWCHAT_DOCS_PORT:-8002}"
     else
         echo "⚠️  NewChat 文档启动失败"
