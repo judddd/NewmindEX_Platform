@@ -7,9 +7,11 @@ set -e
 
 echo "🔑 激活Elasticsearch试用许可..."
 
-# 加载环境变量
+# 加载环境变量（安全方式）
 if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
+    set -a
+    source <(grep -v '^#' .env | grep -E '^[A-Z_][A-Z0-9_]*=' | sed 's/#.*$//' | sed 's/[[:space:]]*$//')
+    set +a
 fi
 
 ES_URL="http://localhost:${ES_PORT_1:-9200}"
