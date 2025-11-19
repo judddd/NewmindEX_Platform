@@ -200,7 +200,9 @@ def start_mcp_server(instance_id: str) -> bool:
                     'max-file': '5',
                     'labels': f'mcp_instance={instance_id}'
                 }
-            }
+            },
+            # 配置开机自启
+            restart_policy={"Name": "unless-stopped"}
         )
         
         # 连接到docker-compose的elastic网络
