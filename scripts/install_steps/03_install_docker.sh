@@ -121,6 +121,27 @@ run_step() {
         return 1
     fi
     
+    # 配置 Docker 资源（内存、CPU等）
+    log_info "配置 Docker 资源限制..."
+    if [ -f "scripts/configure_docker_resources.sh" ]; then
+        # 自动配置模式（不提示重启）
+        export DOCKER_AUTO_CONFIGURE=true
+        bash scripts/configure_docker_resources.sh
+        
+        # 等待配置生效
+        log_info "等待 Docker 重启..."
+        sleep 10
+        
+        # 重新等待Docker就绪
+        if ! wait_for_docker 120; then
+            log_warn "Docker 重启后未就绪，但继续安装..."
+        else
+            log_success "Docker 资源配置完成"
+        fi
+    else
+        log_warn "找不到资源配置脚本，跳过"
+    fi
+    
     # 验证安装
     if verify_step; then
         mark_step_completed "$STEP_ID"
