@@ -161,6 +161,9 @@ services:
       
       # 文件权限强制执行
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      
+      # 版本更新通知（禁用）
+      - NEWFLOW_VERSION_NOTIFICATIONS_ENABLED=false
     volumes:
       - ./newflow_data:/home/node/.newflow
     extra_hosts:
