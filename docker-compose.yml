@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   es01:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-8.17.3}
