@@ -131,11 +131,13 @@ else
     echo "✅ 端口 ${LMSTUDIO_PORT:-1234} (LM Studio) 可用"
 fi
 
-# Dashboard端口特殊处理
-if lsof -Pi :${DASHBOARD_PORT:-8000} -sTCP:LISTEN 2>/dev/null | grep -q "python"; then
-    echo "✅ 端口 ${DASHBOARD_PORT:-8000} (Dashboard) - Python进程已运行"
+# Dashboard端口特殊处理 - 通过进程检查
+if pgrep -f "uvicorn main:app" > /dev/null 2>&1; then
+    echo "✅ 端口 ${DASHBOARD_PORT:-8000} (Dashboard) - Dashboard进程已运行"
+elif lsof -Pi :${DASHBOARD_PORT:-8000} -sTCP:LISTEN 2>/dev/null | grep -q "."; then
+    echo "⚠️  警告：端口 ${DASHBOARD_PORT:-8000} (Dashboard) 已被占用"
 else
-    check_port ${DASHBOARD_PORT:-8000} "Dashboard"
+    echo "✅ 端口 ${DASHBOARD_PORT:-8000} (Dashboard) 可用"
 fi
 
 echo ""

@@ -1,6 +1,6 @@
 # MCP服务器 Docker 构建总览
 
-本目录包含三个MCP (Model Context Protocol) 服务器的Docker构建脚本。
+本目录包含四个MCP (Model Context Protocol) 服务器的Docker构建脚本。
 
 ## 📦 可用的MCP服务器
 
@@ -9,18 +9,16 @@
 | **Elasticsearch** | 0.3.0 | `mcp-server-elasticsearch-sl/` | 连接Elasticsearch集群 |
 | **Kibana** | 0.4.0 | `mcp-server-kibana/` | 连接Kibana服务 |
 | **NewFlow** | 1.0.0 | `newflow-mcp-server/` | 连接NewFlow工作流引擎 |
+| **CMDB** | 0.1.0 | `mcp-server-cmdb/` | 连接CMDB配置管理数据库 |
 
 ## 🚀 快速开始
 
 ### 统一的构建脚本命名
 
-每个MCP服务器目录都包含相同的构建脚本：
+每个MCP服务器目录都包含构建脚本：
 
 ```bash
-build-docker-amd64.sh        # 构建AMD64架构镜像
-build-docker-arm64.sh        # 构建ARM64架构镜像  
-build-docker-multiarch.sh    # 构建多架构镜像
-export-docker-images.sh      # 导出镜像为tar文件
+build-docker.sh              # 统一构建脚本（同时构建AMD64和ARM64）
 ```
 
 ### 示例：构建Elasticsearch MCP服务器
@@ -29,26 +27,21 @@ export-docker-images.sh      # 导出镜像为tar文件
 # 进入Elasticsearch MCP目录
 cd mcp-server-elasticsearch-sl/
 
-# 构建ARM64镜像（Apple Silicon Mac）
-./build-docker-arm64.sh
-
-# 或构建AMD64镜像（Intel/AMD处理器）
-./build-docker-amd64.sh
-
-# 导出镜像
-./export-docker-images.sh
+# 构建镜像（同时构建AMD64和ARM64）
+./build-docker.sh
 ```
 
-### 示例：构建所有MCP服务器（ARM64）
+### 示例：构建所有MCP服务器
 
 ```bash
 # 在mcp_tool目录下
 cd /Users/ablatazmat/Downloads/deploy_newmind/mcp_tool
 
-# 构建所有ARM64镜像
-./mcp-server-elasticsearch-sl/build-docker-arm64.sh
-./mcp-server-kibana/build-docker-arm64.sh
-./newflow-mcp-server/build-docker-arm64.sh
+# 构建所有MCP镜像
+./mcp-server-elasticsearch-sl/build-docker.sh
+./mcp-server-kibana/build-docker.sh
+./newflow-mcp-server/build-docker.sh
+./mcp-server-cmdb/build-docker.sh
 ```
 
 ## 📋 构建产物
@@ -58,36 +51,37 @@ cd /Users/ablatazmat/Downloads/deploy_newmind/mcp_tool
 ```
 newmind-mcp-elasticsearch:0.3.0-amd64
 newmind-mcp-elasticsearch:0.3.0-arm64
-newmind-mcp-elasticsearch:latest-amd64
-newmind-mcp-elasticsearch:latest-arm64
 
 newmind-mcp-kibana:0.4.0-amd64
 newmind-mcp-kibana:0.4.0-arm64
-newmind-mcp-kibana:latest-amd64
-newmind-mcp-kibana:latest-arm64
 
 newmind-mcp-newflow:1.0.0-amd64
 newmind-mcp-newflow:1.0.0-arm64
-newmind-mcp-newflow:latest-amd64
-newmind-mcp-newflow:latest-arm64
+
+newmind-mcp-cmdb:0.1.0-amd64
+newmind-mcp-cmdb:0.1.0-arm64
 ```
 
 ### 导出文件位置
 
-每个服务器的tar文件会保存在各自的 `docker-exports/` 目录：
+每个服务器的tar文件会保存在各自的目录：
 
 ```
-mcp-server-elasticsearch-sl/docker-exports/
+mcp-server-elasticsearch-sl/
 ├── newmind-mcp-elasticsearch-0.3.0-amd64.tar
 └── newmind-mcp-elasticsearch-0.3.0-arm64.tar
 
-mcp-server-kibana/docker-exports/
+mcp-server-kibana/
 ├── newmind-mcp-kibana-0.4.0-amd64.tar
 └── newmind-mcp-kibana-0.4.0-arm64.tar
 
-newflow-mcp-server/docker-exports/
+newflow-mcp-server/
 ├── newmind-mcp-newflow-1.0.0-amd64.tar
 └── newmind-mcp-newflow-1.0.0-arm64.tar
+
+mcp-server-cmdb/
+├── newmind-mcp-cmdb-0.1.0-amd64.tar
+└── newmind-mcp-cmdb-0.1.0-arm64.tar
 ```
 
 ## 🐳 运行容器示例
@@ -129,7 +123,22 @@ docker run -d \
   -e MCP_TRANSPORT=http \
   -e N8N_BASE_URL="http://host.docker.internal:5677" \
   -e N8N_API_KEY="your_api_key" \
-  newmind-mcp-newflow:latest-arm64
+  newmind-mcp-newflow:1.0.0-arm64
+```
+
+### CMDB MCP
+
+```bash
+docker run -d \
+  --name mcp-cmdb-9205 \
+  -p 9205:3000 \
+  -e MCP_TRANSPORT=http \
+  -e CMDB_DOMAIN="https://cmdb-service.example.com" \
+  -e CMDB_APP_ID="your_app_id" \
+  -e CMDB_APP_SECRET="your_app_secret" \
+  -e CMDB_VERIFY_SSL="true" \
+  -e NODE_TLS_REJECT_UNAUTHORIZED="0" \
+  newmind-mcp-cmdb:0.1.0-arm64
 ```
 
 ## 📊 环境变量参考
@@ -161,6 +170,16 @@ docker run -d \
 | `N8N_BASE_URL` | NewFlow URL | `http://host.docker.internal:5677` |
 | `N8N_API_KEY` | API Key | `your_api_key` |
 
+### CMDB MCP
+
+| 变量 | 说明 | 示例 |
+|------|------|------|
+| `CMDB_DOMAIN` | CMDB域名URL | `https://cmdb-service.example.com` |
+| `CMDB_APP_ID` | 应用ID | `your_app_id` |
+| `CMDB_APP_SECRET` | 应用密钥 | `your_app_secret` |
+| `CMDB_VERIFY_SSL` | SSL证书验证 | `true` 或 `false` |
+| `NODE_TLS_REJECT_UNAUTHORIZED` | 跳过SSL验证 | `0` |
+
 ## 🛠️ 批量操作脚本
 
 ### 构建所有ARM64镜像
@@ -180,7 +199,10 @@ echo "🔨 构建 Kibana MCP..."
 cd mcp-server-kibana && ./build-docker-arm64.sh && cd ..
 
 echo "🔨 构建 NewFlow MCP..."
-cd newflow-mcp-server && ./build-docker-arm64.sh && cd ..
+cd newflow-mcp-server && ./build-docker.sh && cd ..
+
+echo "🔨 构建 CMDB MCP..."
+cd mcp-server-cmdb && ./build-docker.sh && cd ..
 
 echo "✅ 所有镜像构建完成！"
 ```
@@ -202,7 +224,10 @@ echo "📦 导出 Kibana MCP..."
 cd mcp-server-kibana && ./export-docker-images.sh && cd ..
 
 echo "📦 导出 NewFlow MCP..."
-cd newflow-mcp-server && ./export-docker-images.sh && cd ..
+cd newflow-mcp-server && ./build-docker.sh && cd ..
+
+echo "📦 导出 CMDB MCP..."
+cd mcp-server-cmdb && ./build-docker.sh && cd ..
 
 echo "✅ 所有镜像导出完成！"
 ```
@@ -226,6 +251,9 @@ curl http://localhost:9203/health
 
 # NewFlow
 curl http://localhost:9204/health
+
+# CMDB
+curl http://localhost:9205/health
 ```
 
 ### 测试MCP端点
@@ -242,8 +270,9 @@ curl -X POST http://localhost:9202/mcp \
 每个MCP服务器目录都有详细的构建文档：
 
 - [Elasticsearch MCP 构建指南](./mcp-server-elasticsearch-sl/DOCKER_BUILD_GUIDE.md)
-- Kibana MCP 构建指南 (查看各自目录的README)
-- NewFlow MCP 构建指南 (查看各自目录的README)
+- [Kibana MCP 文档](./mcp-server-kibana/README.md)
+- [NewFlow MCP 文档](./newflow-mcp-server/README.md)
+- [CMDB MCP 文档](./mcp-server-cmdb/README.md)
 
 ## ⚠️ 注意事项
 
@@ -262,7 +291,7 @@ curl -X POST http://localhost:9202/mcp \
 
 4. **端口映射**：
    - 避免端口冲突
-   - 建议ES:9202, Kibana:9203, NewFlow:9204
+   - 建议ES:9202, Kibana:9203, NewFlow:9204, CMDB:9205
 
 ## 🔄 更新和维护
 
@@ -270,12 +299,13 @@ curl -X POST http://localhost:9202/mcp \
 
 ```bash
 # 清理旧镜像
-docker rmi newmind-mcp-elasticsearch:latest-arm64
-docker rmi newmind-mcp-kibana:latest-arm64
-docker rmi newmind-mcp-newflow:latest-arm64
+docker rmi newmind-mcp-elasticsearch:0.3.0-arm64
+docker rmi newmind-mcp-kibana:0.4.0-arm64
+docker rmi newmind-mcp-newflow:1.0.0-arm64
+docker rmi newmind-mcp-cmdb:0.1.0-arm64
 
 # 重新构建
-./build-docker-arm64.sh
+./build-docker.sh
 ```
 
 ### 查看镜像大小
@@ -289,6 +319,7 @@ docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep newmi
 - Elasticsearch MCP: [GitHub Issues](https://github.com/TocharianOU/mcp-server-elasticsearch-sl/issues)
 - Kibana MCP: [GitHub Issues](https://github.com/TocharianOU/mcp-server-kibana/issues)
 - NewFlow MCP: [GitHub Issues](https://github.com/TocharianOU/newflow-mcp-server/issues)
+- CMDB MCP: 查看项目README
 
 ---
 

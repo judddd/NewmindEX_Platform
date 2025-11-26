@@ -84,6 +84,28 @@ MCP_TEMPLATES = {
             "kibana_password": "",
             "kibana_space": "default"
         }
+    },
+    "local_cmdb": {
+        "name": "本地CMDB（推荐）",
+        "type": "cmdb",
+        "description": "MCP Docker容器连接CMDB配置管理数据库",
+        "config": {
+            "cmdb_domain": "https://cmdb-service.example.com",
+            "cmdb_app_id": "",
+            "cmdb_app_secret": "",
+            "cmdb_verify_ssl": "true"
+        }
+    },
+    "production_cmdb": {
+        "name": "生产环境CMDB",
+        "type": "cmdb",
+        "description": "连接到生产环境CMDB",
+        "config": {
+            "cmdb_domain": "https://cmdb-service.example.com",
+            "cmdb_app_id": "",
+            "cmdb_app_secret": "",
+            "cmdb_verify_ssl": "true"
+        }
     }
 }
 

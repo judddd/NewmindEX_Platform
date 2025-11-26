@@ -28,10 +28,11 @@ mkdir -p "$INSTALLERS_DIR"
 MCP_VERSION="1.0.0"
 
 # 使用简单数组（兼容旧版bash）
-MCP_TYPES=("elasticsearch" "kibana" "newflow")
+MCP_TYPES=("elasticsearch" "kibana" "newflow" "cmdb")
 MCP_elasticsearch="mcp-server-elasticsearch-sl"
 MCP_kibana="mcp-server-kibana"
 MCP_newflow="newflow-mcp-server"
+MCP_cmdb="mcp-server-cmdb"
 
 # 构建单个 MCP 镜像
 build_mcp_image() {

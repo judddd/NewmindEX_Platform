@@ -176,6 +176,13 @@ verify_step() {
         all_ok=false
     fi
     
+    # 检查MinIO
+    if docker images | grep -q "minio"; then
+        log_success "  ✓ MinIO"
+    else
+        log_warn "  ✗ MinIO 镜像缺失（可选组件）"
+    fi
+    
     echo ""
     
     if [ "$all_ok" = false ]; then

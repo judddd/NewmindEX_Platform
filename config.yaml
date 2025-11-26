@@ -66,6 +66,10 @@ docker_images:
     file: "installers/newmind-mcp-newflow-1.0.0.tar"
     image: "newmind-mcp-newflow:1.0.0"
     version: "1.0.0"
+  minio:
+    file: "installers/docker_images/minio-latest.tar"
+    image: "minio/minio:latest"
+    version: "latest"
 
 # AI模型（永不删除）
 ai_models:
@@ -91,6 +95,7 @@ python:
 data:
   elasticsearch: "elasticsearch/node*"
   newflow: "newflow_data/"
+  minio: "minio_data/"
   mcp: "python_dashboard/mcp_instances.db"
   logs: "logs/"
   dashboard_logs: "python_dashboard/*.log"
@@ -103,6 +108,8 @@ ports:
   newflow: 5677
   lmstudio: 1234
   newchat: 61990
+  minio_api: 9000
+  minio_console: 9001
   mcp_elasticsearch: 3001
   mcp_kibana: 3002
   mcp_newflow: 3003
@@ -149,8 +156,8 @@ download_sources:
   # 应用程序
   applications:
     newchat:
-      remote: "NewChat-1.0.4-mac-arm64.dmg"
-      local: "installers/NewChat-1.0.4-mac-arm64.dmg"
+      remote: "NewChat-1.1.0-mac-arm64.dmg"
+      local: "installers/NewChat-1.1.0-mac-arm64.dmg"
       size: "294M"
       md5: ""
       required: true
@@ -217,6 +224,12 @@ download_sources:
       size: "93M"
       md5: ""
       required: true
+    minio:
+      remote: "minio-latest.tar"
+      local: "installers/docker_images/minio-latest.tar"
+      size: "55M"
+      md5: ""
+      required: false
   
   # AI模型（压缩包）
   ai_models:

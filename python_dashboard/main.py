@@ -29,6 +29,9 @@ if env_file.exists():
             line = line.strip()
             if line and not line.startswith('#') and '=' in line:
                 key, value = line.split('=', 1)
+                # 去掉值中的行内注释
+                if '#' in value:
+                    value = value.split('#')[0].strip()
                 # 只在环境变量不存在时设置（避免覆盖系统环境变量）
                 if key not in os.environ:
                     os.environ[key] = value
@@ -189,7 +192,7 @@ async def startup_event():
 
 class MCPInstanceCreate(BaseModel):
     name: str
-    type: str  # elasticsearch, kibana, newflow
+    type: str  # elasticsearch, kibana, newflow, cmdb
     config: Dict
     port: Optional[int] = None
 
@@ -262,6 +265,10 @@ async def get_status():
     # 检查NewChat - 通过端口 61990
     newchat_running = await check_port_open('localhost', 61990)
     
+    # 检查MinIO - 通过Docker检查实际状态
+    minio_status_result = await get_docker_service_status('minio')
+    minio_running = minio_status_result.get('status') == 'running'
+    
     # 检查MCP实例
     mcp_instances = get_all_instances()
     for instance in mcp_instances:
@@ -287,6 +294,11 @@ async def get_status():
         "newflow": {
             "status": "running" if newflow_running else "stopped",
             "url": f"http://localhost:{os.getenv('NEWFLOW_PORT', '5677')}"
+        },
+        "minio": {
+            "status": "running" if minio_running else "stopped",
+            "api_url": f"http://localhost:{os.getenv('MINIO_API_PORT', '9000')}",
+            "console_url": f"http://localhost:{os.getenv('MINIO_CONSOLE_PORT', '9001')}"
         },
         "mcp_servers": {
             "total": len(mcp_instances),
@@ -405,6 +417,50 @@ async def open_newchat():
         return {"success": False, "error": str(e)}
 
 
+# ==================== MinIO API ====================
+
+@app.get("/api/minio/status")
+async def minio_status():
+    """MinIO状态"""
+    status_result = await get_docker_service_status('minio')
+    is_running = status_result.get('status') == 'running'
+    
+    minio_info = {
+        "status": "running" if is_running else "stopped",
+        "api_port": int(os.getenv('MINIO_API_PORT', '9000')),
+        "console_port": int(os.getenv('MINIO_CONSOLE_PORT', '9001')),
+        "api_url": f"http://localhost:{os.getenv('MINIO_API_PORT', '9000')}",
+        "console_url": f"http://localhost:{os.getenv('MINIO_CONSOLE_PORT', '9001')}",
+        "root_user": os.getenv('MINIO_ROOT_USER', 'minioadmin')
+    }
+    
+    # 如果MinIO运行中，尝试获取存储信息
+    if is_running:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                # MinIO健康检查端点
+                response = await client.get(f"http://localhost:{os.getenv('MINIO_API_PORT', '9000')}/minio/health/live")
+                minio_info["health"] = "healthy" if response.status_code == 200 else "unhealthy"
+        except:
+            minio_info["health"] = "unknown"
+    
+    return minio_info
+
+
+@app.post("/api/minio/open-console")
+async def open_minio_console():
+    """在浏览器中打开MinIO控制台"""
+    import subprocess
+    import webbrowser
+    try:
+        console_url = f"http://localhost:{os.getenv('MINIO_CONSOLE_PORT', '9001')}"
+        # 尝试在默认浏览器中打开
+        webbrowser.open(console_url)
+        return {"success": True, "message": f"MinIO控制台已打开: {console_url}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # ==================== Docker服务管理 API ====================
 
 # 服务名映射
@@ -412,7 +468,8 @@ SERVICE_MAPPING = {
     'elasticsearch': ['es01', 'es02', 'es03'],  # ES集群三节点
     'kibana': ['kibana'],
     'newflow': ['newflow'],
-    'logstash': ['logstash']
+    'logstash': ['logstash'],
+    'minio': ['minio']
 }
 
 @app.get("/api/docker/{service}/status")
@@ -652,6 +709,9 @@ async def mcp_update_instance(instance_id: str, data: MCPInstanceUpdate):
         updates['config'] = data.config
     if data.port:
         updates['port'] = data.port
+        # 端口变更时同步更新端点URL
+        updates['endpoint'] = f"http://localhost:{data.port}/mcp"
+        updates['health_endpoint'] = f"http://localhost:{data.port}/health"
     
     success = update_instance(instance_id, updates)
     if not success:

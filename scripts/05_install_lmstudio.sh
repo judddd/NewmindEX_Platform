@@ -15,28 +15,6 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}🤖 安装/升级 LM Studio...${NC}"
 echo ""
 
-# 检查是否已安装
-if [ -d "/Applications/LM Studio.app" ]; then
-    echo -e "${YELLOW}⚠️  检测到已安装的 LM Studio，将进行覆盖安装（升级）${NC}"
-    
-    # 尝试获取当前版本
-    if [ -f "/Applications/LM Studio.app/Contents/Info.plist" ]; then
-        CURRENT_VERSION=$(defaults read "/Applications/LM Studio.app/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "未知")
-        echo -e "${BLUE}   当前版本: ${CURRENT_VERSION}${NC}"
-    fi
-    
-    # 停止运行中的LM Studio进程
-    echo -e "${YELLOW}   检查并停止运行中的 LM Studio 进程...${NC}"
-    pkill -x "LM Studio" 2>/dev/null || true
-    pkill -x "lms" 2>/dev/null || true
-    sleep 1
-    
-    # 删除旧版本
-    echo -e "${YELLOW}   删除旧版本...${NC}"
-    rm -rf "/Applications/LM Studio.app"
-    echo ""
-fi
-
 # 检查DMG文件
 LMSTUDIO_DMG=$(ls installers/LM-Studio-*-arm64.dmg 2>/dev/null | head -1)
 
@@ -47,10 +25,60 @@ if [ -z "$LMSTUDIO_DMG" ]; then
 fi
 
 # 从文件名提取版本号
-VERSION=$(basename "$LMSTUDIO_DMG" | sed -n 's/LM-Studio-\(.*\)-arm64.dmg/\1/p')
+NEW_VERSION=$(basename "$LMSTUDIO_DMG" | sed -n 's/LM-Studio-\(.*\)-arm64.dmg/\1/p')
 echo -e "${BLUE}📦 发现安装包: $LMSTUDIO_DMG${NC}"
-echo -e "${BLUE}   版本: ${VERSION}${NC}"
+echo -e "${BLUE}   安装包版本: ${NEW_VERSION}${NC}"
+
+# 提取主版本号（忽略构建号）- 例如：0.3.30-1 -> 0.3.30
+NEW_VERSION_MAIN=$(echo "$NEW_VERSION" | sed 's/-[0-9]*$//')
+
+# 检查是否已安装
+SHOULD_INSTALL=true
+if [ -d "/Applications/LM Studio.app" ]; then
+    echo -e "${BLUE}   检测到已安装的 LM Studio${NC}"
+    
+    # 尝试获取当前版本
+    CURRENT_VERSION="未知"
+    if [ -f "/Applications/LM Studio.app/Contents/Info.plist" ]; then
+        CURRENT_VERSION=$(defaults read "/Applications/LM Studio.app/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "未知")
+    fi
+    echo -e "${BLUE}   当前版本: ${CURRENT_VERSION}${NC}"
+    
+    # 提取当前版本的主版本号
+    CURRENT_VERSION_MAIN=$(echo "$CURRENT_VERSION" | sed 's/-[0-9]*$//')
+    
+    # 比较主版本号
+    if [ "$CURRENT_VERSION_MAIN" = "$NEW_VERSION_MAIN" ]; then
+        echo -e "${GREEN}✅ 版本相同，跳过安装${NC}"
+        SHOULD_INSTALL=false
+    else
+        echo -e "${YELLOW}⚠️  版本不同，将进行覆盖安装（升级）${NC}"
+        echo -e "${BLUE}   ${CURRENT_VERSION_MAIN} → ${NEW_VERSION_MAIN}${NC}"
+        
+        # 停止运行中的LM Studio进程
+        echo -e "${YELLOW}   检查并停止运行中的 LM Studio 进程...${NC}"
+        pkill -x "LM Studio" 2>/dev/null || true
+        pkill -x "lms" 2>/dev/null || true
+        sleep 1
+        
+        # 删除旧版本
+        echo -e "${YELLOW}   删除旧版本...${NC}"
+        rm -rf "/Applications/LM Studio.app"
+    fi
+else
+    echo -e "${BLUE}   LM Studio 未安装，开始安装${NC}"
+fi
+
 echo ""
+
+# 如果不需要安装，直接退出
+if [ "$SHOULD_INSTALL" = false ]; then
+    echo -e "${GREEN}╔════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║      ✅ LM Studio 已是最新版本            ║${NC}"
+    echo -e "${GREEN}╚════════════════════════════════════════════╝${NC}"
+    echo ""
+    exit 0
+fi
 
 echo -e "${BLUE}📦 挂载 LM Studio DMG...${NC}"
 hdiutil attach "$LMSTUDIO_DMG" -nobrowse -quiet
@@ -119,7 +147,7 @@ echo -e "${GREEN}║      ✅ LM Studio 安装/升级完成！         ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${BLUE}📝 版本信息:${NC}"
-echo -e "   • 已安装版本: ${VERSION}"
+echo -e "   • 已安装版本: ${NEW_VERSION}"
 echo ""
 echo -e "${BLUE}🚀 下一步：${NC}"
 echo -e "   1. 打开 LM Studio.app"

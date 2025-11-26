@@ -69,9 +69,145 @@ echo "步骤 8/13: 导入MCP Docker镜像"
 bash scripts/07_load_mcp_images.sh || echo "⚠️  MCP镜像导入跳过，将使用Node模式"
 echo ""
 
-# 步骤8：启动Docker服务
+# 步骤8：启动Docker服务（智能检测，仅启动未运行的服务）
 echo "步骤 9/13: 启动Docker服务"
-bash scripts/07_start_docker_services.sh
+echo "🔍 检查Docker服务状态..."
+
+# 检查哪些服务需要启动
+SERVICES_TO_START=()
+SERVICES_RUNNING=()
+
+# 检查ES集群
+if docker ps --format '{{.Names}}' | grep -q '^es01$' && \
+   docker ps --format '{{.Names}}' | grep -q '^es02$' && \
+   docker ps --format '{{.Names}}' | grep -q '^es03$'; then
+    SERVICES_RUNNING+=("Elasticsearch")
+    echo "   ✅ Elasticsearch 集群已运行，跳过启动"
+else
+    SERVICES_TO_START+=("es01" "es02" "es03")
+fi
+
+# 检查Kibana
+if docker ps --format '{{.Names}}' | grep -q '^kibana$'; then
+    SERVICES_RUNNING+=("Kibana")
+    echo "   ✅ Kibana 已运行，跳过启动"
+else
+    SERVICES_TO_START+=("kibana")
+fi
+
+# 检查Logstash
+if docker ps --format '{{.Names}}' | grep -q '^logstash$'; then
+    SERVICES_RUNNING+=("Logstash")
+    echo "   ✅ Logstash 已运行，跳过启动"
+else
+    SERVICES_TO_START+=("logstash")
+fi
+
+# 检查NewFlow
+if docker ps --format '{{.Names}}' | grep -q '^newflow$'; then
+    SERVICES_RUNNING+=("NewFlow")
+    echo "   ✅ NewFlow 已运行，跳过启动"
+else
+    SERVICES_TO_START+=("newflow")
+fi
+
+# 检查MinIO
+if docker ps --format '{{.Names}}' | grep -q '^minio$'; then
+    SERVICES_RUNNING+=("MinIO")
+    echo "   ✅ MinIO 已运行，跳过启动"
+else
+    SERVICES_TO_START+=("minio")
+fi
+
+# 根据需要启动服务
+if [ ${#SERVICES_TO_START[@]} -eq 0 ]; then
+    echo "✅ 所有Docker服务都已运行，无需启动"
+else
+    echo "🚀 启动以下服务: ${SERVICES_TO_START[*]}"
+    for service in "${SERVICES_TO_START[@]}"; do
+        echo "   启动 $service..."
+        docker compose up -d $service
+    done
+    echo "✅ Docker服务启动完成"
+    
+    # 如果启动了ES，等待其就绪
+    if [[ " ${SERVICES_TO_START[@]} " =~ " es01 " ]] || \
+       [[ " ${SERVICES_TO_START[@]} " =~ " es02 " ]] || \
+       [[ " ${SERVICES_TO_START[@]} " =~ " es03 " ]]; then
+        echo "⏳ 等待 Elasticsearch 集群就绪..."
+        sleep 10
+        MAX_WAIT=120
+        ELAPSED=0
+        while [ $ELAPSED -lt $MAX_WAIT ]; do
+            if curl -s http://localhost:${ES_PORT_1:-9200}/_cluster/health > /dev/null 2>&1; then
+                echo "✅ Elasticsearch 已就绪"
+                break
+            fi
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+        done
+        if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "⚠️  Elasticsearch 启动超时，请检查日志: docker logs es01"
+        fi
+    fi
+    
+    # 如果启动了Kibana，等待其就绪
+    if [[ " ${SERVICES_TO_START[@]} " =~ " kibana " ]]; then
+        echo "⏳ 等待 Kibana 就绪..."
+        sleep 5
+        MAX_WAIT=60
+        ELAPSED=0
+        while [ $ELAPSED -lt $MAX_WAIT ]; do
+            if curl -s http://localhost:${KIBANA_PORT:-5601}/api/status > /dev/null 2>&1; then
+                echo "✅ Kibana 已就绪"
+                break
+            fi
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+        done
+        if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "⚠️  Kibana 启动超时，请检查日志: docker logs kibana"
+        fi
+    fi
+    
+    # 如果启动了NewFlow，等待其就绪
+    if [[ " ${SERVICES_TO_START[@]} " =~ " newflow " ]]; then
+        echo "⏳ 等待 NewFlow 就绪..."
+        sleep 5
+        MAX_WAIT=60
+        ELAPSED=0
+        while [ $ELAPSED -lt $MAX_WAIT ]; do
+            if curl -s http://localhost:${NEWFLOW_PORT:-5677} > /dev/null 2>&1; then
+                echo "✅ NewFlow 已就绪"
+                break
+            fi
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+        done
+        if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "⚠️  NewFlow 启动超时，请检查日志: docker logs newflow"
+        fi
+    fi
+    
+    # 如果启动了MinIO，等待其就绪
+    if [[ " ${SERVICES_TO_START[@]} " =~ " minio " ]]; then
+        echo "⏳ 等待 MinIO 就绪..."
+        sleep 3
+        MAX_WAIT=30
+        ELAPSED=0
+        while [ $ELAPSED -lt $MAX_WAIT ]; do
+            if curl -s http://localhost:${MINIO_API_PORT:-9000}/minio/health/live > /dev/null 2>&1; then
+                echo "✅ MinIO 已就绪"
+                break
+            fi
+            sleep 3
+            ELAPSED=$((ELAPSED + 3))
+        done
+        if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "⚠️  MinIO 启动超时，请检查日志: docker logs minio"
+        fi
+    fi
+fi
 echo ""
 
 # 步骤8：激活试用许可
@@ -142,27 +278,47 @@ echo ""
 echo "=========================================="
 echo ""
 
-# 启动Python Dashboard
+# 启动Python Dashboard（智能检测）
 echo "步骤 12/12: 启动Python Dashboard..."
 cd python_dashboard
-# 检查并停止旧的Dashboard进程
+
+# 检查Dashboard是否已经运行
+DASHBOARD_RUNNING=false
 if [ -f dashboard.pid ]; then
     OLD_PID=$(cat dashboard.pid)
-    if ps -p $OLD_PID > /dev/null; then
-        echo "ℹ️  停止旧的Dashboard进程 (PID: $OLD_PID)..."
-        kill $OLD_PID || true
-        sleep 2
+    if ps -p $OLD_PID > /dev/null 2>&1; then
+        # 验证是否是我们的Dashboard进程
+        if ps -p $OLD_PID -o command | grep -q "uvicorn main:app"; then
+            DASHBOARD_RUNNING=true
+            echo "✅ Dashboard 已运行 (PID: $OLD_PID)，跳过启动"
+        fi
     fi
-    rm -f dashboard.pid
 fi
-source .venv/bin/activate
-# 加载环境变量
-set -a; source ../.env 2>/dev/null || true; set +a
-nohup uvicorn main:app --host 0.0.0.0 --port ${DASHBOARD_PORT:-8000} > dashboard.log 2>&1 &
-DASHBOARD_PID=$!
-echo $DASHBOARD_PID > dashboard.pid
+
+# 如果通过进程名也能找到，说明已运行
+if ! $DASHBOARD_RUNNING && pgrep -f "uvicorn main:app" > /dev/null 2>&1; then
+    RUNNING_PID=$(pgrep -f "uvicorn main:app" | head -1)
+    DASHBOARD_RUNNING=true
+    # 更新PID文件
+    echo $RUNNING_PID > dashboard.pid
+    echo "✅ Dashboard 已运行 (PID: $RUNNING_PID)，跳过启动"
+fi
+
+# 只有在未运行时才启动
+if ! $DASHBOARD_RUNNING; then
+    # 清理可能残留的旧PID文件
+    rm -f dashboard.pid
+    
+    source .venv/bin/activate
+    # 加载环境变量
+    set -a; source ../.env 2>/dev/null || true; set +a
+    nohup uvicorn main:app --host 0.0.0.0 --port ${DASHBOARD_PORT:-8000} > dashboard.log 2>&1 &
+    DASHBOARD_PID=$!
+    echo $DASHBOARD_PID > dashboard.pid
+    echo "✅ Python Dashboard已在后台启动，PID: $DASHBOARD_PID。日志文件: python_dashboard/dashboard.log"
+fi
+
 cd ..
-echo "✅ Python Dashboard已在后台启动，PID: $DASHBOARD_PID。日志文件: python_dashboard/dashboard.log"
 echo ""
 
 # 步骤11：初始化默认MCP实例

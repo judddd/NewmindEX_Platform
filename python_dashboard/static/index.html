@@ -1236,7 +1236,7 @@
 
             <!-- 服务状态总览 -->
             <div class="row mb-4 g-3">
-                <div class="col">
+                <div class="col-md-6 col-lg-4 col-xl-2">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">Elasticsearch</h6>
@@ -1254,7 +1254,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col">
+                <div class="col-md-6 col-lg-4 col-xl-2">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">Kibana</h6>
@@ -1272,7 +1272,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col">
+                <div class="col-md-6 col-lg-4 col-xl-2">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">LM Studio</h6>
@@ -1288,7 +1288,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col">
+                <div class="col-md-6 col-lg-4 col-xl-2">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">NewChat</h6>
@@ -1303,7 +1303,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col">
+                <div class="col-md-6 col-lg-4 col-xl-2">
                     <div class="card status-card">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">NewFlow</h6>
@@ -1315,6 +1315,24 @@
                                     <i class="fas fa-play"></i> 启动
                                 </button>
                                 <a href="http://localhost:5677" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 col-xl-2">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">MinIO</h6>
+                            <h3 class="card-title" id="minio-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="minio-toggle-btn" onclick="toggleDockerService('minio')" class="btn btn-sm btn-success flex-grow-1">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <a href="http://localhost:9001" target="_blank" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-external-link-alt"></i>
                                 </a>
                             </div>
@@ -1531,10 +1549,18 @@
         }
         
         function updateDashboard(status) {
+            // 安全检查：如果status为空或不完整，直接返回
+            if (!status) {
+                console.warn('updateDashboard: status 为空');
+                return;
+            }
+            
             // 更新ES状态和按钮
-            const esStatus = status.elasticsearch.status === 'running';
-            document.getElementById('es-status').innerHTML = 
-                `<span class="badge badge-${esStatus ? 'running' : 'stopped'}">${esStatus ? '运行中' : '离线'}</span>`;
+            const esStatus = status.elasticsearch?.status === 'running';
+            const esStatusEl = document.getElementById('es-status');
+            if (esStatusEl) {
+                esStatusEl.innerHTML = `<span class="badge badge-${esStatus ? 'running' : 'stopped'}">${esStatus ? '运行中' : '离线'}</span>`;
+            }
             const esBtn = document.getElementById('elasticsearch-toggle-btn');
             if (esBtn) {
                 esBtn.className = esStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
@@ -1543,8 +1569,10 @@
             
             // 更新Kibana状态和按钮
             const kibanaStatus = status.kibana?.status === 'running';
-            document.getElementById('kibana-status').innerHTML = 
-                `<span class="badge badge-${kibanaStatus ? 'running' : 'stopped'}">${kibanaStatus ? '运行中' : '离线'}</span>`;
+            const kibanaStatusEl = document.getElementById('kibana-status');
+            if (kibanaStatusEl) {
+                kibanaStatusEl.innerHTML = `<span class="badge badge-${kibanaStatus ? 'running' : 'stopped'}">${kibanaStatus ? '运行中' : '离线'}</span>`;
+            }
             const kibanaBtn = document.getElementById('kibana-toggle-btn');
             if (kibanaBtn) {
                 kibanaBtn.className = kibanaStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
@@ -1552,23 +1580,41 @@
             }
             
             // 更新LM Studio状态
-            const lmStatus = status.lmstudio.status === 'running';
-            document.getElementById('lm-status').innerHTML = 
-                `<span class="badge badge-${lmStatus ? 'running' : 'stopped'}">${lmStatus ? '运行中' : '离线'}</span>`;
+            const lmStatus = status.lmstudio?.status === 'running';
+            const lmStatusEl = document.getElementById('lm-status');
+            if (lmStatusEl) {
+                lmStatusEl.innerHTML = `<span class="badge badge-${lmStatus ? 'running' : 'stopped'}">${lmStatus ? '运行中' : '离线'}</span>`;
+            }
             
             // 更新NewChat状态
             const newchatStatus = status.newchat?.status === 'running';
-            document.getElementById('newchat-status').innerHTML = 
-                `<span class="badge badge-${newchatStatus ? 'running' : 'stopped'}">${newchatStatus ? '运行中' : '离线'}</span>`;
+            const newchatStatusEl = document.getElementById('newchat-status');
+            if (newchatStatusEl) {
+                newchatStatusEl.innerHTML = `<span class="badge badge-${newchatStatus ? 'running' : 'stopped'}">${newchatStatus ? '运行中' : '离线'}</span>`;
+            }
             
             // 更新NewFlow状态和按钮
             const newflowStatus = status.newflow?.status === 'running';
-            document.getElementById('newflow-status').innerHTML = 
-                `<span class="badge badge-${newflowStatus ? 'running' : 'stopped'}">${newflowStatus ? '运行中' : '离线'}</span>`;
+            const newflowStatusEl = document.getElementById('newflow-status');
+            if (newflowStatusEl) {
+                newflowStatusEl.innerHTML = `<span class="badge badge-${newflowStatus ? 'running' : 'stopped'}">${newflowStatus ? '运行中' : '离线'}</span>`;
+            }
             const newflowBtn = document.getElementById('newflow-toggle-btn');
             if (newflowBtn) {
                 newflowBtn.className = newflowStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
                 newflowBtn.innerHTML = newflowStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
+            }
+            
+            // 更新MinIO状态和按钮
+            const minioStatus = status.minio?.status === 'running';
+            const minioStatusEl = document.getElementById('minio-status');
+            if (minioStatusEl) {
+                minioStatusEl.innerHTML = `<span class="badge badge-${minioStatus ? 'running' : 'stopped'}">${minioStatus ? '运行中' : '离线'}</span>`;
+            }
+            const minioBtn = document.getElementById('minio-toggle-btn');
+            if (minioBtn) {
+                minioBtn.className = minioStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
+                minioBtn.innerHTML = minioStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
             }
             
             // 更新MCP实例表格
@@ -1629,16 +1675,26 @@
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             }
             
-            const response = await fetch(`/api/mcp/instances/${instanceId}/start`, { method: 'POST' });
-            if (response.ok) {
-                // 服务器会广播，但我们也主动刷新一次，确保立即切换
-                await refreshStatusOnce();
-            } else {
-                alert('启动失败');
-            }
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = oldHtml;
+            try {
+                const response = await fetch(`/api/mcp/instances/${instanceId}/start`, { method: 'POST' });
+                if (response.ok) {
+                    showToast('success', 'MCP实例启动成功', '容器已启动并通过健康检查');
+                    // 服务器会广播，但我们也主动刷新一次，确保立即切换
+                    await refreshStatusOnce();
+                } else {
+                    const error = await response.json().catch(() => ({}));
+                    const errorMsg = error.detail || '启动失败，请检查端口是否被占用或Docker镜像是否存在';
+                    showToast('error', 'MCP实例启动失败', errorMsg);
+                    console.error('启动MCP失败:', error);
+                }
+            } catch (error) {
+                showToast('error', 'MCP实例启动失败', `网络错误: ${error.message}`);
+                console.error('启动MCP异常:', error);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = oldHtml;
+                }
             }
         }
         
@@ -1656,13 +1712,17 @@
             try {
                 const response = await fetch(`/api/mcp/instances/${instanceId}/stop`, { method: 'POST' });
                 if (response.ok) {
+                    showToast('success', 'MCP实例已停止', '容器已成功停止');
                     await refreshStatusOnce();
                 } else {
                     const error = await response.json().catch(() => ({}));
-                    alert(`停止失败: ${error.detail || '该实例可能是外部启动的，请在外部系统中手动停止'}`);
+                    const errorMsg = error.detail || '该实例可能是外部启动的，请在外部系统中手动停止';
+                    showToast('error', 'MCP实例停止失败', errorMsg);
+                    console.error('停止MCP失败:', error);
                 }
             } catch (error) {
-                alert(`停止失败: ${error.message}`);
+                showToast('error', 'MCP实例停止失败', `网络错误: ${error.message}`);
+                console.error('停止MCP异常:', error);
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -1804,56 +1864,129 @@
                 console.error('填充配置时出错:', error);
             }
             
-            // 修改表单提交行为
+            // 修改模态框标题和按钮，明确显示是"编辑"模式
+            const modalTitle = document.querySelector('#createMCPModal .modal-title');
+            if (modalTitle) {
+                modalTitle.innerHTML = '<i class="fas fa-edit"></i> 更新MCP服务实例';
+            }
+            
+            // 修改提交按钮文字和事件（使用延迟确保DOM已更新）
+            setTimeout(() => {
+                const submitBtn = document.getElementById('mcpSubmitBtn');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> 更新配置';
+                    // 清除所有旧事件并设置新事件
+                    submitBtn.onclick = null;
+                    const newBtn = submitBtn.cloneNode(true);
+                    submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+                    
+                    // 绑定新事件
+                    newBtn.onclick = async () => {
+                        console.log('更新按钮被点击，实例ID:', instanceId);
+                        await updateMCPInstance(instanceId);
+                    };
+                }
+            }, 150);
+
+            
+            // 添加一个提示信息
+            const modalBody = document.querySelector('#createMCPModal .modal-body');
+            if (modalBody && !document.getElementById('edit-mode-notice')) {
+                const notice = document.createElement('div');
+                notice.id = 'edit-mode-notice';
+                notice.className = 'alert alert-info mb-3';
+                notice.innerHTML = '<i class="fas fa-info-circle"></i> 正在编辑实例：<strong>' + instance.name + '</strong>。修改配置后将重启容器以应用新配置。';
+                modalBody.insertBefore(notice, modalBody.firstChild);
+            }
+            
+            // 移除表单原有的onsubmit（使用按钮onclick代替）
             const form = document.getElementById('createMCPForm');
             if (form) {
-                form.onsubmit = async (e) => {
-                    e.preventDefault();
-                    await updateMCPInstance(instanceId);
-                    // 恢复原来的提交函数
-                    form.onsubmit = createMCPInstance;
-                };
+                form.onsubmit = (e) => e.preventDefault();
             }
             
             // 注意：showCreateModal() 已经自动显示了模态框，这里不需要再次显示
         }
         
         async function updateMCPInstance(instanceId) {
-            const formData = {
-                name: document.getElementById('mcpName').value,
-                type: document.getElementById('mcpType').value,
-                port: parseInt(document.getElementById('mcpPort').value),
-                config: {}
-            };
+            console.log('updateMCPInstance 被调用，实例ID:', instanceId);
             
-            // 收集配置（复用createMCPInstance的逻辑）
+            // 获取提交按钮并设置加载状态
+            const submitBtn = document.getElementById('mcpSubmitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>更新中...';
+            }
+            
+            try {
+                const formData = {
+                    name: document.getElementById('mcpName').value,
+                    type: document.getElementById('mcpType').value,
+                    port: parseInt(document.getElementById('mcpPort').value),
+                    config: {}
+                };
+                
+                console.log('表单数据:', formData);
+            
+            // 收集配置（根据认证类型决定包含哪些字段）
             if (formData.type === 'elasticsearch') {
+                const authType = document.getElementById('esAuthType').value;
                 formData.config.es_url = document.getElementById('esUrl').value;
-                const username = document.getElementById('esUsername').value;
-                const password = document.getElementById('esPassword').value;
-                if (username) formData.config.es_username = username;
-                if (password) formData.config.es_password = password;
-                const apiKey = document.getElementById('esApiKey').value;
-                if (apiKey) formData.config.es_api_key = apiKey;
-                const caCert = document.getElementById('esCACert').value;
-                if (caCert) formData.config.es_ca_cert = caCert;
-                formData.config.es_disable_ssl = document.getElementById('esDisableSSL').checked;
+                
+                // 根据认证类型添加相应字段
+                if (authType === 'basic') {
+                    formData.config.es_username = document.getElementById('esUsername').value || '';
+                    formData.config.es_password = document.getElementById('esPassword').value || '';
+                } else if (authType === 'apikey') {
+                    formData.config.es_api_key = document.getElementById('esApiKey').value || '';
+                }
+                // authType === 'none' 时不添加任何认证字段
+                
+                // TLS配置
+                const esDisableTLS = document.getElementById('esDisableTLS');
+                if (esDisableTLS && esDisableTLS.checked) {
+                    formData.config.disable_tls = true;
+                } else {
+                    const caCert = document.getElementById('esCACert').value;
+                    if (caCert) {
+                        formData.config.es_ca_cert = caCert;
+                    }
+                }
+                
             } else if (formData.type === 'kibana') {
+                const authType = document.getElementById('kibanaAuthType').value;
                 formData.config.kibana_url = document.getElementById('kibanaUrl').value;
-                const username = document.getElementById('kibanaUsername').value;
-                const password = document.getElementById('kibanaPassword').value;
-                if (username) formData.config.kibana_username = username;
-                if (password) formData.config.kibana_password = password;
-                const cookies = document.getElementById('kibanaCookies').value;
-                if (cookies) formData.config.kibana_cookies = cookies;
-                const caCert = document.getElementById('kibanaCACert').value;
-                if (caCert) formData.config.kibana_ca_cert = caCert;
-                formData.config.kibana_disable_ssl = document.getElementById('kibanaDisableSSL').checked;
+                formData.config.kibana_space = document.getElementById('kibanaSpace').value || 'default';
+                
+                // 根据认证类型添加相应字段
+                if (authType === 'basic') {
+                    formData.config.kibana_username = document.getElementById('kibanaUsername').value || '';
+                    formData.config.kibana_password = document.getElementById('kibanaPassword').value || '';
+                } else if (authType === 'cookie') {
+                    formData.config.kibana_cookies = document.getElementById('kibanaCookies').value || '';
+                }
+                // authType === 'none' 时不添加任何认证字段
+                
+                // TLS配置
+                const kibanaDisableTLS = document.getElementById('kibanaDisableTLS');
+                if (kibanaDisableTLS && kibanaDisableTLS.checked) {
+                    formData.config.disable_tls = true;
+                } else {
+                    const caCert = document.getElementById('kibanaCACert').value;
+                    if (caCert) {
+                        formData.config.kibana_ca_cert = caCert;
+                    }
+                }
+                
             } else if (formData.type === 'newflow') {
                 formData.config.newflow_url = document.getElementById('newflowUrl').value;
                 const apiKey = document.getElementById('newflowApiKey').value;
-                if (apiKey) formData.config.newflow_api_key = apiKey;
+                if (apiKey) {
+                    formData.config.newflow_api_key = apiKey;
+                }
             }
+            
+            console.log('准备发送PUT请求到:', `/api/mcp/instances/${instanceId}`);
             
             const response = await fetch(`/api/mcp/instances/${instanceId}`, {
                 method: 'PUT',
@@ -1861,16 +1994,37 @@
                 body: JSON.stringify(formData)
             });
             
-            if (response.ok) {
-                alert('MCP实例更新成功！\n\n配置已更新并重新启动容器。');
-                bootstrap.Modal.getInstance(document.getElementById('createMCPModal')).hide();
-                document.getElementById('createMCPForm').reset();
+                console.log('收到响应:', response.status);
                 
-                // 刷新整个 Dashboard 状态
-                await refreshStatusOnce();
-            } else {
-                const error = await response.json();
-                alert('更新失败: ' + (error.detail || '未知错误'));
+                if (response.ok) {
+                    console.log('更新成功');
+                    // 显示成功提示
+                    showToast('success', 'MCP实例更新成功！', '配置已更新并重新启动容器');
+                    
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('createMCPModal'));
+                    if (modal) modal.hide();
+                    
+                    // 清理编辑模式标记
+                    const editNotice = document.getElementById('edit-mode-notice');
+                    if (editNotice) editNotice.remove();
+                    
+                    document.getElementById('createMCPForm').reset();
+                    
+                    // 刷新整个 Dashboard 状态
+                    await refreshStatusOnce();
+                } else {
+                    const error = await response.json();
+                    showToast('error', '更新失败', error.detail || '未知错误');
+                }
+            } catch (error) {
+                console.error('更新MCP实例时出错:', error);
+                showToast('error', '更新失败', error.message || '网络错误');
+            } finally {
+                // 恢复按钮状态
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> 更新配置';
+                }
             }
         }
         
@@ -1974,13 +2128,26 @@
         }
         
         async function deleteMCP(instanceId) {
-            if (!confirm('确定要删除此MCP实例吗？')) return;
-            
-            const response = await fetch(`/api/mcp/instances/${instanceId}`, { method: 'DELETE' });
-            if (response.ok) {
-                alert('MCP实例已删除');
-            } else {
-                alert('删除失败');
+            try {
+                // 获取实例名称
+                const instance = await fetch(`/api/mcp/instances/${instanceId}`).then(r => r.json()).catch(() => null);
+                const instanceName = instance ? instance.name : '此实例';
+                
+                if (!confirm(`确定要删除MCP实例 "${instanceName}" 吗？\n\n删除后无法恢复。`)) return;
+                
+                const response = await fetch(`/api/mcp/instances/${instanceId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    showToast('success', '删除成功', `MCP实例 "${instanceName}" 已删除`);
+                    await refreshStatusOnce();
+                } else {
+                    const error = await response.json().catch(() => ({}));
+                    const errorMsg = error.detail || '删除失败，请稍后重试';
+                    showToast('error', '删除失败', errorMsg);
+                    console.error('删除MCP失败:', error);
+                }
+            } catch (error) {
+                showToast('error', '删除失败', `网络错误: ${error.message}`);
+                console.error('删除MCP异常:', error);
             }
         }
         
@@ -2560,7 +2727,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-primary" onclick="createMCPInstance()">
+                                <button type="button" class="btn btn-primary" id="mcpSubmitBtn">
                                     <i class="fas fa-check"></i> 创建并启动
                                 </button>
                             </div>
@@ -2594,11 +2761,38 @@
                         checkbox.checked = false;
                     });
                 }
+                
+                // 移除编辑模式的提示信息（如果存在）
+                const editNotice = document.getElementById('edit-mode-notice');
+                if (editNotice) {
+                    editNotice.remove();
+                }
+                
+                // 确保标题和按钮是"创建"模式
+                const modalTitle = document.querySelector('#createMCPModal .modal-title');
+                if (modalTitle) {
+                    modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> 创建MCP服务实例';
+                }
+                
+                // 绑定创建按钮事件
+                const submitBtn = document.getElementById('mcpSubmitBtn');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> 创建并启动';
+                    submitBtn.onclick = createMCPInstance;
+                }
             }, 0);
             
             // 显示模态框
             const modal = new bootstrap.Modal(document.getElementById('createMCPModal'));
             modal.show();
+            
+            // 确保按钮事件在模态框显示后绑定
+            setTimeout(() => {
+                const submitBtn = document.getElementById('mcpSubmitBtn');
+                if (submitBtn && !submitBtn.onclick) {
+                    submitBtn.onclick = createMCPInstance;
+                }
+            }, 100);
         }
         
         function updateConfigFields() {
@@ -2777,17 +2971,142 @@
                     // 关闭模态框
                     bootstrap.Modal.getInstance(document.getElementById('createMCPModal')).hide();
                     
+                    // 显示成功提示
+                    showToast('success', 'MCP实例创建成功！', `端口: ${instance.port} | 端点: ${instance.endpoint}`);
+                    
                     // 询问是否立即启动
-                    if (confirm(`MCP实例创建成功！\n\n实例ID: ${instance.id}\n端口: ${instance.port}\n端点: ${instance.endpoint}\n\n是否立即启动？`)) {
+                    if (confirm(`是否立即启动MCP实例 "${name}"？`)) {
                         await startMCP(instance.id);
                     }
                 } else {
                     const error = await response.json();
-                    alert(`创建失败: ${error.detail || '未知错误'}`);
+                    showToast('error', '创建失败', error.detail || '未知错误');
                 }
             } catch (error) {
-                alert(`创建失败: ${error.message}`);
+                showToast('error', '创建失败', error.message);
             }
+        }
+        
+        // Toast通知系统
+        function showToast(type, title, message) {
+            // 移除旧的toast容器（如果存在）
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                    min-width: 300px;
+                    max-width: 400px;
+                `;
+                document.body.appendChild(toastContainer);
+            }
+            
+            // 创建toast元素
+            const toast = document.createElement('div');
+            const toastId = 'toast-' + Date.now();
+            toast.id = toastId;
+            
+            // 根据类型设置颜色和图标
+            let bgColor, icon, borderColor;
+            switch(type) {
+                case 'success':
+                    bgColor = 'rgba(16, 185, 129, 0.95)';
+                    borderColor = '#10b981';
+                    icon = '<i class="fas fa-check-circle"></i>';
+                    break;
+                case 'error':
+                    bgColor = 'rgba(239, 68, 68, 0.95)';
+                    borderColor = '#ef4444';
+                    icon = '<i class="fas fa-times-circle"></i>';
+                    break;
+                case 'warning':
+                    bgColor = 'rgba(245, 158, 11, 0.95)';
+                    borderColor = '#f59e0b';
+                    icon = '<i class="fas fa-exclamation-triangle"></i>';
+                    break;
+                case 'info':
+                    bgColor = 'rgba(59, 130, 246, 0.95)';
+                    borderColor = '#3b82f6';
+                    icon = '<i class="fas fa-info-circle"></i>';
+                    break;
+                default:
+                    bgColor = 'rgba(100, 116, 139, 0.95)';
+                    borderColor = '#64748b';
+                    icon = '<i class="fas fa-bell"></i>';
+            }
+            
+            toast.style.cssText = `
+                background: ${bgColor};
+                color: white;
+                padding: 16px 20px;
+                border-radius: 12px;
+                border-left: 4px solid ${borderColor};
+                margin-bottom: 10px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+                animation: slideIn 0.3s ease-out;
+                display: flex;
+                align-items: start;
+                gap: 12px;
+            `;
+            
+            toast.innerHTML = `
+                <div style="font-size: 20px; margin-top: 2px;">${icon}</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; margin-bottom: 4px;">${title}</div>
+                    <div style="font-size: 14px; opacity: 0.95;">${message}</div>
+                </div>
+                <button onclick="document.getElementById('${toastId}').remove()" 
+                        style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; padding: 0; opacity: 0.7; line-height: 1;"
+                        onmouseover="this.style.opacity='1'" 
+                        onmouseout="this.style.opacity='0.7'">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            // 添加动画样式（如果还没有）
+            if (!document.getElementById('toast-animations')) {
+                const style = document.createElement('style');
+                style.id = 'toast-animations';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from {
+                            transform: translateX(400px);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes slideOut {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(400px);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            toastContainer.appendChild(toast);
+            
+            // 5秒后自动关闭
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 300);
+            }, 5000);
         }
         
         // 初始化

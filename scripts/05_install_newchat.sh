@@ -25,31 +25,58 @@ if [ -z "$NEWCHAT_DMG" ]; then
 fi
 
 # 从文件名提取版本号
-VERSION=$(basename "$NEWCHAT_DMG" | sed -n 's/NewChat-\(.*\)-mac-arm64.dmg/\1/p')
+NEW_VERSION=$(basename "$NEWCHAT_DMG" | sed -n 's/NewChat-\(.*\)-mac-arm64.dmg/\1/p')
 echo -e "${BLUE}📦 发现安装包: $NEWCHAT_DMG${NC}"
-echo -e "${BLUE}   版本: ${VERSION}${NC}"
-echo ""
+echo -e "${BLUE}   安装包版本: ${NEW_VERSION}${NC}"
+
+# 提取主版本号（忽略构建号）
+NEW_VERSION_MAIN=$(echo "$NEW_VERSION" | sed 's/-[0-9]*$//')
 
 # 检查是否已安装
+SHOULD_INSTALL=true
 if [ -d "/Applications/NewChat.app" ]; then
-    echo -e "${YELLOW}⚠️  检测到已安装的 NewChat，将进行覆盖安装（升级）${NC}"
-    echo -e "${YELLOW}   旧版本将被替换为: ${VERSION}${NC}"
-    echo ""
+    echo -e "${BLUE}   检测到已安装的 NewChat${NC}"
     
-    # 尝试获取当前安装的版本（如果可能）
+    # 尝试获取当前安装的版本
+    CURRENT_VERSION="未知"
     if [ -f "/Applications/NewChat.app/Contents/Info.plist" ]; then
         CURRENT_VERSION=$(defaults read /Applications/NewChat.app/Contents/Info.plist CFBundleShortVersionString 2>/dev/null || echo "未知")
-        echo -e "${BLUE}   当前版本: ${CURRENT_VERSION}${NC}"
     fi
+    echo -e "${BLUE}   当前版本: ${CURRENT_VERSION}${NC}"
     
-    # 停止运行中的NewChat进程
-    echo -e "${YELLOW}   检查并停止运行中的 NewChat 进程...${NC}"
-    pkill -x "NewChat" 2>/dev/null || true
-    sleep 1
+    # 提取当前版本的主版本号
+    CURRENT_VERSION_MAIN=$(echo "$CURRENT_VERSION" | sed 's/-[0-9]*$//')
     
-    # 删除旧版本
-    echo -e "${YELLOW}   删除旧版本...${NC}"
-    rm -rf "/Applications/NewChat.app"
+    # 比较主版本号
+    if [ "$CURRENT_VERSION_MAIN" = "$NEW_VERSION_MAIN" ]; then
+        echo -e "${GREEN}✅ 版本相同，跳过安装${NC}"
+        SHOULD_INSTALL=false
+    else
+        echo -e "${YELLOW}⚠️  版本不同，将进行覆盖安装（升级）${NC}"
+        echo -e "${BLUE}   ${CURRENT_VERSION_MAIN} → ${NEW_VERSION_MAIN}${NC}"
+        
+        # 停止运行中的NewChat进程
+        echo -e "${YELLOW}   检查并停止运行中的 NewChat 进程...${NC}"
+        pkill -x "NewChat" 2>/dev/null || true
+        sleep 1
+        
+        # 删除旧版本
+        echo -e "${YELLOW}   删除旧版本...${NC}"
+        rm -rf "/Applications/NewChat.app"
+    fi
+else
+    echo -e "${BLUE}   NewChat 未安装，开始安装${NC}"
+fi
+
+echo ""
+
+# 如果不需要安装，直接退出
+if [ "$SHOULD_INSTALL" = false ]; then
+    echo -e "${GREEN}╔════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║      ✅ NewChat 已是最新版本              ║${NC}"
+    echo -e "${GREEN}╚════════════════════════════════════════════╝${NC}"
+    echo ""
+    exit 0
 fi
 
 echo -e "${BLUE}📦 挂载 NewChat DMG...${NC}"
@@ -132,7 +159,7 @@ echo -e "${GREEN}║       ✅ NewChat 安装/升级完成！          ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${BLUE}📝 版本信息:${NC}"
-echo -e "   • 已安装版本: ${VERSION}"
+echo -e "   • 已安装版本: ${NEW_VERSION}"
 echo ""
 echo -e "${YELLOW}⚠️  注意: NewChat 已安装但未自动启动${NC}"
 echo -e "${YELLOW}   请在需要时手动启动应用${NC}"

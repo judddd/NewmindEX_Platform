@@ -32,11 +32,58 @@ MCP_LOGS_DIR = Path(__file__).parent / "mcp_logs"
 LOGS_DIR = PROJECT_ROOT / "logs"
 
 # MCP镜像名称映射
-MCP_IMAGES = {
-    "elasticsearch": "newmind-mcp-elasticsearch:1.0.0",
-    "kibana": "newmind-mcp-kibana:1.0.0",
-    "newflow": "newmind-mcp-newflow:1.0.0",
+# 自动检测系统架构
+import platform
+ARCH = "arm64" if platform.machine() in ["arm64", "aarch64"] else "amd64"
+
+# 镜像优先级：先尝试不带架构后缀的版本，再尝试带架构后缀的版本
+MCP_IMAGE_TEMPLATES = {
+    "elasticsearch": [
+        "newmind-mcp-elasticsearch:1.0.0",
+        f"newmind-mcp-elasticsearch:1.0.0-{ARCH}",
+        f"newmind-mcp-elasticsearch:0.3.0-{ARCH}",
+    ],
+    "kibana": [
+        "newmind-mcp-kibana:1.0.0",
+        f"newmind-mcp-kibana:1.0.0-{ARCH}",
+        f"newmind-mcp-kibana:0.4.0-{ARCH}",
+    ],
+    "newflow": [
+        "newmind-mcp-newflow:1.0.0",
+        f"newmind-mcp-newflow:1.0.0-{ARCH}",
+    ],
+    "cmdb": [
+        f"newmind-mcp-cmdb:0.1.0-{ARCH}",
+        "newmind-mcp-cmdb:0.1.0",
+    ],
 }
+
+
+def get_available_image(mcp_type: str) -> Optional[str]:
+    """
+    获取可用的MCP镜像名称
+    
+    按优先级尝试多个可能的镜像标签，返回第一个存在的镜像
+    
+    Args:
+        mcp_type: MCP类型 (elasticsearch, kibana, newflow, cmdb)
+        
+    Returns:
+        str: 可用的镜像名称，如果都不存在则返回None
+    """
+    if not docker_client:
+        return None
+        
+    image_candidates = MCP_IMAGE_TEMPLATES.get(mcp_type, [])
+    
+    for image_name in image_candidates:
+        try:
+            docker_client.images.get(image_name)
+            return image_name
+        except NotFound:
+            continue
+    
+    return None
 
 
 def ensure_directories():
@@ -80,19 +127,16 @@ def start_mcp_server(instance_id: str) -> bool:
     config = instance['config']
     container_name = get_container_name(instance_id)
     
-    # 获取镜像名称
-    image_name = MCP_IMAGES.get(mcp_type)
+    # 获取可用的镜像名称
+    image_name = get_available_image(mcp_type)
     if not image_name:
-        print(f"未知的MCP类型: {mcp_type}")
+        print(f"❌ 未找到 {mcp_type} 类型的Docker镜像")
+        print(f"   尝试的镜像: {', '.join(MCP_IMAGE_TEMPLATES.get(mcp_type, []))}")
+        print(f"   请运行: scripts/build_mcp_images.sh")
+        log_dashboard("ERROR", f"No Docker image found for {mcp_type}")
         return False
     
-    # 检查镜像是否存在
-    try:
-        docker_client.images.get(image_name)
-    except NotFound:
-        print(f"❌ Docker镜像不存在: {image_name}")
-        print(f"   请运行: scripts/build_mcp_images.sh")
-        return False
+    print(f"✅ 使用镜像: {image_name}")
     
     # 构建环境变量
     environment = {
@@ -160,6 +204,21 @@ def start_mcp_server(instance_id: str) -> bool:
         
         environment["NEWFLOW_API_URL"] = newflow_url
         environment["NEWFLOW_API_KEY"] = api_key
+    
+    elif mcp_type == "cmdb":
+        # CMDB配置
+        cmdb_domain = config.get("cmdb_domain", "")
+        environment["CMDB_DOMAIN"] = cmdb_domain
+        environment["CMDB_APP_ID"] = config.get("cmdb_app_id", "")
+        environment["CMDB_APP_SECRET"] = config.get("cmdb_app_secret", "")
+        
+        # SSL验证配置
+        verify_ssl = config.get("cmdb_verify_ssl", "true")
+        if verify_ssl.lower() in ["false", "0", "no"]:
+            environment["CMDB_VERIFY_SSL"] = "false"
+            environment["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
+        else:
+            environment["CMDB_VERIFY_SSL"] = "true"
     
     # 创建日志目录（用于容器日志挂载）
     container_log_dir = LOGS_DIR / "mcp_containers" / instance_id
