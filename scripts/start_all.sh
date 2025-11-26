@@ -73,6 +73,70 @@ echo ""
 echo "步骤 9/13: 启动Docker服务"
 echo "🔍 检查Docker服务状态..."
 
+# 检查 Docker 是否正在运行
+check_and_start_docker() {
+    echo "🐳 检查 Docker 运行状态..."
+    
+    # 尝试连接 Docker daemon
+    if docker info > /dev/null 2>&1; then
+        echo "✅ Docker 正在运行"
+        return 0
+    fi
+    
+    echo "⚠️  Docker 未运行，正在自动启动 Docker Desktop..."
+    
+    # 检测操作系统
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        if [ -d "/Applications/Docker.app" ]; then
+            echo "📂 找到 Docker.app，正在启动..."
+            open -a Docker
+        else
+            echo "❌ 未找到 Docker Desktop，请先安装 Docker Desktop"
+            echo "   下载地址: https://www.docker.com/products/docker-desktop"
+            exit 1
+        fi
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux - 尝试启动 Docker 服务
+        echo "🐧 检测到 Linux 系统，尝试启动 Docker 服务..."
+        if command -v systemctl &> /dev/null; then
+            sudo systemctl start docker || {
+                echo "❌ 无法启动 Docker 服务，请手动启动"
+                exit 1
+            }
+        else
+            echo "❌ 未找到 systemctl，请手动启动 Docker"
+            exit 1
+        fi
+    else
+        echo "❌ 不支持的操作系统: $OSTYPE"
+        exit 1
+    fi
+    
+    # 等待 Docker daemon 启动
+    echo "⏳ 等待 Docker 启动..."
+    MAX_WAIT=60
+    ELAPSED=0
+    while [ $ELAPSED -lt $MAX_WAIT ]; do
+        if docker info > /dev/null 2>&1; then
+            echo "✅ Docker 已成功启动"
+            return 0
+        fi
+        sleep 2
+        ELAPSED=$((ELAPSED + 2))
+        printf "."
+    done
+    
+    echo ""
+    echo "❌ Docker 启动超时（等待 ${MAX_WAIT}s），请手动检查 Docker Desktop"
+    echo "   提示：首次启动 Docker Desktop 可能需要更长时间"
+    exit 1
+}
+
+# 执行 Docker 检查和启动
+check_and_start_docker
+echo ""
+
 # 检查哪些服务需要启动
 SERVICES_TO_START=()
 SERVICES_RUNNING=()
