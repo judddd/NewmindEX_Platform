@@ -50,8 +50,11 @@ from es_monitor import (
 from lmstudio_manager import (
     get_lm_status, get_lm_models, download_model, start_lm_server, stop_lm_server
 )
-from newflow_importer import (
-    get_workflow_files, import_workflow, import_all_workflows, list_workflows
+from newrag_manager import (
+    start_newrag, stop_newrag, check_newrag_status, install_newrag
+)
+from newflow_manager import (
+    start_newflow, stop_newflow, check_newflow_status
 )
 from mcp_templates import list_templates, get_template, generate_newchat_config
 from audit_logger import (
@@ -147,44 +150,6 @@ async def startup_event():
     else:
         print("ℹ️  无需重启MCP实例")
     
-    # 等待 NewFlow 服务启动（最多等待30秒）
-    newflow_url = f"http://localhost:{os.getenv('NEWFLOW_PORT', '5677')}"
-    api_key = os.getenv('NEWFLOW_API_KEY')
-    
-    print(f"⏳ 等待 NewFlow 服务启动... ({newflow_url})")
-    max_retries = 30
-    for i in range(max_retries):
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"{newflow_url}/healthz", timeout=2.0)
-                if response.status_code == 200:
-                    print(f"✅ NewFlow 服务已就绪")
-                    break
-        except:
-            pass
-        
-        if i < max_retries - 1:
-            await asyncio.sleep(1)
-    else:
-        print(f"⚠️  NewFlow 服务未启动，跳过工作流自动导入")
-        print("🎉 Dashboard 启动完成！")
-        return
-    
-    # 自动导入工作流
-    print("📂 开始自动导入工作流...")
-    try:
-        result = await import_all_workflows(newflow_url, api_key)
-        if result['total'] > 0:
-            print(f"✅ 工作流处理完成: 成功 {result['success']} / 跳过 {result['skipped']} / 失败 {result['failed']} / 总数 {result['total']}")
-            if result['skipped'] > 0:
-                print(f"ℹ️  已跳过 {result['skipped']} 个已存在的工作流")
-            if result['failed'] > 0:
-                print(f"⚠️  {result['failed']} 个工作流导入失败")
-        else:
-            print("ℹ️  未找到需要导入的工作流文件")
-    except Exception as e:
-        print(f"❌ 工作流自动导入失败: {e}")
-    
     print("🎉 Dashboard 启动完成！")
 
 
@@ -255,15 +220,31 @@ async def get_status():
     kibana_status_result = await get_docker_service_status('kibana')
     kibana_running = kibana_status_result.get('status') == 'running'
     
-    # 检查NewFlow - 通过Docker检查实际状态
-    newflow_status_result = await get_docker_service_status('newflow')
-    newflow_running = newflow_status_result.get('status') == 'running'
+    # 检查NewFlow - 检查本地端口 (优先使用127.0.0.1避免localhost解析问题)
+    newflow_port = int(os.getenv('NEWFLOW_PORT', '5678'))
+    # 1. 检查进程 PID (最准确)
+    newflow_process_running, _ = check_newflow_status()
+    # 2. 检查端口
+    newflow_port_open = await check_port_open('127.0.0.1', newflow_port)
+    if not newflow_port_open:
+        newflow_port_open = await check_port_open('localhost', newflow_port)
+    
+    # 综合判断：只有两者都为真才算运行中？不，只要有一个为真可能就是残留
+    # 但为了状态显示准确，我们偏向于：如果PID在，或者端口在，都算运行中
+    # 除非 stop 操作刚刚执行完，可能有一点延迟
+    newflow_running = newflow_process_running or newflow_port_open
     
     # 检查LM Studio
     lm_status = await get_lm_status()
     
     # 检查NewChat - 通过端口 61990
     newchat_running = await check_port_open('localhost', 61990)
+    
+    # 检查NewRAG - 同时检查进程和端口
+    # 检查 3000 (Frontend) 或 8080 (Backend)
+    newrag_process, _ = check_newrag_status()
+    newrag_port_open = await check_port_open('127.0.0.1', 3000) or await check_port_open('localhost', 3000) or await check_port_open('127.0.0.1', 8080) or await check_port_open('localhost', 8080)
+    newrag_running = newrag_process and newrag_port_open
     
     # 检查MinIO - 通过Docker检查实际状态
     minio_status_result = await get_docker_service_status('minio')
@@ -291,9 +272,13 @@ async def get_status():
             "status": "running" if newchat_running else "stopped",
             "port": 61990
         },
+        "newrag": {
+            "status": "running" if newrag_running else "stopped",
+            "url": "http://localhost:3000"
+        },
         "newflow": {
             "status": "running" if newflow_running else "stopped",
-            "url": f"http://localhost:{os.getenv('NEWFLOW_PORT', '5677')}"
+            "url": f"http://localhost:{os.getenv('NEWFLOW_PORT', '5678')}"
         },
         "minio": {
             "status": "running" if minio_running else "stopped",
@@ -467,7 +452,6 @@ async def open_minio_console():
 SERVICE_MAPPING = {
     'elasticsearch': ['es01', 'es02', 'es03'],  # ES集群三节点
     'kibana': ['kibana'],
-    'newflow': ['newflow'],
     'logstash': ['logstash'],
     'minio': ['minio']
 }
@@ -594,31 +578,82 @@ async def toggle_docker_service(service: str):
 
 
 
-# ==================== NewFlow API ====================
+# ==================== NewRAG API ====================
 
-@app.get("/api/newflow/workflows")
-async def newflow_workflows():
-    """NewFlow工作流列表"""
-    newflow_url = f"http://localhost:{os.getenv('NEWFLOW_PORT', '5677')}"
-    api_key = os.getenv('NEWFLOW_API_KEY')
-    workflows = await list_workflows(newflow_url, api_key)
-    
-    # 同时返回本地配置文件列表
-    local_files = [f.name for f in get_workflow_files()]
-    
+@app.get("/api/newrag/status")
+async def newrag_status_api():
+    """获取NewRAG状态"""
+    is_running, status_str = check_newrag_status()
+    # 从config读取配置比较好，但这里暂时硬编码或用环境变量
+    # 假设默认端口
     return {
-        "workflows": workflows or [],
-        "local_files": local_files
+        "status": "running" if is_running else "stopped",
+        "detail": status_str,
+        "frontend_url": "http://localhost:3000",
+        "backend_url": "http://localhost:8080",
+        "mcp_url": "http://localhost:3001"
     }
 
+@app.post("/api/newrag/toggle")
+async def newrag_toggle_api():
+    """切换NewRAG状态"""
+    try:
+        is_running, _ = check_newrag_status()
+        if is_running:
+            success, msg = stop_newrag()
+            action = "stopped"
+        else:
+            success, msg = start_newrag()
+            action = "started"
+        
+        if success:
+            return {
+                "success": True, 
+                "action": action, 
+                "message": msg,
+                "new_status": "running" if action == "started" else "stopped"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=msg)
+    except Exception as e:
+        print(f"❌ NewRAG toggle error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/newflow/import")
-async def newflow_import():
-    """一键导入所有工作流（从 workflow_conf 目录）"""
-    newflow_url = f"http://localhost:{os.getenv('NEWFLOW_PORT', '5677')}"
-    api_key = os.getenv('NEWFLOW_API_KEY')
-    result = await import_all_workflows(newflow_url, api_key)
-    return result
+
+@app.get("/api/newflow/status")
+async def newflow_status_api():
+    """获取NewFlow状态"""
+    is_running, status_str = check_newflow_status()
+    return {
+        "status": "running" if is_running else "stopped",
+        "detail": status_str,
+        "url": f"http://localhost:{os.getenv('NEWFLOW_PORT', '5678')}"
+    }
+
+@app.post("/api/newflow/toggle")
+async def newflow_toggle_api():
+    """切换NewFlow状态"""
+    try:
+        is_running, _ = check_newflow_status()
+        if is_running:
+            success, msg = stop_newflow()
+            action = "stopped"
+        else:
+            success, msg = start_newflow()
+            action = "started"
+        
+        if success:
+            return {
+                "success": True, 
+                "action": action, 
+                "message": msg,
+                "new_status": "running" if action == "started" else "stopped"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=msg)
+    except Exception as e:
+        print(f"❌ NewFlow toggle error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ==================== MCP服务编排API ====================
@@ -919,11 +954,20 @@ async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
-            # 推送状态更新
-            status = await get_status()
-            await websocket.send_json(status)
+            try:
+                # 推送状态更新
+                status = await get_status()
+                await websocket.send_json(status)
+            except Exception as e:
+                print(f"❌ WebSocket status update failed: {e}")
+                # 发送错误状态或保持静默，避免断开连接
+                # await websocket.send_json({"error": str(e)})
+            
             await asyncio.sleep(5)  # 每5秒更新一次
     except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        print(f"❌ WebSocket connection error: {e}")
         manager.disconnect(websocket)
 
 

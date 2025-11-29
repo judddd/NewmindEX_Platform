@@ -1311,10 +1311,10 @@
                                 <span class="badge badge-stopped">离线</span>
                             </h3>
                             <div class="d-flex gap-2 mt-3">
-                                <button id="newflow-toggle-btn" onclick="toggleDockerService('newflow')" class="btn btn-sm btn-success flex-grow-1">
+                                <button id="newflow-toggle-btn" onclick="toggleNewFlow()" class="btn btn-sm btn-success flex-grow-1">
                                     <i class="fas fa-play"></i> 启动
                                 </button>
-                                <a href="http://localhost:5677" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <a href="http://localhost:5678" target="_blank" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-external-link-alt"></i>
                                 </a>
                             </div>
@@ -1333,6 +1333,24 @@
                                     <i class="fas fa-play"></i> 启动
                                 </button>
                                 <a href="http://localhost:9001" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 col-xl-2">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">NewRAG</h6>
+                            <h3 class="card-title" id="newrag-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <div class="d-flex gap-2 mt-3 flex-wrap">
+                                <button id="newrag-toggle-btn" onclick="toggleNewRAG()" class="btn btn-sm btn-success flex-grow-1">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <a href="http://localhost:3000" target="_blank" id="newrag-link" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-external-link-alt"></i>
                                 </a>
                             </div>
@@ -1379,22 +1397,7 @@
             <!-- 快速操作 -->
             <div class="row mt-4">
                 <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6><i class="fas fa-project-diagram"></i> NewFlow工作流</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-primary" id="workflow-toggle-btn" onclick="toggleWorkflows()">
-                                    <i class="fas fa-eye"></i> 查看工作流
-                                </button>
-                                <button class="btn btn-success" onclick="importWorkflows()">
-                                    <i class="fas fa-download"></i> 导入工作流
-                                </button>
-                            </div>
-                            <div id="workflow-status" class="mt-2"></div>
-                        </div>
-                    </div>
+                    <!-- NewFlow 工作流卡片已移除 -->
                 </div>
                 <div class="col-md-4">
                     <div class="card">
@@ -1615,6 +1618,18 @@
             if (minioBtn) {
                 minioBtn.className = minioStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
                 minioBtn.innerHTML = minioStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
+            }
+
+            // 更新NewRAG状态和按钮
+            const newragStatus = status.newrag?.status === 'running';
+            const newragStatusEl = document.getElementById('newrag-status');
+            if (newragStatusEl) {
+                newragStatusEl.innerHTML = `<span class="badge badge-${newragStatus ? 'running' : 'stopped'}">${newragStatus ? '运行中' : '离线'}</span>`;
+            }
+            const newragBtn = document.getElementById('newrag-toggle-btn');
+            if (newragBtn) {
+                newragBtn.className = newragStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
+                newragBtn.innerHTML = newragStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
             }
             
             // 更新MCP实例表格
@@ -2325,6 +2340,90 @@
             }
         }
         
+        async function toggleNewRAG() {
+            const button = document.getElementById('newrag-toggle-btn');
+            if (!button) return;
+            
+            const originalText = button.innerHTML;
+            const originalClass = button.className;
+            
+            try {
+                // 检查当前状态
+                const statusResponse = await fetch('/api/newrag/status');
+                const statusData = await statusResponse.json();
+                
+                if (statusData.status === 'running') {
+                    if (!confirm('确定要停止 NewRAG 服务吗？')) return;
+                }
+                
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+                
+                const response = await fetch('/api/newrag/toggle', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('success', data.action === 'started' ? 'NewRAG 启动成功' : 'NewRAG 已停止', data.message);
+                    // 自动刷新会在 updateDashboard 中处理
+                    setTimeout(refreshStatusOnce, 1000);
+                } else {
+                    alert('操作失败: ' + (data.detail || data.message));
+                    button.innerHTML = originalText;
+                    button.className = originalClass;
+                }
+            } catch (error) {
+                console.error('NewRAG操作失败:', error);
+                alert('操作失败: ' + error.message);
+                button.innerHTML = originalText;
+                button.className = originalClass;
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function toggleNewFlow() {
+            const button = document.getElementById('newflow-toggle-btn');
+            if (!button) return;
+            
+            const originalText = button.innerHTML;
+            const originalClass = button.className;
+            
+            try {
+                // 检查当前状态
+                const statusResponse = await fetch('/api/newflow/status');
+                const statusData = await statusResponse.json();
+                
+                if (statusData.status === 'running') {
+                    if (!confirm('确定要停止 NewFlow 服务吗？')) return;
+                }
+                
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+                
+                const response = await fetch('/api/newflow/toggle', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('success', data.action === 'started' ? 'NewFlow 启动成功' : 'NewFlow 已停止', data.message);
+                    // 立即请求状态更新
+                    fetchStatus();
+                } else {
+                    showToast('error', '操作失败', data.detail || data.message || data.error);
+                    button.innerHTML = originalText;
+                    button.className = originalClass;
+                }
+            } catch (error) {
+                console.error('NewFlow操作失败:', error);
+                showToast('error', '操作可能已执行但通讯中断', error.message);
+                // 即使报错，也尝试刷新状态，因为可能后端已经执行成功了
+                setTimeout(fetchStatus, 1000);
+                button.innerHTML = originalText;
+                button.className = originalClass;
+            } finally {
+                button.disabled = false;
+            }
+        }
+        
         async function toggleDockerService(service) {
             console.log('🔧 toggleDockerService 被调用，服务:', service);
             const button = document.getElementById(`${service}-toggle-btn`);
@@ -2703,8 +2802,8 @@
                                         <div class="mb-3">
                                             <label class="form-label">NewFlow URL * <i class="fas fa-info-circle text-muted" title="NewFlow 服务器地址"></i></label>
                                             <input type="text" class="form-control" id="newflowUrl" 
-                                                   placeholder="http://localhost:5677">
-                                            <small class="text-muted">NewFlow 工作流服务地址，通常是 http://localhost:5677</small>
+                                                   placeholder="http://localhost:5678">
+                                            <small class="text-muted">NewFlow 工作流服务地址，通常是 http://localhost:5678</small>
                                         </div>
                                         
                                         <!-- NewFlow API Key -->
@@ -2938,7 +3037,7 @@
                 }
             } else if (type === 'newflow') {
                 config = {
-                    newflow_url: document.getElementById('newflowUrl').value || 'http://localhost:5677'
+                    newflow_url: document.getElementById('newflowUrl').value || 'http://localhost:5678'
                 };
                 
                 const apiKey = document.getElementById('newflowApiKey').value;

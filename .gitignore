@@ -29,15 +29,17 @@ elasticsearch/node*/
 elasticsearch_data/
 kibana_data/
 logstash_data/
+minio_data/
 
-# newflow_data/ - 保留配置但忽略运行时数据
-newflow_data/*.log
-newflow_data/n8nEventLog-*.log
-newflow_data/crash.journal
-newflow_data/execution_data/
-newflow_data/logs/
-newflow_data/database.sqlite*
-newflow_data/binaryData/
+# NewFlow 运行时数据
+newflow-main/data/
+newflow-main/*.log
+
+# NewRAG 运行时数据
+newrag-main/data/
+newrag-main/logs/
+newrag-main/uploads/
+newrag-main/*.log
 
 # Environment
 .env
@@ -55,12 +57,18 @@ copy.enva
 .vscode/
 .idea/
 
-# MCP Runtime
+# Python Dashboard Runtime
 python_dashboard/mcp_pids/
 python_dashboard/mcp_logs/
 python_dashboard/mcp_instances.db
 python_dashboard/dashboard.pid
 python_dashboard/dashboard.log
+python_dashboard/newrag.pid
+python_dashboard/newrag.log
+python_dashboard/newflow.pid
+python_dashboard/newflow.log
+
+# MCP Tool Runtime
 mcp_tool/instances/*/logs/
 mcp_tool/instances/*/pids/
 
@@ -74,8 +82,6 @@ logs/
 installers/
 !installers/README*.md
 !installers/example-configs/
-
-# 但保留installers目录结构说明
 !installers/.gitkeep
 
 # Upload artifacts

@@ -20,6 +20,18 @@ LM_PORT="${LMSTUDIO_PORT:-1234}"
 
 # 检查lms命令
 if ! command -v lms &> /dev/null; then
+    # 尝试查找常用路径
+    if [ -f "$HOME/.cache/lm-studio/bin/lms" ]; then
+        export PATH="$HOME/.cache/lm-studio/bin:$PATH"
+        echo "✅ 在缓存目录找到 lms 命令"
+    elif [ -f "/Applications/LM Studio.app/Contents/MacOS/lms" ]; then
+        # 注意：应用内的二进制文件可能不是CLI工具，但值得一试或者作为提示
+        echo "⚠️  未在PATH中找到lms，但在应用包中发现了二进制文件。"
+        echo "   建议运行: export PATH=\"\$HOME/.cache/lm-studio/bin:\$PATH\""
+    fi
+fi
+
+if ! command -v lms &> /dev/null; then
     echo "❌ lms命令不可用"
     echo "   请确保已安装LM Studio CLI工具"
     echo "   在LM Studio应用中: Settings > Developer > Install CLI"
@@ -33,13 +45,9 @@ echo "🔍 检查模型状态..."
 if lms ls | grep -q "$LM_MODEL"; then
     echo "✅ 模型已下载: $LM_MODEL"
 else
-    echo "📥 下载模型: $LM_MODEL (这可能需要较长时间，约30GB)..."
-    echo "   变体: $LM_VARIANT"
-    
-    # 下载模型
-    lms get "$LM_MODEL" --variant "$LM_VARIANT"
-    
-    echo "✅ 模型下载完成"
+    echo "ℹ️  未检测到模型: $LM_MODEL"
+    echo "   请手动下载模型 (无需自动下载)"
+    exit 0
 fi
 
 # 检查LM Studio服务是否已运行

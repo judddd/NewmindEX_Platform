@@ -146,12 +146,38 @@ def start_mcp_server(instance_id: str) -> bool:
     }
     
     # 根据类型添加配置
+    
+    # 尝试查找ES网络名称
+    elastic_net_name = None
+    try:
+        # 尝试通过es01容器查找网络
+        es_container = docker_client.containers.get('es01')
+        networks = es_container.attrs['NetworkSettings']['Networks']
+        if networks:
+            elastic_net_name = list(networks.keys())[0]
+    except:
+        # 降级：尝试标准名称
+        try:
+             docker_client.networks.get('deploy_newmind_elastic')
+             elastic_net_name = 'deploy_newmind_elastic'
+        except:
+             pass
+
     if mcp_type == "elasticsearch":
-        # MCP Docker模式：localhost需要转换为host.docker.internal
-        # 因为MCP容器和ES容器不在同一网络，无法通过容器名访问
+        # MCP Docker模式配置
         es_url = config.get("es_url", "http://host.docker.internal:9200")
-        if "localhost" in es_url:
-            es_url = es_url.replace("localhost", "host.docker.internal")
+        
+        if elastic_net_name:
+            # 如果能连接到elastic网络，优先使用容器名
+            if "localhost" in es_url:
+                es_url = es_url.replace("localhost", "es01")
+            elif "host.docker.internal" in es_url:
+                es_url = es_url.replace("host.docker.internal", "es01")
+        else:
+            # 否则使用host.docker.internal访问宿主机映射端口
+            if "localhost" in es_url:
+                es_url = es_url.replace("localhost", "host.docker.internal")
+                
         environment["ES_URL"] = es_url
         
         if config.get("es_api_key"):
@@ -166,10 +192,19 @@ def start_mcp_server(instance_id: str) -> bool:
             environment["ES_CA_CERT"] = config["es_ca_cert"]
     
     elif mcp_type == "kibana":
-        # MCP Docker模式：localhost需要转换为host.docker.internal
+        # MCP Docker模式配置
         kibana_url = config.get("kibana_url", "http://host.docker.internal:5601")
-        if "localhost" in kibana_url:
-            kibana_url = kibana_url.replace("localhost", "host.docker.internal")
+        
+        if elastic_net_name:
+            # 如果能连接到elastic网络，优先使用容器名
+            if "localhost" in kibana_url:
+                kibana_url = kibana_url.replace("localhost", "kibana")
+            elif "host.docker.internal" in kibana_url:
+                kibana_url = kibana_url.replace("host.docker.internal", "kibana")
+        else:
+            if "localhost" in kibana_url:
+                kibana_url = kibana_url.replace("localhost", "host.docker.internal")
+                
         environment["KIBANA_URL"] = kibana_url
         environment["KIBANA_DEFAULT_SPACE"] = config.get("kibana_space", "default")
         
@@ -192,7 +227,7 @@ def start_mcp_server(instance_id: str) -> bool:
     elif mcp_type == "newflow":
         api_key = config.get("newflow_api_key") or ""
         # MCP Docker模式：localhost需要转换为host.docker.internal
-        newflow_url = config.get("newflow_url", "http://host.docker.internal:5677")
+        newflow_url = config.get("newflow_url", "http://host.docker.internal:5678")
         if "localhost" in newflow_url:
             newflow_url = newflow_url.replace("localhost", "host.docker.internal")
         
@@ -265,20 +300,23 @@ def start_mcp_server(instance_id: str) -> bool:
         )
         
         # 连接到docker-compose的elastic网络
-        try:
-            compose_network = docker_client.networks.get('deploy_newmind_elastic')
-            compose_network.connect(container)
-            print(f"✓ 已连接到docker-compose网络: deploy_newmind_elastic")
-            
-            # 断开bridge网络（可选）
+        if elastic_net_name:
             try:
-                bridge_network = docker_client.networks.get('bridge')
-                bridge_network.disconnect(container)
-            except:
-                pass
-        except NotFound:
-            print("⚠️  docker-compose网络不存在，使用默认bridge网络")
-            print("   提示：请先启动docker-compose服务")
+                compose_network = docker_client.networks.get(elastic_net_name)
+                compose_network.connect(container)
+                print(f"✓ 已连接到docker-compose网络: {elastic_net_name}")
+                
+                # 断开bridge网络（可选，保持bridge通常更安全，除非为了隔离）
+                # try:
+                #     bridge_network = docker_client.networks.get('bridge')
+                #     bridge_network.disconnect(container)
+                # except:
+                #     pass
+            except Exception as e:
+                print(f"⚠️  连接到网络 {elastic_net_name} 失败: {e}")
+        else:
+            print("⚠️  docker-compose网络未找到，使用默认bridge网络")
+            print("   注意：无法通过容器名访问ES/Kibana，将尝试使用host.docker.internal")
         
         # 等待容器启动
         print(f"⏳ 等待容器启动...")

@@ -42,7 +42,8 @@ RESPONSE=$(curl -s -X PUT -u ${ES_USER}:${ES_PASS} \
         "api_key": "dummy",
         "url": "http://host.docker.internal:'$LM_PORT'/v1/chat/completions",
         "model_id": "'$LM_MODEL'"
-      }
+      },
+      "task_type": "completion"
     }')
 
 if echo "$RESPONSE" | grep -q '"inference_id"'; then
