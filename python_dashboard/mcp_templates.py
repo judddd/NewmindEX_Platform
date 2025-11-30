@@ -12,6 +12,7 @@ MCP_TEMPLATES = {
             "ES_URL": "http://host.docker.internal:9200",
             "ES_USERNAME": "elastic",
             "ES_PASSWORD": "changeme123",
+            "ES_CA_CERT": "",
             "MAX_TOKEN_CALL": "8000",
             "NODE_TLS_REJECT_UNAUTHORIZED": "0"
         }
@@ -25,6 +26,9 @@ MCP_TEMPLATES = {
             "KIBANA_USERNAME": "elastic",
             "KIBANA_PASSWORD": "changeme123",
             "KIBANA_DEFAULT_SPACE": "default",
+            "KIBANA_CA_CERT": "",
+            "KIBANA_TIMEOUT": "30000",
+            "KIBANA_MAX_RETRIES": "3",
             "NODE_TLS_REJECT_UNAUTHORIZED": "0"
         }
     },
@@ -72,7 +76,6 @@ def generate_newchat_config(mcp_instances: list) -> dict:
     
     for instance in mcp_instances:
         # 优先使用实例名称作为 key (如果名称是英文且无空格，或者进行 slugify)
-        # 这里简单处理：如果名字全是 ASCII，就用名字，否则用 ID
         if all(ord(c) < 128 for c in instance["name"]):
             server_key = instance["name"].replace(" ", "_").lower()
         else:

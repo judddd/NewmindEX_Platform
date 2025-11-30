@@ -3,7 +3,7 @@ NewmindEx AI Platform Management Dashboard
 FastAPI主应用 - 提供管理API和Web界面
 """
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +14,7 @@ import asyncio
 import os
 import socket
 import httpx
+import shutil
 
 # 加载环境变量 (使用标准方式)
 from pathlib import Path
@@ -42,7 +43,7 @@ from database import (
     update_instance, delete_instance, get_next_available_port
 )
 from mcp_manager import (
-    start_mcp_server, stop_mcp_server, get_mcp_logs, check_mcp_health
+    start_mcp_server, stop_mcp_server, get_mcp_logs, check_mcp_health, CERTS_DIR
 )
 from es_monitor import (
     get_cluster_health, get_nodes_info, get_ml_status, check_license
@@ -845,6 +846,61 @@ async def mcp_instance_logs(instance_id: str, lines: int = 100):
     """获取MCP服务日志（Docker容器日志）"""
     logs = get_mcp_logs(instance_id, lines)
     return {"logs": logs}
+
+
+@app.post("/api/mcp/instances/{instance_id}/certs")
+async def upload_mcp_cert(instance_id: str, file: UploadFile = File(...)):
+    """上传CA证书文件"""
+    instance = get_instance(instance_id)
+    if not instance:
+        raise HTTPException(status_code=404, detail="实例不存在")
+    
+    instance_cert_dir = CERTS_DIR / instance_id
+    instance_cert_dir.mkdir(parents=True, exist_ok=True)
+    
+    file_path = instance_cert_dir / file.filename
+    
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        log_audit("MCP_CERT_UPLOAD", f"Uploaded cert: {file.filename}", {"instance_id": instance_id})
+        
+        return {
+            "success": True, 
+            "message": f"证书已上传。请在配置中使用路径: /certs/{file.filename}",
+            "path": f"/certs/{file.filename}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"上传失败: {e}")
+
+
+@app.get("/api/mcp/instances/{instance_id}/certs")
+async def list_mcp_certs(instance_id: str):
+    """列出已上传的证书"""
+    instance_cert_dir = CERTS_DIR / instance_id
+    if not instance_cert_dir.exists():
+        return {"certs": []}
+        
+    files = []
+    for f in instance_cert_dir.iterdir():
+        if f.is_file():
+            files.append(f.name)
+            
+    return {"certs": files}
+
+
+@app.delete("/api/mcp/instances/{instance_id}/certs/{filename}")
+async def delete_mcp_cert(instance_id: str, filename: str):
+    """删除证书文件"""
+    instance_cert_dir = CERTS_DIR / instance_id
+    file_path = instance_cert_dir / filename
+    
+    if file_path.exists():
+        file_path.unlink()
+        return {"success": True, "message": "文件已删除"}
+    else:
+        raise HTTPException(status_code=404, detail="文件不存在")
 
 
 # ==================== 日志查询API ====================

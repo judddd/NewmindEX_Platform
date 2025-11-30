@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { DashboardAPI } from '../services/api';
 import type { MCPInstance } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge, StatusIndicator } from '../components/ui/common';
-import { Play, Square, Trash2, Plus, X, Copy } from 'lucide-react';
+import { Play, Square, Trash2, Plus, X, Copy, Settings, Upload, File as FileIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export const MCPManager = () => {
@@ -10,8 +10,10 @@ export const MCPManager = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showCertModal, setShowCertModal] = useState(false);
   const [exportConfig, setExportConfig] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [certInstance, setCertInstance] = useState<MCPInstance | null>(null);
   const [templates, setTemplates] = useState<any[]>([]);
 
   const fetchInstances = async () => {
@@ -61,7 +63,6 @@ export const MCPManager = () => {
   };
 
   const handleCopy = (instance: MCPInstance) => {
-      // 使用更友好的 key (如果名称是英文)
       let key = instance.id;
       if (/^[a-zA-Z0-9\s\-_]+$/.test(instance.name)) {
           key = instance.name.toLowerCase().replace(/\s+/g, '_');
@@ -79,6 +80,11 @@ export const MCPManager = () => {
       };
       setExportConfig(JSON.stringify(config, null, 2));
       setShowExportModal(true);
+  };
+
+  const handleCertManage = (instance: MCPInstance) => {
+      setCertInstance(instance);
+      setShowCertModal(true);
   };
 
   return (
@@ -127,6 +133,9 @@ export const MCPManager = () => {
                       </>
                   )}
                 </Button>
+                <Button size="sm" variant="secondary" onClick={() => handleCertManage(instance)} title="证书管理">
+                    <Settings className="w-4 h-4 text-slate-400" />
+                </Button>
                 <Button size="sm" variant="secondary" onClick={() => handleCopy(instance)} title="复制配置">
                     <Copy className="w-4 h-4 text-slate-400" />
                 </Button>
@@ -161,6 +170,13 @@ export const MCPManager = () => {
             onClose={() => setShowExportModal(false)} 
         />
       )}
+
+      {showCertModal && certInstance && (
+        <CertManagerModal 
+            instance={certInstance}
+            onClose={() => setShowCertModal(false)}
+        />
+      )}
     </div>
   );
 };
@@ -168,6 +184,106 @@ export const MCPManager = () => {
 const ServerIcon = ({className}: {className?: string}) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
 )
+
+const CertManagerModal = ({ instance, onClose }: { instance: MCPInstance, onClose: () => void }) => {
+    const [files, setFiles] = useState<string[]>([]);
+    const [uploading, setUploading] = useState(false);
+
+    const fetchFiles = async () => {
+        try {
+            const data = await DashboardAPI.getMCPCerts(instance.id);
+            setFiles(data.certs || []);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    useEffect(() => {
+        fetchFiles();
+    }, [instance.id]);
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+        setUploading(true);
+        try {
+            await DashboardAPI.uploadMCPCert(instance.id, file);
+            await fetchFiles();
+            alert('上传成功！请在配置中使用路径: /certs/' + file.name);
+        } catch (e) {
+            alert('上传失败');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDelete = async (filename: string) => {
+        if (!confirm(`确定要删除 ${filename} 吗？`)) return;
+        try {
+            await DashboardAPI.deleteMCPCert(instance.id, filename);
+            fetchFiles();
+        } catch (e) {
+            alert('删除失败');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-background rounded-xl border shadow-lg w-full max-w-lg p-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">证书管理 - {instance.name}</h3>
+                    <button onClick={onClose}><X className="w-4 h-4" /></button>
+                </div>
+                
+                <div className="space-y-4">
+                    <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center bg-slate-900/50 hover:bg-slate-900/80 transition-colors relative">
+                        <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground mb-1">点击上传 CA 证书文件</p>
+                        <input 
+                            type="file" 
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                            onChange={handleUpload}
+                            disabled={uploading}
+                        />
+                        {uploading && <p className="text-xs text-blue-400 mt-2">上传中...</p>}
+                    </div>
+
+                    <div>
+                        <h4 className="text-sm font-medium mb-2">已上传文件</h4>
+                        {files.length === 0 ? (
+                            <p className="text-xs text-muted-foreground italic">暂无上传文件</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {files.map(file => (
+                                    <div key={file} className="flex items-center justify-between bg-slate-900 p-3 rounded-md text-sm border border-slate-800">
+                                        <div className="flex items-center gap-2">
+                                            <FileIcon className="w-4 h-4 text-blue-400" />
+                                            <span>{file}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs text-muted-foreground font-mono bg-slate-950 px-2 py-1 rounded">/certs/{file}</span>
+                                            <button onClick={() => handleDelete(file)} className="text-red-400 hover:text-red-300">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-md text-xs text-blue-300">
+                        <p>提示：上传后，请在实例配置中将 <code className="font-bold">XX_CA_CERT</code> 设置为 <code className="font-bold">/certs/文件名</code>，然后重启实例。</p>
+                    </div>
+                </div>
+
+                <div className="flex justify-end mt-6">
+                    <Button onClick={onClose}>关闭</Button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const ExportConfigModal = ({ config, onClose }: { config: string, onClose: () => void }) => {
     const handleCopy = () => {

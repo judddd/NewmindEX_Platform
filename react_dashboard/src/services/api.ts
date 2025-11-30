@@ -125,6 +125,27 @@ export const DashboardAPI = {
     return response.data;
   },
 
+  uploadMCPCert: async (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(`/api/mcp/instances/${id}/certs`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  getMCPCerts: async (id: string) => {
+    const response = await api.get(`/api/mcp/instances/${id}/certs`);
+    return response.data;
+  },
+
+  deleteMCPCert: async (id: string, filename: string) => {
+    const response = await api.delete(`/api/mcp/instances/${id}/certs/${filename}`);
+    return response.data;
+  },
+
   getMCPTemplates: async () => {
     const response = await api.get('/api/mcp/templates');
     return response.data;

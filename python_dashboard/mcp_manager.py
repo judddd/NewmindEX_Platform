@@ -30,6 +30,7 @@ except DockerException as e:
 PROJECT_ROOT = Path(__file__).parent.parent
 MCP_LOGS_DIR = Path(__file__).parent / "mcp_logs"
 LOGS_DIR = PROJECT_ROOT / "logs"
+CERTS_DIR = Path(__file__).parent / "certs"
 
 # MCP镜像名称映射
 # 自动检测系统架构
@@ -89,6 +90,7 @@ def get_available_image(mcp_type: str) -> Optional[str]:
 def ensure_directories():
     """确保必要的目录存在"""
     MCP_LOGS_DIR.mkdir(exist_ok=True)
+    CERTS_DIR.mkdir(exist_ok=True)
 
 
 def get_container_name(instance_id: str) -> str:
@@ -186,10 +188,11 @@ def start_mcp_server(instance_id: str) -> bool:
             environment["ES_USERNAME"] = config.get("es_username", "")
             environment["ES_PASSWORD"] = config.get("es_password", "")
         
-        if config.get("disable_tls"):
-            environment["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
+        # 证书处理
+        if config.get("node_tls_reject_unauthorized") == "0":
+             environment["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
         elif config.get("es_ca_cert"):
-            environment["ES_CA_CERT"] = config["es_ca_cert"]
+             environment["ES_CA_CERT"] = config["es_ca_cert"]
     
     elif mcp_type == "kibana":
         # MCP Docker模式配置
@@ -214,7 +217,7 @@ def start_mcp_server(instance_id: str) -> bool:
             environment["KIBANA_USERNAME"] = config.get("kibana_username", "")
             environment["KIBANA_PASSWORD"] = config.get("kibana_password", "")
         
-        if config.get("disable_tls"):
+        if config.get("node_tls_reject_unauthorized") == "0":
             environment["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
         elif config.get("kibana_ca_cert"):
             environment["KIBANA_CA_CERT"] = config["kibana_ca_cert"]
@@ -239,6 +242,12 @@ def start_mcp_server(instance_id: str) -> bool:
         
         environment["NEWFLOW_API_URL"] = newflow_url
         environment["NEWFLOW_API_KEY"] = api_key
+        if config.get("newflow_webhook_username"):
+            environment["NEWFLOW_WEBHOOK_USERNAME"] = config["newflow_webhook_username"]
+        if config.get("newflow_webhook_password"):
+            environment["NEWFLOW_WEBHOOK_PASSWORD"] = config["newflow_webhook_password"]
+        if config.get("node_tls_reject_unauthorized") == "0":
+             environment["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
     
     elif mcp_type == "cmdb":
         # CMDB配置
@@ -258,6 +267,17 @@ def start_mcp_server(instance_id: str) -> bool:
     # 创建日志目录（用于容器日志挂载）
     container_log_dir = LOGS_DIR / "mcp_containers" / instance_id
     container_log_dir.mkdir(parents=True, exist_ok=True)
+
+    # 准备挂载卷
+    volumes = {
+        str(container_log_dir): {'bind': '/var/log/mcp', 'mode': 'rw'}
+    }
+
+    # 检查并挂载证书目录
+    instance_certs_dir = CERTS_DIR / instance_id
+    if instance_certs_dir.exists() and any(instance_certs_dir.iterdir()):
+        print(f"📂 挂载证书目录: {instance_certs_dir} -> /certs")
+        volumes[str(instance_certs_dir)] = {'bind': '/certs', 'mode': 'ro'}
     
     try:
         # 删除已存在的同名容器
@@ -282,10 +302,8 @@ def start_mcp_server(instance_id: str) -> bool:
             remove=False,
             network='bridge',  # 先用默认网络创建
             extra_hosts={'host.docker.internal': 'host-gateway'},
-            # 挂载日志目录
-            volumes={
-                str(container_log_dir): {'bind': '/var/log/mcp', 'mode': 'rw'}
-            },
+            # 挂载目录 (日志 + 证书)
+            volumes=volumes,
             # 配置Docker日志驱动
             log_config={
                 'type': 'json-file',
@@ -545,4 +563,3 @@ def list_mcp_containers() -> list:
     except Exception as e:
         print(f"列出容器失败: {e}")
         return []
-
