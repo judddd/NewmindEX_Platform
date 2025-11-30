@@ -49,10 +49,29 @@ run_step() {
 install_nodejs() {
     log_info "检查 Node.js..."
     
+    local need_install=true
+    
     # 检查是否已安装
     if command -v node &> /dev/null; then
-        local version=$(node --version)
-        log_success "Node.js 已安装: $version"
+        local version_str=$(node --version) # v20.18.1
+        # 提取主版本号
+        local major_version=$(echo "$version_str" | cut -d. -f1 | tr -d 'v')
+        
+        log_info "发现已安装 Node.js: $version_str (主版本: $major_version)"
+        
+        if [ "$major_version" -lt 22 ]; then
+            log_warn "Node.js 版本过低 ($version_str < v22). 准备升级..."
+            need_install=true
+        else
+            log_success "Node.js 版本满足要求 ($version_str)"
+            need_install=false
+        fi
+    else
+        log_info "Node.js 未安装"
+        need_install=true
+    fi
+    
+    if [ "$need_install" = false ]; then
         return 0
     fi
     
