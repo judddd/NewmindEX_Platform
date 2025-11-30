@@ -46,6 +46,13 @@ run_step() {
     fi
     
     echo ""
+
+    # 验证本地服务
+    if ! verify_local_services; then
+        all_passed=false
+    fi
+    
+    echo ""
     
     # 验证连通性
     if ! verify_connectivity; then
@@ -147,7 +154,7 @@ verify_docker_services() {
     local all_ok=true
     
     # 检查容器
-    for container in "elasticsearch" "kibana" "newflow"; do
+    for container in "elasticsearch" "kibana"; do
         if docker ps --format "{{.Names}}" | grep -q "$container"; then
             local status=$(docker ps --format "{{.Status}}" --filter "name=$container" | head -1)
             log_success "  ✓ $container ($status)"
@@ -161,6 +168,30 @@ verify_docker_services() {
     local image_count=$(docker images --format "{{.Repository}}:{{.Tag}}" | wc -l | tr -d ' ')
     log_info "  • Docker镜像总数: $image_count"
     
+    [ "$all_ok" = true ]
+}
+
+# 验证本地服务
+verify_local_services() {
+    echo -e "${CYAN}本地服务验证:${NC}"
+    local all_ok=true
+
+    # NewRAG
+    if [ -f "python_dashboard/newrag.pid" ] && ps -p $(cat python_dashboard/newrag.pid) > /dev/null 2>&1; then
+        log_success "  ✓ NewRAG (运行中)"
+    else
+        log_error "  ✗ NewRAG 未运行"
+        all_ok=false
+    fi
+
+    # NewFlow
+    if [ -f "python_dashboard/newflow.pid" ] && ps -p $(cat python_dashboard/newflow.pid) > /dev/null 2>&1; then
+        log_success "  ✓ NewFlow (运行中)"
+    else
+        log_error "  ✗ NewFlow 未运行"
+        all_ok=false
+    fi
+
     [ "$all_ok" = true ]
 }
 
@@ -187,7 +218,7 @@ verify_connectivity() {
     fi
     
     # NewFlow
-    if curl -s http://localhost:5677 &> /dev/null; then
+    if curl -s http://localhost:5678 &> /dev/null; then
         log_success "  ✓ NewFlow"
     else
         log_error "  ✗ NewFlow 无法连接"
@@ -242,7 +273,7 @@ generate_installation_report() {
         echo "  • Dashboard: http://localhost:8000"
         echo "  • Elasticsearch: http://localhost:9200"
         echo "  • Kibana: http://localhost:5601"
-        echo "  • NewFlow: http://localhost:5677"
+        echo "  • NewFlow: http://localhost:5678"
         echo "  • LM Studio: http://localhost:1234"
         echo ""
         

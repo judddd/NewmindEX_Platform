@@ -69,6 +69,54 @@ fi
 echo "🐍 停止Python Dashboard..."
 PYTHON_STOPPED=0
 
+# 停止 NewRAG (放在 Dashboard 之前或一起)
+if [ -f "python_dashboard/newrag.pid" ]; then
+    pid=$(cat python_dashboard/newrag.pid)
+    if ps -p $pid > /dev/null 2>&1; then
+        echo "   停止 NewRAG 进程: $pid"
+        # 尝试杀掉进程组 (负号表示进程组)
+        kill -- -$pid 2>/dev/null || kill $pid 2>/dev/null || true
+    fi
+    rm -f python_dashboard/newrag.pid
+    PYTHON_STOPPED=1
+fi
+# 兜底清理 NewRAG
+NEWRAG_PIDS=$(pgrep -f "newrag-main/dev.py" || true)
+if [ -n "$NEWRAG_PIDS" ]; then
+    echo "$NEWRAG_PIDS" | while read pid; do
+        echo "   停止残留 NewRAG 进程: $pid"
+        kill -9 $pid 2>/dev/null || true
+        PYTHON_STOPPED=1
+    done
+fi
+
+# 深度清理 NewRAG 子进程 (Backend, MCP, Frontend)
+echo "   🧹 深度清理 NewRAG 子进程..."
+# Backend (web/app.py)
+pkill -9 -f "web/app.py" 2>/dev/null || true
+# MCP
+pkill -9 -f "newrag-search-mcp" 2>/dev/null || true
+# Frontend (vite)
+pkill -9 -f "vite" 2>/dev/null || true
+# 清理端口占用 (8080, 2999)
+lsof -t -i:8080 2>/dev/null | xargs kill -9 2>/dev/null || true
+lsof -t -i:2999 2>/dev/null | xargs kill -9 2>/dev/null || true
+
+# 停止 NewFlow
+if [ -f "python_dashboard/newflow.pid" ]; then
+    pid=$(cat python_dashboard/newflow.pid)
+    if ps -p $pid > /dev/null 2>&1; then
+        echo "   停止 NewFlow 进程: $pid"
+        kill -- -$pid 2>/dev/null || kill $pid 2>/dev/null || true
+    fi
+    rm -f python_dashboard/newflow.pid
+fi
+# 深度清理 NewFlow (端口 5678)
+echo "   🧹 释放 NewFlow 端口 (5678)..."
+lsof -t -i:5678 2>/dev/null | xargs kill -9 2>/dev/null || true
+# 查找相关进程 (按名称兜底)
+pkill -f "n8n start" 2>/dev/null || true
+
 # 先尝试从PID文件停止
 if [ -f "python_dashboard/dashboard.pid" ]; then
     pid=$(cat python_dashboard/dashboard.pid)
@@ -89,6 +137,11 @@ if [ -n "$UVICORN_PIDS" ]; then
         PYTHON_STOPPED=1
     done
 fi
+
+# 清理端口 80 或 8000 (强制释放)
+echo "   🧹 释放 Dashboard 端口..."
+lsof -t -i:80 2>/dev/null | xargs kill -9 2>/dev/null || true
+lsof -t -i:8000 2>/dev/null | xargs kill -9 2>/dev/null || true
 
 # 清理所有python_dashboard相关进程
 DASHBOARD_PIDS=$(pgrep -f "python.*dashboard" || true)

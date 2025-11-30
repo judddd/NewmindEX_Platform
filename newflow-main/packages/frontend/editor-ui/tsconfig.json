@@ -1,0 +1,36 @@
+{
+	"extends": "@newflow/typescript-config/tsconfig.frontend.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"moduleResolution": "bundler",
+		"rootDirs": [
+			".",
+			"../@newflow/rest-api-client/src",
+			"../@newflow/composables/src",
+			"../@newflow/chat/src",
+			"../@newflow/design-system/src"
+		],
+		"outDir": "dist",
+		"types": [
+			"vitest/globals",
+			"unplugin-icons/types/vue",
+			"../@newflow/design-system/src/shims-modules.d.ts"
+		],
+		"paths": {
+			"@/*": ["./src/*"],
+			"@newflow/rest-api-client*": ["../@newflow/rest-api-client/src*"],
+			"@newflow/composables*": ["../@newflow/composables/src*"],
+			"@newflow/constants*": ["../../@newflow/constants/src*"],
+			"@newflow/chat*": ["../@newflow/chat/src*"],
+			"@newflow/design-system*": ["../@newflow/design-system/src*"],
+			"@newflow/i18n*": ["../@newflow/i18n/src*"],
+			"@newflow/stores*": ["../@newflow/stores/src*"],
+			"@newflow/api-types*": ["../../@newflow/api-types/src*"],
+			"@newflow/utils*": ["../../@newflow/utils/src*"]
+		},
+		// TODO: remove all options below this line
+		"useUnknownInCatchVariables": false
+	},
+	"include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue"],
+	"exclude": ["src/plugins/codemirror/typescript/worker/**/*.d.ts"]
+}

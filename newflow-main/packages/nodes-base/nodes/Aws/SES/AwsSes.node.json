@@ -1,0 +1,29 @@
+{
+	"node": "n8n-nodes-base.awsSes",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Communication", "Development"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "http://newflow.ee/integrations/builtin/credentials/aws/"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "http://newflow.ee/integrations/builtin/app-nodes/n8n-nodes-base.awsses/"
+			}
+		],
+		"generic": [
+			{
+				"label": "Why business process automation with n8n can change your daily life",
+				"icon": "🧬",
+				"url": "http://newflow.ee/blog/why-business-process-automation-with-n8n-can-change-your-daily-life/"
+			},
+			{
+				"label": "7 no-code workflow automations for Amazon Web Services",
+				"url": "http://newflow.ee/blog/aws-workflow-automation/"
+			}
+		]
+	}
+}

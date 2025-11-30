@@ -1,0 +1,14 @@
+{
+	"extends": [
+		"@newflow/typescript-config/tsconfig.common.json",
+		"@newflow/typescript-config/tsconfig.backend.json"
+	],
+	"compilerOptions": {
+		"rootDir": ".",
+		"baseUrl": "src",
+		"paths": {
+			"@/*": ["./*"]
+		}
+	},
+	"include": ["src/**/*.ts"]
+}

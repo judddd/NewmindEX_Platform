@@ -54,8 +54,8 @@ if docker ps --filter name=newflow --format "{{.Names}}" | grep -q newflow; then
     NEWFLOW_IP=$(docker inspect newflow --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
     echo "✅ NewFlow"
     echo "   容器IP: $NEWFLOW_IP"
-    echo "   主机访问: http://localhost:5677"
-    echo "   Docker IP访问: http://$NEWFLOW_IP:5677"
+    echo "   主机访问: http://localhost:5678"
+    echo "   Docker IP访问: http://$NEWFLOW_IP:5678"
     echo ""
 else
     echo "⚠️  NewFlow容器未运行"

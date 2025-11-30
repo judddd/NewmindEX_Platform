@@ -13,6 +13,79 @@ import { randomUUID } from 'crypto';
 import { CmdbClient } from './src/cmdb-client.js';
 import type { CmdbConfig, QueryCondition } from './src/types.js';
 
+/**
+ * Estimate token count for a given text
+ * Simple estimation: ~4 characters per token for English/Chinese mix
+ */
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+/**
+ * Check if response content exceeds token limit
+ * @param content - The content to check
+ * @param limit - Token limit (default: 2000)
+ * @returns Object with exceeded flag and estimated tokens
+ */
+function checkTokenLimit(content: any, limit: number = 2000): {
+  exceeded: boolean;
+  estimatedTokens: number;
+  suggestedPageSize: number | null;
+} {
+  const jsonString = JSON.stringify(content);
+  const estimatedTokens = estimateTokens(jsonString);
+  
+  let suggestedPageSize = null;
+  if (estimatedTokens > limit && Array.isArray(content)) {
+    // Calculate suggested page size based on current ratio
+    const currentSize = content.length;
+    suggestedPageSize = Math.max(1, Math.floor((currentSize * limit) / estimatedTokens));
+  }
+  
+  return {
+    exceeded: estimatedTokens > limit,
+    estimatedTokens,
+    suggestedPageSize,
+  };
+}
+
+/**
+ * Create a token limit exceeded error response
+ */
+function createTokenLimitError(
+  estimatedTokens: number,
+  limit: number,
+  currentPageSize: number,
+  suggestedPageSize: number | null
+): any {
+  const messages = [
+    `⚠️ Response too large: estimated ${estimatedTokens} tokens (limit: ${limit} tokens)`,
+    `Current pageSize: ${currentPageSize}`,
+  ];
+  
+  if (suggestedPageSize) {
+    messages.push(
+      `Suggested action: Reduce pageSize to ${suggestedPageSize} or smaller`,
+      `Or use cmdb_extract_fields to fetch only specific fields`
+    );
+  } else {
+    messages.push(
+      `Suggested action: Use cmdb_extract_fields to fetch only specific fields`,
+      `Or add more specific filter conditions`
+    );
+  }
+  
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: messages.join('\n'),
+      },
+    ],
+    isError: true,
+  };
+}
+
 // Configuration schema with validation
 const ConfigSchema = z.object({
   domain: z
@@ -36,19 +109,30 @@ const ConfigSchema = z.object({
 
   verifySsl: z
     .boolean()
-    .default(true)
-    .describe('Whether to verify SSL certificates'),
+    .default(false)
+    .describe('Whether to verify SSL certificates (default: false for ease of use)'),
+
+  caCertPath: z
+    .string()
+    .optional()
+    .describe('Optional path to custom CA certificate file (PEM format). If provided, SSL verification will be enabled.'),
 });
 
 type ValidatedConfig = z.infer<typeof ConfigSchema>;
 
 /**
  * Create and configure the CMDB MCP Server
+ * @param config - Validated CMDB configuration
+ * @param sharedClient - Optional shared CmdbClient instance (for HTTP mode)
  */
-export async function createCmdbMcpServer(config: ValidatedConfig) {
+export async function createCmdbMcpServer(
+  config: ValidatedConfig,
+  sharedClient?: CmdbClient
+) {
   const validatedConfig = ConfigSchema.parse(config);
 
-  const cmdbClient = new CmdbClient(validatedConfig);
+  // Use shared client if provided, otherwise create new one
+  const cmdbClient = sharedClient || new CmdbClient(validatedConfig);
 
   const server = new McpServer({
     name: 'cmdb-mcp-server',
@@ -110,7 +194,7 @@ export async function createCmdbMcpServer(config: ValidatedConfig) {
   // Tool 2: Query view without conditions
   server.tool(
     'cmdb_query_view',
-    'Query a CMDB view and retrieve asset data',
+    'Query a CMDB view and retrieve asset data. IMPORTANT for AI: Start with pageSize=10 to avoid overwhelming responses. Only increase or fetch more pages if the user explicitly needs more data.',
     {
       viewid: z
         .string()
@@ -123,17 +207,17 @@ export async function createCmdbMcpServer(config: ValidatedConfig) {
         .int()
         .min(1)
         .max(1000)
-        .default(50)
-        .describe('Number of records per page (default: 50)'),
+        .default(10)
+        .describe('Number of records per page. RECOMMENDED: Start with 10 for initial queries. Only increase (20, 50, 100) if user explicitly needs more data. Default: 10'),
 
       startPage: z
         .number()
         .int()
         .min(1)
         .default(1)
-        .describe('Starting page number (default: 1)'),
+        .describe('Starting page number for pagination. Use to fetch additional pages only when necessary. Default: 1'),
     },
-    async ({ viewid, pageSize = 50, startPage = 1 }) => {
+    async ({ viewid, pageSize = 10, startPage = 1 }) => {
       try {
         const result = await cmdbClient.queryView(
           viewid,
@@ -151,6 +235,17 @@ export async function createCmdbMcpServer(config: ValidatedConfig) {
               },
             ],
           };
+        }
+
+        // Check token limit before returning
+        const tokenCheck = checkTokenLimit(result.content, 2000);
+        if (tokenCheck.exceeded) {
+          return createTokenLimitError(
+            tokenCheck.estimatedTokens,
+            2000,
+            pageSize,
+            tokenCheck.suggestedPageSize
+          );
         }
 
         const summary = {
@@ -198,7 +293,7 @@ export async function createCmdbMcpServer(config: ValidatedConfig) {
   // Tool 3: Query view with conditions
   server.tool(
     'cmdb_query_with_conditions',
-    'Query a CMDB view with filtering conditions',
+    'Query a CMDB view with filtering conditions. IMPORTANT for AI: Start with pageSize=10. Only increase if user explicitly requests more results. Avoid multiple calls unless necessary.',
     {
       viewid: z
         .string()
@@ -224,17 +319,17 @@ export async function createCmdbMcpServer(config: ValidatedConfig) {
         .int()
         .min(1)
         .max(1000)
-        .default(50)
-        .describe('Number of records per page (default: 50)'),
+        .default(10)
+        .describe('Number of records per page. RECOMMENDED: Start with 10. Increase progressively (20→50→100) only if needed. Default: 10'),
 
       startPage: z
         .number()
         .int()
         .min(1)
         .default(1)
-        .describe('Starting page number (default: 1)'),
+        .describe('Starting page number. Use pagination (startPage=2,3...) only when user explicitly needs more results. Default: 1'),
     },
-    async ({ viewid, conditions, pageSize = 50, startPage = 1 }) => {
+    async ({ viewid, conditions, pageSize = 10, startPage = 1 }) => {
       try {
         const result = await cmdbClient.queryView(
           viewid,
@@ -252,6 +347,17 @@ export async function createCmdbMcpServer(config: ValidatedConfig) {
               },
             ],
           };
+        }
+
+        // Check token limit before returning
+        const tokenCheck = checkTokenLimit(result.content, 2000);
+        if (tokenCheck.exceeded) {
+          return createTokenLimitError(
+            tokenCheck.estimatedTokens,
+            2000,
+            pageSize,
+            tokenCheck.suggestedPageSize
+          );
         }
 
         const summary = {
@@ -300,7 +406,7 @@ export async function createCmdbMcpServer(config: ValidatedConfig) {
   // Tool 4: Extract specific fields from query results
   server.tool(
     'cmdb_extract_fields',
-    'Query CMDB view and extract only specific fields from results',
+    'Query CMDB view and extract only specific fields from results. IMPORTANT for AI: Use this for focused queries. Start with pageSize=10. This tool returns minimal data - perfect for AI analysis.',
     {
       viewid: z
         .string()
@@ -312,7 +418,7 @@ export async function createCmdbMcpServer(config: ValidatedConfig) {
         .array(z.string())
         .min(1, 'At least one field is required')
         .describe(
-          'Array of field names to extract (supports dot notation, e.g., "manager_show_value")'
+          'Array of field names to extract (supports dot notation, e.g., "manager_show_value"). Extract only necessary fields to reduce response size.'
         ),
 
       conditions: z
@@ -334,17 +440,17 @@ export async function createCmdbMcpServer(config: ValidatedConfig) {
         .int()
         .min(1)
         .max(1000)
-        .default(50)
-        .describe('Number of records per page (default: 50)'),
+        .default(10)
+        .describe('Number of records per page. RECOMMENDED: Start with 10. This tool already extracts specific fields, so less data is returned. Default: 10'),
 
       startPage: z
         .number()
         .int()
         .min(1)
         .default(1)
-        .describe('Starting page number (default: 1)'),
+        .describe('Starting page number. Paginate only when user needs comprehensive data across multiple pages. Default: 1'),
     },
-    async ({ viewid, fields, conditions = [], pageSize = 50, startPage = 1 }) => {
+    async ({ viewid, fields, conditions = [], pageSize = 10, startPage = 1 }) => {
       try {
         const result = await cmdbClient.queryView(
           viewid,
@@ -369,6 +475,17 @@ export async function createCmdbMcpServer(config: ValidatedConfig) {
           result.content,
           fields
         );
+
+        // Check token limit before returning
+        const tokenCheck = checkTokenLimit(extractedRecords, 2000);
+        if (tokenCheck.exceeded) {
+          return createTokenLimitError(
+            tokenCheck.estimatedTokens,
+            2000,
+            pageSize,
+            tokenCheck.suggestedPageSize
+          );
+        }
 
         const summary = {
           total: result.total,
@@ -420,7 +537,9 @@ const config: CmdbConfig = {
   domain: process.env.CMDB_DOMAIN || '',
   appId: process.env.CMDB_APP_ID || '',
   appSecret: process.env.CMDB_APP_SECRET || '',
-  verifySsl: process.env.CMDB_VERIFY_SSL !== '0' && process.env.CMDB_VERIFY_SSL !== 'false',
+  // Default to false (no SSL verification) unless explicitly set to '1' or 'true'
+  verifySsl: process.env.CMDB_VERIFY_SSL === '1' || process.env.CMDB_VERIFY_SSL === 'true',
+  caCertPath: process.env.CMDB_CA_CERT_PATH,
 };
 
 async function main() {
@@ -438,6 +557,12 @@ async function main() {
 
       const app = express();
       app.use(express.json());
+
+      // Create a shared CmdbClient instance for all sessions in HTTP mode
+      // This ensures token is shared across all sessions and reduces login overhead
+      process.stderr.write('[MCP] Creating shared CMDB client for HTTP mode...\n');
+      const sharedCmdbClient = new CmdbClient(config);
+      process.stderr.write('[MCP] ✓ Shared CMDB client created\n');
 
       // Store active transports by session ID
       const transports = new Map<string, StreamableHTTPServerTransport>();
@@ -461,26 +586,26 @@ async function main() {
           // Check if we have an existing session
           if (sessionId && transports.has(sessionId)) {
             transport = transports.get(sessionId)!;
+            console.log(`[MCP] Reusing existing session: ${sessionId}`);
           } else {
             // Create new transport for new session
+            console.log('[MCP] Creating new session...');
             transport = new StreamableHTTPServerTransport({
               sessionIdGenerator: () => randomUUID(),
               onsessioninitialized: async (newSessionId: string) => {
                 transports.set(newSessionId, transport);
-                process.stderr.write(
-                  `New MCP session initialized: ${newSessionId}\n`
-                );
+                console.log(`[MCP] ✓ New session initialized: ${newSessionId}`);
+                console.log(`[MCP] Active sessions: ${transports.size}`);
               },
               onsessionclosed: async (closedSessionId: string) => {
                 transports.delete(closedSessionId);
-                process.stderr.write(
-                  `MCP session closed: ${closedSessionId}\n`
-                );
+                console.log(`[MCP] Session closed: ${closedSessionId}`);
+                console.log(`[MCP] Active sessions: ${transports.size}`);
               },
             });
 
-            // Create server for this transport
-            const server = await createCmdbMcpServer(config);
+            // Create server for this transport with shared client
+            const server = await createCmdbMcpServer(config, sharedCmdbClient);
             await server.connect(transport);
           }
 
@@ -546,24 +671,32 @@ async function main() {
 
       // Handle process termination
       process.on('SIGINT', async () => {
-        console.log('\nShutting down server...');
+        console.log('\n[MCP] Shutting down HTTP server...');
+        console.log(`[MCP] Closing ${transports.size} active session(s)...`);
         for (const [sessionId, transport] of transports.entries()) {
+          console.log(`[MCP] Closing session: ${sessionId}`);
           await transport.close();
         }
+        console.log('[MCP] ✓ All sessions closed');
         process.exit(0);
       });
     } else {
       // Stdio Mode (Default) - Use Stdio Transport
       process.stderr.write(`Starting CMDB MCP Server in Stdio mode\n`);
+      process.stderr.write(`[MCP] Transport: Stdio\n`);
+      process.stderr.write(`[MCP] CMDB Domain: ${config.domain}\n`);
 
       const transport = new StdioServerTransport();
       const server = await createCmdbMcpServer(config);
 
       await server.connect(transport);
+      process.stderr.write('[MCP] ✓ Server connected and ready\n');
 
       // Handle process termination
       process.on('SIGINT', async () => {
+        process.stderr.write('\n[MCP] Shutting down server...\n');
         await server.close();
+        process.stderr.write('[MCP] ✓ Server closed\n');
         process.exit(0);
       });
     }

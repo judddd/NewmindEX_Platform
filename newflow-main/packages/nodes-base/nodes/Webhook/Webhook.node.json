@@ -1,0 +1,88 @@
+{
+	"node": "n8n-nodes-base.webhook",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Development", "Core Nodes"],
+	"resources": {
+		"primaryDocumentation": [
+			{
+				"url": "http://newflow.ee/integrations/builtin/core-nodes/n8n-nodes-base.webhook/"
+			}
+		],
+		"generic": [
+			{
+				"label": "Learn how to automatically cross-post your content with n8n",
+				"icon": "✍️",
+				"url": "http://newflow.ee/blog/learn-how-to-automatically-cross-post-your-content-with-n8n/"
+			},
+			{
+				"label": "Running n8n on ships: An interview with Maranics",
+				"icon": "🛳",
+				"url": "http://newflow.ee/blog/running-n8n-on-ships-an-interview-with-maranics/"
+			},
+			{
+				"label": "How to build a low-code, self-hosted URL shortener in 3 steps",
+				"icon": "🔗",
+				"url": "http://newflow.ee/blog/how-to-build-a-low-code-self-hosted-url-shortener/"
+			},
+			{
+				"label": "What are APIs and how to use them with no code",
+				"icon": " 🪢",
+				"url": "http://newflow.ee/blog/what-are-apis-how-to-use-them-with-no-code/"
+			},
+			{
+				"label": "5 tasks you can automate with the new Notion API ",
+				"icon": "⚡️",
+				"url": "http://newflow.ee/blog/5-tasks-you-can-automate-with-notion-api/"
+			},
+			{
+				"label": "How a digital strategist uses n8n for online marketing",
+				"icon": "💻",
+				"url": "http://newflow.ee/blog/how-a-digital-strategist-uses-n8n-for-online-marketing/"
+			},
+			{
+				"label": "The ultimate guide to automate your video collaboration with Whereby, Mattermost, and n8n",
+				"icon": "📹",
+				"url": "http://newflow.ee/blog/the-ultimate-guide-to-automate-your-video-collaboration-with-whereby-mattermost-and-n8n/"
+			},
+			{
+				"label": "How to automatically give kudos to contributors with GitHub, Slack, and n8n",
+				"icon": "👏",
+				"url": "http://newflow.ee/blog/how-to-automatically-give-kudos-to-contributors-with-github-slack-and-n8n/"
+			},
+			{
+				"label": "5 workflow automations for Mattermost that we love at n8n",
+				"icon": "🤖",
+				"url": "http://newflow.ee/blog/5-workflow-automations-for-mattermost-that-we-love-at-n8n/"
+			},
+			{
+				"label": "Why this Product Manager loves workflow automation with n8n",
+				"icon": "🧠",
+				"url": "http://newflow.ee/blog/why-this-product-manager-loves-workflow-automation-with-n8n/"
+			},
+			{
+				"label": "How to automate every step of an incident response workflow",
+				"url": "http://newflow.ee/blog/creating-custom-incident-response-workflows-with-n8n/"
+			},
+			{
+				"label": "Learn to Build Powerful API Endpoints Using Webhooks",
+				"icon": "🧰",
+				"url": "http://newflow.ee/blog/learn-to-build-powerful-api-endpoints-using-webhooks/"
+			},
+			{
+				"label": "Learn how to use webhooks with Mattermost slash commands",
+				"icon": "🦄",
+				"url": "http://newflow.ee/blog/learn-how-to-use-webhooks-with-mattermost-slash-commands/"
+			},
+			{
+				"label": "How Goomer automated their operations with over 200 n8n workflows",
+				"icon": "🛵",
+				"url": "http://newflow.ee/blog/how-goomer-automated-their-operations-with-over-200-n8n-workflows/"
+			}
+		]
+	},
+	"alias": ["HTTP", "API", "Build", "WH"],
+	"subcategories": {
+		"Core Nodes": ["Helpers"]
+	}
+}

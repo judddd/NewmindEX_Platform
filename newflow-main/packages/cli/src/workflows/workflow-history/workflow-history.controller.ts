@@ -1,0 +1,61 @@
+/**
+ * Modified by NewFlow Team
+ * Original work: Copyright (c) 2019-2024, Jan Oberhauser (n8n)
+ * Modified work: Copyright (c) 2024, NewFlow Team
+ *
+ * This file is part of NewFlow, a modified version of n8n.
+ * License: Sustainable Use License (see LICENSE.md)
+ */
+
+import { PaginationDto } from '@newflow/api-types';
+import { RestController, Get, Query } from '@newflow/decorators';
+import { Response } from 'express';
+
+import { NotFoundError } from '@/errors/response-errors/not-found.error';
+import { SharedWorkflowNotFoundError } from '@/errors/shared-workflow-not-found.error';
+import { WorkflowHistoryVersionNotFoundError } from '@/errors/workflow-history-version-not-found.error';
+import { WorkflowHistoryRequest } from '@/requests';
+
+import { WorkflowHistoryService } from './workflow-history.service';
+
+const DEFAULT_TAKE = 20;
+
+@RestController('/workflow-history')
+export class WorkflowHistoryController {
+	constructor(private readonly historyService: WorkflowHistoryService) {}
+
+	@Get('/workflow/:workflowId')
+	async getList(req: WorkflowHistoryRequest.GetList, _res: Response, @Query query: PaginationDto) {
+		try {
+			return await this.historyService.getList(
+				req.user,
+				req.params.workflowId,
+				query.take ?? DEFAULT_TAKE,
+				query.skip ?? 0,
+			);
+		} catch (e) {
+			if (e instanceof SharedWorkflowNotFoundError) {
+				throw new NotFoundError('Could not find workflow');
+			}
+			throw e;
+		}
+	}
+
+	@Get('/workflow/:workflowId/version/:versionId')
+	async getVersion(req: WorkflowHistoryRequest.GetVersion) {
+		try {
+			return await this.historyService.getVersion(
+				req.user,
+				req.params.workflowId,
+				req.params.versionId,
+			);
+		} catch (e) {
+			if (e instanceof SharedWorkflowNotFoundError) {
+				throw new NotFoundError('Could not find workflow');
+			} else if (e instanceof WorkflowHistoryVersionNotFoundError) {
+				throw new NotFoundError('Could not find version');
+			}
+			throw e;
+		}
+	}
+}

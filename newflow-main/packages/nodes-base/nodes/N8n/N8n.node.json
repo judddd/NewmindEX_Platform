@@ -1,0 +1,22 @@
+{
+	"node": "n8n-nodes-base.n8n",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Development", "Core Nodes"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "http://newflow.ee/api/authentication/"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "http://newflow.ee/integrations/builtin/core-nodes/n8n-nodes-base.n8n/"
+			}
+		]
+	},
+	"alias": ["Workflow", "Execution"],
+	"subcategories": {
+		"Core Nodes": ["Helpers", "Other Trigger Nodes"]
+	}
+}

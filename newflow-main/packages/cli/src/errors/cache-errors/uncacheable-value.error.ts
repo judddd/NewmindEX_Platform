@@ -1,0 +1,18 @@
+/**
+ * Modified by NewFlow Team
+ * Original work: Copyright (c) 2019-2024, Jan Oberhauser (n8n)
+ * Modified work: Copyright (c) 2024, NewFlow Team
+ *
+ * This file is part of NewFlow, a modified version of n8n.
+ * License: Sustainable Use License (see LICENSE.md)
+ */
+
+import { UnexpectedError } from 'n8n-workflow';
+
+export class UncacheableValueError extends UnexpectedError {
+	constructor(key: string) {
+		super('Value cannot be cached in Redis', {
+			extra: { key, hint: 'Does the value contain circular references?' },
+		});
+	}
+}

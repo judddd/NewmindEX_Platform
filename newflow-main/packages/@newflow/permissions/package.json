@@ -1,0 +1,24 @@
+{
+  "name": "@newflow/permissions",
+  "version": "0.35.0",
+  "scripts": {
+    "clean": "rimraf dist .turbo",
+    "dev": "pnpm watch",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json && echo 'Build completed'",
+    "watch": "tsc -p tsconfig.build.json --watch"
+  },
+  "main": "dist/index.js",
+  "module": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@newflow/typescript-config": "workspace:*"
+  }
+}
+

@@ -1,0 +1,25 @@
+{
+	"node": "n8n-nodes-base.redis",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Development", "Data & Storage"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "http://newflow.ee/integrations/builtin/credentials/redis/"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "http://newflow.ee/integrations/builtin/app-nodes/n8n-nodes-base.redis/"
+			}
+		],
+		"generic": [
+			{
+				"label": "Why this Product Manager loves workflow automation with n8n",
+				"icon": "🧠",
+				"url": "http://newflow.ee/blog/why-this-product-manager-loves-workflow-automation-with-n8n/"
+			}
+		]
+	}
+}

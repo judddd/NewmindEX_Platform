@@ -86,7 +86,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 | **管理控制台** | http://localhost:8000 | - |
 | **Elasticsearch** | http://localhost:9200 | elastic / changeme123 |
 | **Kibana** | http://localhost:5601 | elastic / changeme123 |
-| **NewFlow** | http://localhost:5677 | - |
+| **NewFlow** | http://localhost:5678 | - |
 | **LM Studio** | http://localhost:1234 | - |
 
 ---
@@ -148,7 +148,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 │                   │                                          │
 │  ┌────────────────┼───────────────────┐                     │
 │  │  MCP Manager   │   LM Studio       │   NewFlow          │
-│  │  (3001-3100)   │   (1234)          │   (5677)           │
+│  │  (3001-3100)   │   (1234)          │   (5678)           │
 │  └────────────────┴───────────────────┴────────────────┘   │
 │                                                               │
 └─────────────────────────────────────────────────────────────┘
@@ -329,7 +329,7 @@ ELASTIC_PASSWORD=changeme123
 # 服务端口
 ES_PORT_1=9200
 KIBANA_PORT=5601
-NEWFLOW_PORT=5677
+NEWFLOW_PORT=5678
 LMSTUDIO_PORT=1234
 DASHBOARD_PORT=8000
 

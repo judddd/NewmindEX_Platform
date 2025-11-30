@@ -112,6 +112,10 @@ async def log_requests(request: Request, call_next):
     return response
 
 # 挂载静态文件
+# 先挂载 assets (Vite build output)
+if os.path.exists("static/assets"):
+    app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
@@ -971,19 +975,32 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 
+# ==================== SPA Catch-all ====================
+
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    """SPA前端路由支持"""
+    # API和静态资源404不处理
+    if full_path.startswith("api/") or full_path.startswith("static/") or full_path.startswith("assets/"):
+        raise HTTPException(status_code=404)
+    # 其他路径返回index.html
+    return FileResponse("static/index.html")
+
+
 # ==================== 启动事件 ====================
 
 @app.on_event("startup")
 async def startup_event():
     """应用启动时执行"""
+    port = int(os.getenv('DASHBOARD_PORT', '80'))
     print("🚀 NewmindEx AI Platform Dashboard 启动")
     print("=" * 50)
-    print(f"📊 Dashboard: http://localhost:{os.getenv('DASHBOARD_PORT', '8000')}")
-    print(f"📚 API文档: http://localhost:{os.getenv('DASHBOARD_PORT', '8000')}/docs")
+    print(f"📊 Dashboard: http://localhost:{port}")
+    print(f"📚 API文档: http://localhost:{port}/docs")
     print("=" * 50)
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv('DASHBOARD_PORT', '8000')))
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv('DASHBOARD_PORT', '80')))
 

@@ -122,53 +122,6 @@ services:
     networks:
       - elastic
 
-  newflow:
-    image: newflow:${NEWFLOW_VERSION:-1.0.4}
-    container_name: newflow
-    restart: unless-stopped
-    ports:
-      - "${NEWFLOW_PORT:-5677}:5677"
-    environment:
-      # 基础配置
-      - NEWFLOW_PORT=${NEWFLOW_PORT:-5677}
-      - N8N_PORT=${NEWFLOW_PORT:-5677}
-      - NEWFLOW_LISTEN_ADDRESS=${NEWFLOW_LISTEN_ADDRESS:-0.0.0.0}
-      - N8N_LISTEN_ADDRESS=${NEWFLOW_LISTEN_ADDRESS:-0.0.0.0}
-      
-      # 自动初始化
-      - NEWFLOW_AUTO_SETUP_ENABLED=${NEWFLOW_AUTO_SETUP_ENABLED:-false}
-      - NEWFLOW_AUTO_SETUP_EMAIL=${NEWFLOW_AUTO_SETUP_EMAIL:-admin@localhost.com}
-      - NEWFLOW_AUTO_SETUP_PASSWORD=${NEWFLOW_AUTO_SETUP_PASSWORD:-admin123A}
-      - NEWFLOW_PREDEFINED_API_KEY=${NEWFLOW_PREDEFINED_API_KEY}
-      
-      # AI 集成
-      - CUSTOM_AI_BASE_URL=${NEWFLOW_CUSTOM_AI_BASE_URL}
-      - CUSTOM_AI_API_KEY=${NEWFLOW_CUSTOM_AI_API_KEY}
-      - CUSTOM_AI_MODEL=${NEWFLOW_CUSTOM_AI_MODEL}
-      
-      # 高级配置（同时设置 NEWFLOW_ 和 N8N_ 前缀以兼容）
-      - DB_SQLITE_POOL_SIZE=${DB_SQLITE_POOL_SIZE:-5}
-      - NEWFLOW_RUNNERS_ENABLED=${NEWFLOW_RUNNERS_ENABLED:-true}
-      - N8N_RUNNERS_ENABLED=${NEWFLOW_RUNNERS_ENABLED:-true}
-      - NEWFLOW_BLOCK_ENV_ACCESS_IN_NODE=${NEWFLOW_BLOCK_ENV_ACCESS_IN_NODE:-false}
-      - N8N_BLOCK_ENV_ACCESS_IN_NODE=${NEWFLOW_BLOCK_ENV_ACCESS_IN_NODE:-false}
-      - NEWFLOW_GIT_NODE_DISABLE_BARE_REPOS=${NEWFLOW_GIT_NODE_DISABLE_BARE_REPOS:-true}
-      - N8N_GIT_NODE_DISABLE_BARE_REPOS=${NEWFLOW_GIT_NODE_DISABLE_BARE_REPOS:-true}
-      - NEWFLOW_SECURE_COOKIE=${NEWFLOW_SECURE_COOKIE:-false}
-      - N8N_SECURE_COOKIE=${NEWFLOW_SECURE_COOKIE:-false}
-      
-      # 文件权限强制执行
-      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
-      
-      # 版本更新通知（禁用）
-      - NEWFLOW_VERSION_NOTIFICATIONS_ENABLED=false
-    volumes:
-      - ./newflow_data:/home/node/.newflow
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      - elastic
-
   minio:
     image: minio/minio:${MINIO_VERSION:-latest}
     container_name: minio
@@ -190,6 +143,25 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+
+  # Documentation Services
+  newflow_docs:
+    image: newflow-docs:1.0
+    container_name: newflow_docs
+    restart: unless-stopped
+    ports:
+      - "${NEWFLOW_DOCS_PORT:-8001}:8001"
+    networks:
+      - elastic
+
+  newchat_docs:
+    image: newchat-docs:1.0.1
+    container_name: newchat_docs
+    restart: unless-stopped
+    ports:
+      - "${NEWCHAT_DOCS_PORT:-8002}:8002"
+    networks:
+      - elastic
 
 volumes:
   esdata01:

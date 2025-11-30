@@ -10,6 +10,7 @@ export interface CmdbConfig {
   appId: string;
   appSecret: string;
   verifySsl: boolean;
+  caCertPath?: string; // Optional path to custom CA certificate
 }
 
 /**

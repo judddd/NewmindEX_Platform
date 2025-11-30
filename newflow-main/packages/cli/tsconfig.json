@@ -1,0 +1,39 @@
+{
+	"extends": [
+		"@newflow/typescript-config/tsconfig.common.json",
+		"@newflow/typescript-config/tsconfig.backend.json"
+	],
+	"compilerOptions": {
+		"rootDir": ".",
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"baseUrl": "src",
+		"paths": {
+			"@/*": ["./*"],
+			"@test/*": ["../test/shared/*"],
+			"@test-integration/*": ["../test/integration/shared/*"]
+		},
+		"tsBuildInfoFile": "dist/typecheck.tsbuildinfo",
+		// TODO: remove all options below this line
+		"strict": false,
+		"useUnknownInCatchVariables": false
+	},
+	"include": ["src/**/*.ts", "test/**/*.ts", "src/sso.ee/saml/saml-schema-metadata-2.0.xsd"],
+	"references": [
+		{ "path": "../core/tsconfig.build.json" },
+		{ "path": "../nodes-base/tsconfig.build.cjs.json" },
+		{ "path": "../workflow/tsconfig.build.esm.json" },
+		{ "path": "../@newflow/api-types/tsconfig.build.json" },
+		{ "path": "../@newflow/client-oauth2/tsconfig.build.json" },
+		{ "path": "../@newflow/config/tsconfig.build.json" },
+		{ "path": "../@newflow/constants/tsconfig.build.json" },
+		{ "path": "../@newflow/decorators/tsconfig.build.json" },
+		{ "path": "../@newflow/db/tsconfig.build.json" },
+		{ "path": "../@newflow/errors/tsconfig.build.json" },
+		{ "path": "../@newflow/backend-common/tsconfig.build.json" },
+		{ "path": "../@newflow/backend-test-utils/tsconfig.build.json" },
+		{ "path": "../@newflow/di/tsconfig.build.json" },
+		{ "path": "../@newflow/nodes-langchain/tsconfig.build.json" },
+		{ "path": "../@newflow/permissions/tsconfig.build.json" }
+	]
+}

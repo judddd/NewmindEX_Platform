@@ -1,0 +1,3216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewmindEx AI - Management Dashboard</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/favicon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/favicon-512.png">
+    <link rel="apple-touch-icon" href="/static/favicon-192.png">
+    
+    <!-- Meta Tags for PWA -->
+    <meta name="theme-color" content="#0a0e1a">
+    <meta name="description" content="NewmindEx AI - Apple Mac Studio 企业级 AI 一体机智能分析与自动化管理平台">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NewmindEx AI">
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 全局样式 - 超酷暗黑科技风格 */
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #0f1420;
+            --bg-card: #151b2e;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --border-color: #1e293b;
+            --border-glow: rgba(59, 130, 246, 0.3);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --glow-cyan: rgba(6, 182, 212, 0.4);
+            --glow-blue: rgba(59, 130, 246, 0.4);
+        }
+        
+        body {
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 60%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 动态背景效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(59, 130, 246, 0.03) 2px, rgba(59, 130, 246, 0.03) 4px),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6, 182, 212, 0.03) 2px, rgba(6, 182, 212, 0.03) 4px);
+            animation: backgroundScroll 60s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes backgroundScroll {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        /* Intro section responsive grid to keep right column fixed on large screens */
+        @media (min-width: 992px) {
+            .intro-row {
+                display: grid !important;
+                grid-template-columns: 2fr 1fr;
+                column-gap: 1.25rem;
+                align-items: start;
+            }
+            .intro-row > [class*="col-"] {
+                width: auto !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+        }
+        
+        .dashboard-container {
+            background: rgba(21, 27, 46, 0.85);
+            backdrop-filter: blur(30px);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 
+                0 0 0 1px rgba(59, 130, 246, 0.1),
+                0 20px 60px rgba(0, 0, 0, 0.6),
+                0 0 80px rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 50%, var(--accent-purple) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: gradientShift 3s ease infinite;
+            letter-spacing: -1px;
+            text-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+            filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.4));
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        /* 卡片样式 - 超酷玻璃态射效果 */
+        .card {
+            background: linear-gradient(135deg, rgba(21, 27, 46, 0.95) 0%, rgba(15, 20, 32, 0.95) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            color: var(--text-primary);
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .card:hover::before {
+            left: 100%;
+        }
+        
+        .card:hover {
+            border-color: var(--border-glow);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(59, 130, 246, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.12), rgba(6, 182, 212, 0.15));
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 1rem 1.5rem;
+            border-radius: 18px 18px 0 0;
+            position: relative;
+            font-weight: 600;
+        }
+        
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            opacity: 0.5;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+            color: var(--text-primary);
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* 状态卡片 - 超炫发光效果 */
+        .status-card {
+            background: linear-gradient(135deg, rgba(21, 27, 46, 0.95) 0%, rgba(15, 20, 32, 0.95) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--border-glow);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.5),
+                0 0 30px var(--glow-blue),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-card:hover::before {
+            opacity: 1;
+        }
+        
+        .badge-running { 
+            background: linear-gradient(135deg, #10b981, #059669, #047857) !important;
+            box-shadow: 
+                0 4px 12px rgba(16, 185, 129, 0.4),
+                0 0 20px rgba(16, 185, 129, 0.3);
+            animation: pulseGlow 2s ease-in-out infinite;
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        .badge-stopped { 
+            background: linear-gradient(135deg, #ef4444, #dc2626, #b91c1c) !important;
+            box-shadow: 
+                0 4px 12px rgba(239, 68, 68, 0.4),
+                0 0 20px rgba(239, 68, 68, 0.3);
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 
+                    0 4px 12px rgba(16, 185, 129, 0.4),
+                    0 0 20px rgba(16, 185, 129, 0.3);
+            }
+            50% {
+                box-shadow: 
+                    0 4px 16px rgba(16, 185, 129, 0.6),
+                    0 0 30px rgba(16, 185, 129, 0.5);
+            }
+        }
+        
+        /* 表格样式 - 赛博朋克风格 */
+        .table {
+            color: var(--text-primary);
+            background: transparent;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .table thead {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.12), rgba(6, 182, 212, 0.15));
+            position: relative;
+        }
+        
+        .table thead::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-purple), transparent);
+        }
+        
+        .table thead th {
+            color: var(--accent-cyan);
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            position: relative;
+            text-align: left;
+        }
+        
+        .table thead th:first-child {
+            padding-left: 1rem;
+        }
+        
+        .table tbody tr {
+            border-color: var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .table tbody tr::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 0;
+            background: linear-gradient(180deg, var(--accent-cyan), var(--accent-purple));
+            transition: height 0.3s ease;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .table tbody tr:hover {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.05), transparent);
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+        
+        .table tbody tr:hover::before {
+            height: 100%;
+        }
+        
+        .table th, .table td {
+            border-color: rgba(30, 41, 59, 0.5);
+            padding: 1rem;
+            vertical-align: middle;
+            color: var(--text-primary) !important;
+        }
+        
+        /* 表格内容字体增强 */
+        .table tbody td {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        
+        /* 表格内的实例名称 */
+        .table tbody td:first-child {
+            color: var(--text-primary) !important;
+            font-weight: 600;
+            padding-left: 1rem !important;
+        }
+        
+        /* 表格内的端口号 */
+        .table tbody td:nth-child(4) {
+            color: var(--accent-cyan) !important;
+            font-weight: 600;
+        }
+        
+        /* 按钮样式 - 炫酷科技感 */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 50%, var(--accent-purple) 100%);
+            background-size: 200% auto;
+            border: none;
+            box-shadow: 
+                0 4px 12px rgba(59, 130, 246, 0.4),
+                0 0 20px rgba(59, 130, 246, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-weight: 600;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-primary:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-primary:hover {
+            background-position: right center;
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(59, 130, 246, 0.5),
+                0 0 30px rgba(6, 182, 212, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669, #047857);
+            border: none;
+            box-shadow: 
+                0 4px 12px rgba(16, 185, 129, 0.4),
+                0 0 20px rgba(16, 185, 129, 0.2);
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(16, 185, 129, 0.5),
+                0 0 30px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626, #b91c1c);
+            border: none;
+            box-shadow: 
+                0 4px 12px rgba(239, 68, 68, 0.4),
+                0 0 20px rgba(239, 68, 68, 0.2);
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(239, 68, 68, 0.5),
+                0 0 30px rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #d97706, #b45309);
+            border: none;
+            box-shadow: 
+                0 4px 12px rgba(245, 158, 11, 0.4),
+                0 0 20px rgba(245, 158, 11, 0.2);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(245, 158, 11, 0.5),
+                0 0 30px rgba(245, 158, 11, 0.3);
+            color: white;
+        }
+        
+        .btn-outline-primary {
+            border: 2px solid var(--accent-blue);
+            color: var(--accent-cyan);
+            background: transparent;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-outline-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+        
+        .btn-outline-primary:hover::before {
+            left: 0;
+        }
+        
+        .btn-outline-primary:hover {
+            border-color: var(--accent-cyan);
+            color: white;
+            box-shadow: 0 0 20px var(--glow-cyan);
+        }
+        
+        .btn-outline-secondary {
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-cyan);
+            background: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* 模态框样式 - 高级玻璃态射效果 */
+        .modal-content {
+            background: linear-gradient(135deg, rgba(21, 27, 46, 0.98) 0%, rgba(15, 20, 32, 0.98) 100%);
+            border: 1px solid var(--border-glow);
+            color: var(--text-primary);
+            border-radius: 20px;
+            backdrop-filter: blur(30px);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.7),
+                0 0 40px rgba(59, 130, 246, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.08));
+            border-radius: 20px 20px 0 0;
+            position: relative;
+            padding: 1.5rem;
+        }
+        
+        .modal-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            opacity: 0.5;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            background: rgba(10, 14, 26, 0.5);
+            border-radius: 0 0 20px 20px;
+            padding: 1.5rem;
+        }
+        
+        /* 表单样式 - 未来科技感 */
+        .form-control, .form-select {
+            background: rgba(15, 20, 32, 0.6);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: rgba(15, 20, 32, 0.8);
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+            box-shadow: 
+                0 0 0 3px rgba(6, 182, 212, 0.2),
+                0 0 20px rgba(6, 182, 212, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transform: translateY(-1px);
+        }
+        
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+        
+        .form-check-input {
+            background-color: rgba(15, 20, 32, 0.6);
+            border: 1px solid var(--border-color);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--glow-cyan);
+        }
+        
+        .form-check-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 0.25rem rgba(6, 182, 212, 0.25);
+        }
+        
+        /* 文本样式 */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-primary);
+        }
+        
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+        
+        /* 确保卡片subtitle可见 */
+        .card-subtitle {
+            color: var(--accent-cyan) !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+        
+        /* small标签文字 */
+        small {
+            color: var(--text-secondary) !important;
+        }
+        
+        /* 表格内的文字确保可见 */
+        .table-responsive .table td,
+        .table-responsive .table th {
+            color: var(--text-primary) !important;
+        }
+        
+        /* 工作流表格深色样式 */
+        #workflow-status > div,
+        #license-status > div {
+            background: transparent !important;
+        }
+        
+        #workflow-status .table,
+        #license-status .table {
+            background: transparent !important;
+            color: var(--text-primary) !important;
+            margin-bottom: 0;
+        }
+        
+        #workflow-status .table thead,
+        #license-status .table thead {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1)) !important;
+        }
+        
+        #workflow-status .table thead th,
+        #license-status .table thead th {
+            color: var(--accent-cyan) !important;
+            background: transparent !important;
+        }
+        
+        #workflow-status .table tbody tr,
+        #license-status .table tbody tr {
+            background: transparent !important;
+        }
+        
+        #workflow-status .table tbody td,
+        #license-status .table tbody td {
+            background: transparent !important;
+            color: var(--text-primary) !important;
+            font-weight: 500;
+        }
+        
+        /* 工作流名称加粗 */
+        #workflow-status .table tbody td:first-child,
+        #license-status .table tbody td:first-child {
+            font-weight: 600;
+            padding-left: 0.75rem !important;
+            text-align: left !important;
+        }
+        
+        /* 工作流状态文字颜色 */
+        #workflow-status .text-success {
+            color: #10b981 !important;
+            font-weight: 600;
+        }
+        
+        #workflow-status .text-muted {
+            color: #94a3b8 !important;
+            font-weight: 500;
+        }
+        
+        #workflow-status .alert,
+        #license-status .alert {
+            background: rgba(59, 130, 246, 0.1) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        .alert {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        code {
+            background: rgba(15, 20, 32, 0.9) !important;
+            color: #00d9ff !important;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 217, 255, 0.4);
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9em;
+            font-weight: 600;
+            box-shadow: 
+                0 0 15px rgba(0, 217, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        /* 强制覆盖 Bootstrap 表格默认样式 */
+        .table-responsive {
+            background: transparent !important;
+        }
+        
+        .table > :not(caption) > * > * {
+            background-color: transparent !important;
+        }
+        
+        /* 确保所有徽章使用正确的背景色 */
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .badge.bg-info {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4, #8b5cf6) !important;
+            box-shadow: 
+                0 4px 12px rgba(59, 130, 246, 0.4),
+                0 0 20px rgba(6, 182, 212, 0.3);
+            color: #ffffff !important;
+        }
+        
+        .badge.bg-secondary {
+            background: linear-gradient(135deg, #64748b, #475569) !important;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        .badge.bg-success {
+            background: linear-gradient(135deg, var(--success), #059669) !important;
+            box-shadow: 
+                0 4px 12px rgba(16, 185, 129, 0.3),
+                0 0 20px rgba(16, 185, 129, 0.2);
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        .badge.bg-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626) !important;
+            box-shadow: 
+                0 4px 12px rgba(239, 68, 68, 0.3),
+                0 0 20px rgba(239, 68, 68, 0.2);
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        /* 修复可能的白色文本背景 */
+        td, th {
+            background-color: transparent !important;
+        }
+        
+        /* 覆盖 Bootstrap 的所有可能白色样式 */
+        .bg-light {
+            background-color: var(--bg-secondary) !important;
+        }
+        
+        /* 确保所有表格相关元素都是透明或深色背景 */
+        tbody, thead, tfoot, tr, td, th {
+            background-color: transparent !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* 表格行文字可见性增强 */
+        .table tr td {
+            color: var(--text-primary) !important;
+        }
+        
+        /* 表格加载提示 */
+        .table .text-center {
+            color: var(--accent-cyan) !important;
+            font-weight: 600;
+        }
+        
+        /* Spinner 加载动画的颜色 */
+        .spinner-border {
+            color: var(--accent-cyan) !important;
+        }
+        
+        /* 滚动条样式（Webkit浏览器） */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-blue);
+        }
+        
+        /* 修复 alert-success 的背景色 */
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+            border-color: rgba(16, 185, 129, 0.3) !important;
+            color: var(--success) !important;
+        }
+        
+        .alert-info {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+            border-color: rgba(59, 130, 246, 0.3) !important;
+            color: var(--accent-cyan) !important;
+        }
+        
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.15) !important;
+            border-color: rgba(239, 68, 68, 0.3) !important;
+            color: var(--danger) !important;
+        }
+        
+        /* 连接状态徽章动画 */
+        #connection-status {
+            transition: all 0.3s ease;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        
+        #connection-status.bg-success {
+            background: linear-gradient(135deg, var(--success), #059669) !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            animation: pulseSuccess 2s ease-in-out infinite;
+        }
+        
+        #connection-status.bg-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626) !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+        
+        @keyframes pulseSuccess {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
+            }
+        }
+        
+        /* 图标样式增强 */
+        .fa {
+            transition: all 0.3s ease;
+        }
+        
+        .card-header .fa,
+        h5 .fa, h6 .fa {
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px var(--glow-cyan);
+        }
+        
+        /* 小按钮增强 */
+        .btn-sm {
+            border-radius: 8px;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+        }
+        
+        /* 下拉菜单暗色主题 */
+        .dropdown-menu {
+            background: rgba(21, 27, 46, 0.98);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+        
+        .dropdown-item {
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-cyan);
+        }
+        
+        /* 输入组样式 */
+        .input-group-text {
+            background: rgba(15, 20, 32, 0.6);
+            border-color: var(--border-color);
+            color: var(--accent-cyan);
+        }
+        
+        /* 选择框箭头 */
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2306b6d4' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 16px 12px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding-right: 2.5rem;
+        }
+        
+        /* 进度条 */
+        .progress {
+            background: rgba(15, 20, 32, 0.6);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
+            background-size: 200% auto;
+            animation: progressShine 2s linear infinite;
+        }
+        
+        @keyframes progressShine {
+            to {
+                background-position: 200% center;
+            }
+        }
+        
+        /* 文字选中效果 */
+        ::selection {
+            background: rgba(6, 182, 212, 0.3);
+            color: var(--text-primary);
+        }
+        
+        ::-moz-selection {
+            background: rgba(6, 182, 212, 0.3);
+            color: var(--text-primary);
+        }
+        
+        /* 按钮组 */
+        .btn-group .btn {
+            border-color: var(--border-color);
+        }
+        
+        /* 面包屑导航 */
+        .breadcrumb {
+            background: transparent;
+        }
+        
+        .breadcrumb-item + .breadcrumb-item::before {
+            color: var(--text-secondary);
+        }
+        
+        /* 页面加载动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .dashboard-container {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .card {
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+        
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 1.8rem;
+            }
+            
+            .dashboard-container {
+                padding: 20px;
+                border-radius: 16px;
+            }
+            
+            .status-card:hover {
+                transform: translateY(-4px);
+            }
+        }
+        
+        /* ============================================
+           终极字体修复 - 确保所有表格文字可见
+           ============================================ */
+           
+        /* 强制所有表格单元格文字可见 */
+        table td,
+        table th,
+        .table td,
+        .table th,
+        .table tbody td,
+        .table thead th {
+            color: #ffffff !important;
+            opacity: 1 !important;
+        }
+        
+        /* 重置所有表格单元格的对齐和边距 */
+        .table thead th,
+        .table tbody td {
+            vertical-align: middle !important;
+        }
+        
+        /* 确保表格使用固定布局 */
+        #mcp-instances table,
+        #workflow-status table {
+            table-layout: auto !important;
+            width: 100% !important;
+        }
+        
+        /* MCP 实例表格 */
+        #mcp-instances table tbody td {
+            color: #ffffff !important;
+            font-size: 0.95rem !important;
+            font-weight: 500 !important;
+        }
+        
+        /* 实例名称列 - 亮青色高亮 */
+        #mcp-instances table tbody td:nth-child(1) {
+            color: #00d9ff !important;
+            font-weight: 700 !important;
+            text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+            font-size: 1rem !important;
+            padding-left: 1rem !important;
+            text-align: left !important;
+        }
+        
+        /* 类型列 - 徽章保持原样 */
+        #mcp-instances table tbody td:nth-child(2) {
+            color: #ffffff !important;
+        }
+        
+        /* 状态列 - 徽章保持原样 */
+        #mcp-instances table tbody td:nth-child(3) {
+            color: #ffffff !important;
+        }
+        
+        /* 端口列 - 青色高亮 */
+        #mcp-instances table tbody td:nth-child(4) {
+            color: #06b6d4 !important;
+            font-weight: 600 !important;
+        }
+        
+        /* 端点列 - code标签保持原样 */
+        #mcp-instances table tbody td:nth-child(5) {
+            color: #ffffff !important;
+        }
+        
+        /* 操作列 - 按钮保持原样 */
+        #mcp-instances table tbody td:nth-child(6) {
+            color: #ffffff !important;
+        }
+        
+        /* 工作流表格 */
+        #workflow-status table tbody td {
+            color: #ffffff !important;
+            font-weight: 500 !important;
+        }
+        
+        /* 工作流名称列 - 亮青色高亮 */
+        #workflow-status table tbody td:nth-child(1) {
+            color: #00d9ff !important;
+            font-weight: 700 !important;
+            text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+            font-size: 0.95rem !important;
+            padding-left: 0.75rem !important;
+            text-align: left !important;
+        }
+        
+        /* 工作流状态列 */
+        #workflow-status table tbody td:nth-child(2) {
+            color: #ffffff !important;
+        }
+        
+        /* 许可证表格 */
+        #license-status table tbody td {
+            color: #ffffff !important;
+            font-weight: 500 !important;
+        }
+        
+        /* 确保动态生成的内容也应用样式 */
+        [id$="-table-body"] td {
+            color: #ffffff !important;
+        }
+        
+        /* 确保表格头部文字可见 */
+        .table thead th {
+            color: #06b6d4 !important;
+            font-weight: 600 !important;
+        }
+        
+        /* 表格加载/空状态提示 */
+        .table tbody td.text-center {
+            color: #06b6d4 !important;
+            font-weight: 600 !important;
+        }
+        
+        /* 消除“实例名称”列左侧的视觉空栏：移除行左侧装饰条 */
+        .table tbody tr::before {
+            display: none !important;
+            width: 0 !important;
+        }
+        
+        /* === 修复容器偏移问题 === */
+        #mcp-instances {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        #mcp-instances.table-responsive {
+            overflow-x: visible !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        
+        /* 确保MCP卡片内容不偏移 */
+        .card-body #mcp-instances {
+            width: 100% !important;
+        }
+        
+        /* 工作流状态容器也修复 */
+        #workflow-status {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        #workflow-status table {
+            margin: 0 !important;
+            width: 100% !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="dashboard-container">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <h1 class="logo"><img src="/static/logo.png" alt="Logo" style="height: 8.8rem; width: auto; vertical-align: middle; margin-right: 0.5rem;"> NewmindEx AI</h1>
+                    <p class="text-muted">
+                        <i class="fas fa-desktop" style="color: var(--accent-cyan);"></i> Apple Mac Studio 企业级 AI 一体机 · 智能分析与自动化管理平台
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div id="connection-status" class="badge bg-secondary">
+                        <i class="fas fa-circle-notch fa-spin"></i> 连接中...
+                    </div>
+                </div>
+            </div>
+
+            <!-- 产品简介 -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.08) 100%); border: 1px solid rgba(59, 130, 246, 0.2);">
+                        <div class="card-body">
+                            <div class="row intro-row">
+                                <div class="col-lg-8 col-md-12">
+                                    <h5 style="color: var(--accent-cyan); font-weight: 700; margin-bottom: 1rem;">
+                                        <i class="fas fa-info-circle"></i> 关于
+                                    </h5>
+                                    <p style="color: var(--text-primary); line-height: 1.8; margin-bottom: 0.5rem;">
+                                        <strong>企业级 AI 智能分析一体机解决方案</strong>，集成了日志分析、工作流编排、AI 对话等核心能力，为企业提供从数据采集、分析到智能决策的全链路服务。
+                                    </p>
+                                    <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem;">
+                                        <i class="fas fa-microchip" style="color: var(--accent-cyan);"></i> 
+                                        硬件一体机方案 · 开箱即用 · 本地部署 · 数据安全 · 无需云端依赖
+                                    </p>
+                                    <div class="row g-3">
+                                        <div class="col-sm-6">
+                                            <div style="padding: 0.75rem; background: rgba(59, 130, 246, 0.05); border-radius: 8px; border-left: 3px solid var(--accent-blue);">
+                                                <h6 style="color: var(--accent-blue); font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                                    <i class="fas fa-database"></i> 数据层
+                                                </h6>
+                                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">
+                                                    <strong>Elasticsearch</strong> - 分布式搜索引擎，提供海量数据存储与实时检索能力
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div style="padding: 0.75rem; background: rgba(139, 92, 246, 0.05); border-radius: 8px; border-left: 3px solid var(--accent-purple);">
+                                                <h6 style="color: var(--accent-purple); font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                                    <i class="fas fa-chart-line"></i> 可视化层
+                                                </h6>
+                                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">
+                                                    <strong>Kibana</strong> - 数据可视化工具，支持仪表板、图表、ML 功能，直观展示分析结果
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.05); border-radius: 8px; border-left: 3px solid var(--accent-cyan);">
+                                                <h6 style="color: var(--accent-cyan); font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                                    <i class="fas fa-project-diagram"></i> 自动化层
+                                                </h6>
+                                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">
+                                                    <strong>NewFlow</strong> - 工作流引擎，实现数据处理、告警响应、任务编排的全流程自动化
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div style="padding: 0.75rem; background: rgba(236, 72, 153, 0.05); border-radius: 8px; border-left: 3px solid var(--accent-pink);">
+                                                <h6 style="color: var(--accent-pink); font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                                    <i class="fas fa-robot"></i> AI 交互层
+                                                </h6>
+                                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">
+                                                    <strong>NewChat</strong> - AI 对话客户端与本地 LLM，支持自然语言查询与智能分析
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-12 mt-3 mt-lg-0">
+                                    <div style="padding: 1.5rem; background: rgba(59, 130, 246, 0.08); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                                        <h6 style="color: var(--accent-cyan); font-weight: 700; margin-bottom: 0.5rem; text-align: center;">
+                                            <i class="fas fa-server"></i> 一体机核心优势
+                                        </h6>
+                                        <p style="color: var(--text-secondary); font-size: 0.8rem; text-align: center; margin-bottom: 1rem;">
+                                            Apple Mac Studio M系芯片加持
+                                        </p>
+                                        <ul style="color: var(--text-primary); font-size: 0.88rem; line-height: 2; margin: 0; padding-left: 1.2rem;">
+                                            <li><strong>硬件集成</strong> - Mac Studio 高性能一体化设计</li>
+                                            <li><strong>统一管理</strong> - 一站式管理所有服务组件</li>
+                                            <li><strong>本地算力</strong> - M3/M4 Ultra 芯片支持本地 AI 推理</li>
+                                            <li><strong>数据安全</strong> - 企业数据本地存储，不出网</li>
+                                            <li><strong>离线运行</strong> - 无需云端，独立运行</li>
+                                            <li><strong>开箱即用</strong> - 预配置工作流与连接器</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 服务状态总览 -->
+            <div class="row mb-4 g-3">
+                <div class="col-md-6 col-lg-4 col-xl-2">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Elasticsearch</h6>
+                            <h3 class="card-title" id="es-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="elasticsearch-toggle-btn" onclick="toggleDockerService('elasticsearch')" class="btn btn-sm btn-success flex-grow-1">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <a href="http://localhost:9200" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 col-xl-2">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Kibana</h6>
+                            <h3 class="card-title" id="kibana-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="kibana-toggle-btn" onclick="toggleDockerService('kibana')" class="btn btn-sm btn-success flex-grow-1">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <a href="http://localhost:5601" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 col-xl-2">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">LM Studio</h6>
+                            <h3 class="card-title" id="lm-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <small id="lm-models"></small>
+                            <div class="d-flex gap-2 mt-3">
+                                <button onclick="openLMStudio()" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                    <i class="fas fa-external-link-alt"></i> 打开
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 col-xl-2">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">NewChat</h6>
+                            <h3 class="card-title" id="newchat-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <div class="d-flex gap-2 mt-3">
+                                <button onclick="openNewChat()" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                    <i class="fas fa-external-link-alt"></i> 打开
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 col-xl-2">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">NewFlow</h6>
+                            <h3 class="card-title" id="newflow-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="newflow-toggle-btn" onclick="toggleNewFlow()" class="btn btn-sm btn-success flex-grow-1">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <a href="http://localhost:5678" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 col-xl-2">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">MinIO</h6>
+                            <h3 class="card-title" id="minio-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="minio-toggle-btn" onclick="toggleDockerService('minio')" class="btn btn-sm btn-success flex-grow-1">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <a href="http://localhost:9001" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 col-xl-2">
+                    <div class="card status-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">NewRAG</h6>
+                            <h3 class="card-title" id="newrag-status">
+                                <span class="badge badge-stopped">离线</span>
+                            </h3>
+                            <div class="d-flex gap-2 mt-3 flex-wrap">
+                                <button id="newrag-toggle-btn" onclick="toggleNewRAG()" class="btn btn-sm btn-success flex-grow-1">
+                                    <i class="fas fa-play"></i> 启动
+                                </button>
+                                <a href="http://localhost:3000" target="_blank" id="newrag-link" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MCP服务器管理 -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-server"></i> MCP服务器管理</h5>
+                            <button class="btn btn-primary btn-sm" onclick="showCreateModal()">
+                                <i class="fas fa-plus"></i> 创建MCP实例
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="mcp-instances" class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>实例名称</th>
+                                            <th>类型</th>
+                                            <th>状态</th>
+                                            <th>端口</th>
+                                            <th>端点</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mcp-table-body">
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">加载中...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快速操作 -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <!-- NewFlow 工作流卡片已移除 -->
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-key"></i> Elasticsearch</h6>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-warning w-100" onclick="checkLicense()">
+                                <i class="fas fa-certificate"></i> 检查许可证
+                            </button>
+                            <div id="license-status" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-download"></i> NewChat 配置</h6>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-success w-100" onclick="downloadNewChatConfig()">
+                                <i class="fas fa-download"></i> 导出配置
+                            </button>
+                            <small class="text-muted d-block mt-2">导出运行中的MCP配置</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API 文档栏目 -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                        <div class="card-body">
+                            <h5 class="mb-4" style="color: #ffffff !important; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                <i class="fas fa-book"></i> API 文档与教程
+                            </h5>
+                            <div class="row g-3">
+                                <!-- 解决方案 API -->
+                                <div class="col-md-4">
+                                    <div class="card h-100" style="background: rgba(255,255,255,0.95);">
+                                        <div class="card-body">
+                                            <h6 class="card-title" style="color: #1e293b !important; font-weight: 600;">
+                                                <i class="fas fa-puzzle-piece text-primary"></i> 解决方案 API
+                                            </h6>
+                                            <p class="card-text small" style="color: #64748b !important;">
+                                                完整的平台集成API文档，包括认证、工作流、MCP等
+                                            </p>
+                                            <a href="/docs" target="_blank" class="btn btn-sm btn-primary w-100">
+                                                <i class="fas fa-external-link-alt"></i> 查看文档
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- NewFlow API -->
+                                <div class="col-md-4">
+                                    <div class="card h-100" style="background: rgba(255,255,255,0.95);">
+                                        <div class="card-body">
+                                            <h6 class="card-title" style="color: #1e293b !important; font-weight: 600;">
+                                                <i class="fas fa-project-diagram text-success"></i> NewFlow 文档
+                                            </h6>
+                                            <p class="card-text small" style="color: #64748b !important;">
+                                                工作流引擎API参考，支持创建、执行、监控工作流
+                                            </p>
+                                            <a href="http://localhost:8001" target="_blank" class="btn btn-sm btn-success w-100">
+                                                <i class="fas fa-external-link-alt"></i> 打开文档
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- NewChat 文档 -->
+                                <div class="col-md-4">
+                                    <div class="card h-100" style="background: rgba(255,255,255,0.95);">
+                                        <div class="card-body">
+                                            <h6 class="card-title" style="color: #1e293b !important; font-weight: 600;">
+                                                <i class="fas fa-comments text-info"></i> NewChat 文档
+                                            </h6>
+                                            <p class="card-text small" style="color: #64748b !important;">
+                                                AI对话客户端使用文档，配置指南和功能介绍
+                                            </p>
+                                            <a href="http://localhost:8002" target="_blank" class="btn btn-sm btn-info w-100">
+                                                <i class="fas fa-external-link-alt"></i> 打开文档
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 第二行文档卡片 -->
+                            <div class="row mt-3">
+                                <!-- 待补充文档 -->
+                                <div class="col-md-4">
+                                    <div class="card h-100" style="background: rgba(255,255,255,0.95);">
+                                        <div class="card-body">
+                                            <h6 class="card-title" style="color: #1e293b !important; font-weight: 600;">
+                                                <i class="fas fa-cog text-secondary"></i> 更多文档
+                                            </h6>
+                                            <p class="card-text small" style="color: #64748b !important;">
+                                                Kibana、Elasticsearch 等更多组件文档即将推出
+                                            </p>
+                                            <button class="btn btn-sm btn-secondary w-100" disabled>
+                                                <i class="fas fa-clock"></i> 敬请期待
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="row mt-4">
+                <div class="col-12 text-center text-muted">
+                    <p class="mb-0">
+                        <i class="fas fa-heart text-danger"></i> NewmindEx AI v1.0.0
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // WebSocket连接
+        let ws = null;
+        
+        function connectWebSocket() {
+            ws = new WebSocket(`ws://${window.location.host}/ws`);
+            
+            ws.onopen = () => {
+                document.getElementById('connection-status').innerHTML = 
+                    '<i class="fas fa-check-circle"></i> 已连接';
+                document.getElementById('connection-status').className = 'badge bg-success';
+            };
+            
+            ws.onmessage = (event) => {
+                const status = JSON.parse(event.data);
+                updateDashboard(status);
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('connection-status').innerHTML = 
+                    '<i class="fas fa-times-circle"></i> 断开连接';
+                document.getElementById('connection-status').className = 'badge bg-danger';
+                // 5秒后重连
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+        
+        function updateDashboard(status) {
+            // 安全检查：如果status为空或不完整，直接返回
+            if (!status) {
+                console.warn('updateDashboard: status 为空');
+                return;
+            }
+            
+            // 更新ES状态和按钮
+            const esStatus = status.elasticsearch?.status === 'running';
+            const esStatusEl = document.getElementById('es-status');
+            if (esStatusEl) {
+                esStatusEl.innerHTML = `<span class="badge badge-${esStatus ? 'running' : 'stopped'}">${esStatus ? '运行中' : '离线'}</span>`;
+            }
+            const esBtn = document.getElementById('elasticsearch-toggle-btn');
+            if (esBtn) {
+                esBtn.className = esStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
+                esBtn.innerHTML = esStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
+            }
+            
+            // 更新Kibana状态和按钮
+            const kibanaStatus = status.kibana?.status === 'running';
+            const kibanaStatusEl = document.getElementById('kibana-status');
+            if (kibanaStatusEl) {
+                kibanaStatusEl.innerHTML = `<span class="badge badge-${kibanaStatus ? 'running' : 'stopped'}">${kibanaStatus ? '运行中' : '离线'}</span>`;
+            }
+            const kibanaBtn = document.getElementById('kibana-toggle-btn');
+            if (kibanaBtn) {
+                kibanaBtn.className = kibanaStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
+                kibanaBtn.innerHTML = kibanaStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
+            }
+            
+            // 更新LM Studio状态
+            const lmStatus = status.lmstudio?.status === 'running';
+            const lmStatusEl = document.getElementById('lm-status');
+            if (lmStatusEl) {
+                lmStatusEl.innerHTML = `<span class="badge badge-${lmStatus ? 'running' : 'stopped'}">${lmStatus ? '运行中' : '离线'}</span>`;
+            }
+            
+            // 更新NewChat状态
+            const newchatStatus = status.newchat?.status === 'running';
+            const newchatStatusEl = document.getElementById('newchat-status');
+            if (newchatStatusEl) {
+                newchatStatusEl.innerHTML = `<span class="badge badge-${newchatStatus ? 'running' : 'stopped'}">${newchatStatus ? '运行中' : '离线'}</span>`;
+            }
+            
+            // 更新NewFlow状态和按钮
+            const newflowStatus = status.newflow?.status === 'running';
+            const newflowStatusEl = document.getElementById('newflow-status');
+            if (newflowStatusEl) {
+                newflowStatusEl.innerHTML = `<span class="badge badge-${newflowStatus ? 'running' : 'stopped'}">${newflowStatus ? '运行中' : '离线'}</span>`;
+            }
+            const newflowBtn = document.getElementById('newflow-toggle-btn');
+            if (newflowBtn) {
+                newflowBtn.className = newflowStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
+                newflowBtn.innerHTML = newflowStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
+            }
+            
+            // 更新MinIO状态和按钮
+            const minioStatus = status.minio?.status === 'running';
+            const minioStatusEl = document.getElementById('minio-status');
+            if (minioStatusEl) {
+                minioStatusEl.innerHTML = `<span class="badge badge-${minioStatus ? 'running' : 'stopped'}">${minioStatus ? '运行中' : '离线'}</span>`;
+            }
+            const minioBtn = document.getElementById('minio-toggle-btn');
+            if (minioBtn) {
+                minioBtn.className = minioStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
+                minioBtn.innerHTML = minioStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
+            }
+
+            // 更新NewRAG状态和按钮
+            const newragStatus = status.newrag?.status === 'running';
+            const newragStatusEl = document.getElementById('newrag-status');
+            if (newragStatusEl) {
+                newragStatusEl.innerHTML = `<span class="badge badge-${newragStatus ? 'running' : 'stopped'}">${newragStatus ? '运行中' : '离线'}</span>`;
+            }
+            const newragBtn = document.getElementById('newrag-toggle-btn');
+            if (newragBtn) {
+                newragBtn.className = newragStatus ? 'btn btn-sm btn-danger flex-grow-1' : 'btn btn-sm btn-success flex-grow-1';
+                newragBtn.innerHTML = newragStatus ? '<i class="fas fa-stop"></i> 停止' : '<i class="fas fa-play"></i> 启动';
+            }
+            
+            // 更新MCP实例表格
+            if (status.mcp_servers && status.mcp_servers.instances) {
+                updateMCPTable(status.mcp_servers.instances);
+            }
+        }
+        
+        function updateMCPTable(instances) {
+            const tbody = document.getElementById('mcp-table-body');
+            if (instances.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无MCP实例</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = instances.map(inst => `
+                <tr>
+                    <td>${inst.name}</td>
+                    <td><span class="badge bg-info">${inst.type}</span></td>
+                    <td><span class="badge badge-${inst.is_healthy ? 'running' : 'stopped'}">${inst.is_healthy ? '运行中' : '已停止'}</span></td>
+                    <td>${inst.port}</td>
+                    <td><code>${inst.endpoint}</code></td>
+                    <td>
+                        <button class="btn btn-sm btn-${inst.is_healthy ? 'danger' : 'success'}" 
+                                onclick="${inst.is_healthy ? 'stopMCP' : 'startMCP'}('${inst.id}', event)">
+                            <i class="fas fa-${inst.is_healthy ? 'stop' : 'play'}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="editMCP('${inst.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="copyMCPConfig('${inst.id}')" title="复制MCP客户端配置">
+                            <i class="fas fa-code"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteMCP('${inst.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        async function refreshStatusOnce() {
+            try {
+                const res = await fetch('/api/status');
+                const status = await res.json();
+                updateDashboard(status);
+            } catch {}
+        }
+
+        async function startMCP(instanceId, event = null) {
+            let btn = null;
+            let oldHtml = '';
+            
+            if (event) {
+                btn = event.target.closest('button');
+                oldHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
+            
+            try {
+                const response = await fetch(`/api/mcp/instances/${instanceId}/start`, { method: 'POST' });
+                if (response.ok) {
+                    showToast('success', 'MCP实例启动成功', '容器已启动并通过健康检查');
+                    // 服务器会广播，但我们也主动刷新一次，确保立即切换
+                    await refreshStatusOnce();
+                } else {
+                    const error = await response.json().catch(() => ({}));
+                    const errorMsg = error.detail || '启动失败，请检查端口是否被占用或Docker镜像是否存在';
+                    showToast('error', 'MCP实例启动失败', errorMsg);
+                    console.error('启动MCP失败:', error);
+                }
+            } catch (error) {
+                showToast('error', 'MCP实例启动失败', `网络错误: ${error.message}`);
+                console.error('启动MCP异常:', error);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = oldHtml;
+                }
+            }
+        }
+        
+        async function stopMCP(instanceId, event = null) {
+            let btn = null;
+            let oldHtml = '';
+            
+            if (event) {
+                btn = event.target.closest('button');
+                oldHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
+            
+            try {
+                const response = await fetch(`/api/mcp/instances/${instanceId}/stop`, { method: 'POST' });
+                if (response.ok) {
+                    showToast('success', 'MCP实例已停止', '容器已成功停止');
+                    await refreshStatusOnce();
+                } else {
+                    const error = await response.json().catch(() => ({}));
+                    const errorMsg = error.detail || '该实例可能是外部启动的，请在外部系统中手动停止';
+                    showToast('error', 'MCP实例停止失败', errorMsg);
+                    console.error('停止MCP失败:', error);
+                }
+            } catch (error) {
+                showToast('error', 'MCP实例停止失败', `网络错误: ${error.message}`);
+                console.error('停止MCP异常:', error);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = oldHtml;
+                }
+            }
+        }
+        
+        async function editMCP(instanceId) {
+            // 获取实例详情
+            const response = await fetch(`/api/mcp/instances/${instanceId}`);
+            if (!response.ok) {
+                alert('获取实例信息失败');
+                return;
+            }
+            
+            const instance = await response.json();
+            
+            // 移除旧模态框实例
+            const oldModalEl = document.getElementById('createMCPModal');
+            if (oldModalEl) {
+                const oldModalInstance = bootstrap.Modal.getInstance(oldModalEl);
+                if (oldModalInstance) {
+                    oldModalInstance.hide();
+                    oldModalInstance.dispose();
+                }
+                oldModalEl.remove();
+            }
+            
+            // 创建模态框（直接调用但不让它自动显示）
+            showCreateModal();
+            
+            // 等待DOM渲染和表单重置完成
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // 填充表单基本信息
+            const nameInput = document.getElementById('mcpName');
+            const typeSelect = document.getElementById('mcpType');
+            const portInput = document.getElementById('mcpPort');
+            
+            if (nameInput) nameInput.value = instance.name || '';
+            if (typeSelect) typeSelect.value = instance.type || '';
+            if (portInput) portInput.value = instance.port || '';
+            
+            // 更新配置字段（显示对应类型的配置区域）
+            updateConfigFields();
+            
+            // 等待配置区域显示后再填充
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // 填充配置
+            try {
+                if (instance.type === 'elasticsearch') {
+                    // 设置认证方式
+                    const esAuthType = document.getElementById('esAuthType');
+                    if (instance.config.es_api_key) {
+                        if (esAuthType) esAuthType.value = 'apikey';
+                    } else if (instance.config.es_username || instance.config.es_password) {
+                        if (esAuthType) esAuthType.value = 'basic';
+                    } else {
+                        if (esAuthType) esAuthType.value = 'none';
+                    }
+                    if (esAuthType) toggleESAuthFields();
+                    
+                    const esUrl = document.getElementById('esUrl');
+                    if (esUrl) esUrl.value = instance.config.es_url || '';
+                    
+                    const esUsername = document.getElementById('esUsername');
+                    if (esUsername) esUsername.value = instance.config.es_username || '';
+                    
+                    const esPassword = document.getElementById('esPassword');
+                    if (esPassword) esPassword.value = instance.config.es_password || '';
+                    
+                    const esApiKey = document.getElementById('esApiKey');
+                    if (esApiKey) esApiKey.value = instance.config.es_api_key || '';
+                    
+                    const esCACert = document.getElementById('esCACert');
+                    if (esCACert) esCACert.value = instance.config.es_ca_cert || '';
+                    
+                    const esDisableTLS = document.getElementById('esDisableTLS');
+                    if (esDisableTLS) {
+                        esDisableTLS.checked = instance.config.disable_tls || false;
+                        toggleESCACert();
+                    }
+                } else if (instance.type === 'kibana') {
+                    // 设置认证方式
+                    const kibanaAuthType = document.getElementById('kibanaAuthType');
+                    if (instance.config.kibana_cookies) {
+                        if (kibanaAuthType) kibanaAuthType.value = 'cookie';
+                    } else if (instance.config.kibana_username || instance.config.kibana_password) {
+                        if (kibanaAuthType) kibanaAuthType.value = 'basic';
+                    } else {
+                        if (kibanaAuthType) kibanaAuthType.value = 'none';
+                    }
+                    if (kibanaAuthType) toggleKibanaAuthFields();
+                    
+                    const kibanaUrl = document.getElementById('kibanaUrl');
+                    if (kibanaUrl) kibanaUrl.value = instance.config.kibana_url || '';
+                    
+                    const kibanaUsername = document.getElementById('kibanaUsername');
+                    if (kibanaUsername) kibanaUsername.value = instance.config.kibana_username || '';
+                    
+                    const kibanaPassword = document.getElementById('kibanaPassword');
+                    if (kibanaPassword) kibanaPassword.value = instance.config.kibana_password || '';
+                    
+                    const kibanaCookies = document.getElementById('kibanaCookies');
+                    if (kibanaCookies) kibanaCookies.value = instance.config.kibana_cookies || '';
+                    
+                    const kibanaSpace = document.getElementById('kibanaSpace');
+                    if (kibanaSpace) kibanaSpace.value = instance.config.kibana_space || 'default';
+                    
+                    const kibanaCACert = document.getElementById('kibanaCACert');
+                    if (kibanaCACert) kibanaCACert.value = instance.config.kibana_ca_cert || '';
+                    
+                    const kibanaDisableTLS = document.getElementById('kibanaDisableTLS');
+                    if (kibanaDisableTLS) {
+                        kibanaDisableTLS.checked = instance.config.disable_tls || false;
+                        toggleKibanaCACert();
+                    }
+                    
+                    // 高级配置
+                    const kibanaTimeout = document.getElementById('kibanaTimeout');
+                    if (kibanaTimeout && instance.config.kibana_timeout) {
+                        kibanaTimeout.value = instance.config.kibana_timeout;
+                    }
+                    
+                    const kibanaMaxRetries = document.getElementById('kibanaMaxRetries');
+                    if (kibanaMaxRetries && instance.config.kibana_max_retries) {
+                        kibanaMaxRetries.value = instance.config.kibana_max_retries;
+                    }
+                } else if (instance.type === 'newflow') {
+                    const newflowUrl = document.getElementById('newflowUrl');
+                    if (newflowUrl) newflowUrl.value = instance.config.newflow_url || '';
+                    
+                    const newflowApiKey = document.getElementById('newflowApiKey');
+                    if (newflowApiKey) newflowApiKey.value = instance.config.newflow_api_key || '';
+                }
+            } catch (error) {
+                console.error('填充配置时出错:', error);
+            }
+            
+            // 修改模态框标题和按钮，明确显示是"编辑"模式
+            const modalTitle = document.querySelector('#createMCPModal .modal-title');
+            if (modalTitle) {
+                modalTitle.innerHTML = '<i class="fas fa-edit"></i> 更新MCP服务实例';
+            }
+            
+            // 修改提交按钮文字和事件（使用延迟确保DOM已更新）
+            setTimeout(() => {
+                const submitBtn = document.getElementById('mcpSubmitBtn');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> 更新配置';
+                    // 清除所有旧事件并设置新事件
+                    submitBtn.onclick = null;
+                    const newBtn = submitBtn.cloneNode(true);
+                    submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+                    
+                    // 绑定新事件
+                    newBtn.onclick = async () => {
+                        console.log('更新按钮被点击，实例ID:', instanceId);
+                        await updateMCPInstance(instanceId);
+                    };
+                }
+            }, 150);
+
+            
+            // 添加一个提示信息
+            const modalBody = document.querySelector('#createMCPModal .modal-body');
+            if (modalBody && !document.getElementById('edit-mode-notice')) {
+                const notice = document.createElement('div');
+                notice.id = 'edit-mode-notice';
+                notice.className = 'alert alert-info mb-3';
+                notice.innerHTML = '<i class="fas fa-info-circle"></i> 正在编辑实例：<strong>' + instance.name + '</strong>。修改配置后将重启容器以应用新配置。';
+                modalBody.insertBefore(notice, modalBody.firstChild);
+            }
+            
+            // 移除表单原有的onsubmit（使用按钮onclick代替）
+            const form = document.getElementById('createMCPForm');
+            if (form) {
+                form.onsubmit = (e) => e.preventDefault();
+            }
+            
+            // 注意：showCreateModal() 已经自动显示了模态框，这里不需要再次显示
+        }
+        
+        async function updateMCPInstance(instanceId) {
+            console.log('updateMCPInstance 被调用，实例ID:', instanceId);
+            
+            // 获取提交按钮并设置加载状态
+            const submitBtn = document.getElementById('mcpSubmitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>更新中...';
+            }
+            
+            try {
+                const formData = {
+                    name: document.getElementById('mcpName').value,
+                    type: document.getElementById('mcpType').value,
+                    port: parseInt(document.getElementById('mcpPort').value),
+                    config: {}
+                };
+                
+                console.log('表单数据:', formData);
+            
+            // 收集配置（根据认证类型决定包含哪些字段）
+            if (formData.type === 'elasticsearch') {
+                const authType = document.getElementById('esAuthType').value;
+                formData.config.es_url = document.getElementById('esUrl').value;
+                
+                // 根据认证类型添加相应字段
+                if (authType === 'basic') {
+                    formData.config.es_username = document.getElementById('esUsername').value || '';
+                    formData.config.es_password = document.getElementById('esPassword').value || '';
+                } else if (authType === 'apikey') {
+                    formData.config.es_api_key = document.getElementById('esApiKey').value || '';
+                }
+                // authType === 'none' 时不添加任何认证字段
+                
+                // TLS配置
+                const esDisableTLS = document.getElementById('esDisableTLS');
+                if (esDisableTLS && esDisableTLS.checked) {
+                    formData.config.disable_tls = true;
+                } else {
+                    const caCert = document.getElementById('esCACert').value;
+                    if (caCert) {
+                        formData.config.es_ca_cert = caCert;
+                    }
+                }
+                
+            } else if (formData.type === 'kibana') {
+                const authType = document.getElementById('kibanaAuthType').value;
+                formData.config.kibana_url = document.getElementById('kibanaUrl').value;
+                formData.config.kibana_space = document.getElementById('kibanaSpace').value || 'default';
+                
+                // 根据认证类型添加相应字段
+                if (authType === 'basic') {
+                    formData.config.kibana_username = document.getElementById('kibanaUsername').value || '';
+                    formData.config.kibana_password = document.getElementById('kibanaPassword').value || '';
+                } else if (authType === 'cookie') {
+                    formData.config.kibana_cookies = document.getElementById('kibanaCookies').value || '';
+                }
+                // authType === 'none' 时不添加任何认证字段
+                
+                // TLS配置
+                const kibanaDisableTLS = document.getElementById('kibanaDisableTLS');
+                if (kibanaDisableTLS && kibanaDisableTLS.checked) {
+                    formData.config.disable_tls = true;
+                } else {
+                    const caCert = document.getElementById('kibanaCACert').value;
+                    if (caCert) {
+                        formData.config.kibana_ca_cert = caCert;
+                    }
+                }
+                
+            } else if (formData.type === 'newflow') {
+                formData.config.newflow_url = document.getElementById('newflowUrl').value;
+                const apiKey = document.getElementById('newflowApiKey').value;
+                if (apiKey) {
+                    formData.config.newflow_api_key = apiKey;
+                }
+            }
+            
+            console.log('准备发送PUT请求到:', `/api/mcp/instances/${instanceId}`);
+            
+            const response = await fetch(`/api/mcp/instances/${instanceId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+                console.log('收到响应:', response.status);
+                
+                if (response.ok) {
+                    console.log('更新成功');
+                    // 显示成功提示
+                    showToast('success', 'MCP实例更新成功！', '配置已更新并重新启动容器');
+                    
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('createMCPModal'));
+                    if (modal) modal.hide();
+                    
+                    // 清理编辑模式标记
+                    const editNotice = document.getElementById('edit-mode-notice');
+                    if (editNotice) editNotice.remove();
+                    
+                    document.getElementById('createMCPForm').reset();
+                    
+                    // 刷新整个 Dashboard 状态
+                    await refreshStatusOnce();
+                } else {
+                    const error = await response.json();
+                    showToast('error', '更新失败', error.detail || '未知错误');
+                }
+            } catch (error) {
+                console.error('更新MCP实例时出错:', error);
+                showToast('error', '更新失败', error.message || '网络错误');
+            } finally {
+                // 恢复按钮状态
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> 更新配置';
+                }
+            }
+        }
+        
+        async function copyMCPConfig(instanceId) {
+            // 获取实例详情
+            const response = await fetch(`/api/mcp/instances/${instanceId}`);
+            if (!response.ok) {
+                alert('获取实例信息失败');
+                return;
+            }
+            
+            const instance = await response.json();
+            
+            // 生成 MCP 客户端配置（适用于 Cursor、NewChat 等）
+            const mcpConfig = {
+                mcpServers: {}
+            };
+            
+            // 使用实例名称作为配置key（去除特殊字符）
+            const configKey = instance.name.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase();
+            
+            mcpConfig.mcpServers[configKey] = {
+                initialTimeout: 10,
+                transport: "streamable",
+                url: instance.endpoint || `http://localhost:${instance.port}`
+            };
+            
+            // 格式化为 JSON 字符串
+            const configJson = JSON.stringify(mcpConfig, null, 2);
+            
+            // 复制到剪贴板
+            try {
+                await navigator.clipboard.writeText(configJson);
+            } catch (error) {
+                // 如果剪贴板API失败，使用备用方案
+                const textarea = document.createElement('textarea');
+                textarea.value = configJson;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+            
+            // 显示配置预览模态框
+            showConfigModal(instance.name, instance.endpoint, configJson);
+        }
+        
+        function showConfigModal(instanceName, endpoint, configJson) {
+            const modalHTML = `
+                <div class="modal fade" id="configModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-check-circle text-success"></i> MCP 客户端配置已复制
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <p class="mb-2" style="color: var(--text-primary);"><strong>实例名称：</strong> ${instanceName}</p>
+                                    <p class="mb-2" style="color: var(--text-primary);"><strong>服务端点：</strong> <code style="color: var(--accent-cyan); background: rgba(15, 20, 32, 0.6); padding: 0.2rem 0.4rem; border-radius: 4px;">${endpoint}</code></p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>配置内容（已复制到剪贴板）：</strong></label>
+                                    <textarea id="configJsonTextarea" class="form-control" rows="10" readonly style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace; font-size: 0.9rem;"></textarea>
+                                </div>
+                                <div class="alert" style="background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 10px; color: var(--text-primary);">
+                                    <i class="fas fa-info-circle" style="color: var(--accent-cyan);"></i> <strong>使用说明：</strong><br>
+                                    将以上配置粘贴到 <strong>Cursor</strong>、<strong>NewChat</strong> 或其他 MCP 客户端的配置文件中。
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times"></i> 关闭
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除旧模态框
+            const oldModal = document.getElementById('configModal');
+            if (oldModal) oldModal.remove();
+            
+            // 添加新模态框
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // 安全地设置textarea内容
+            const textarea = document.getElementById('configJsonTextarea');
+            if (textarea) {
+                textarea.value = configJson;
+            }
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('configModal'));
+            modal.show();
+        }
+        
+        async function deleteMCP(instanceId) {
+            try {
+                // 获取实例名称
+                const instance = await fetch(`/api/mcp/instances/${instanceId}`).then(r => r.json()).catch(() => null);
+                const instanceName = instance ? instance.name : '此实例';
+                
+                if (!confirm(`确定要删除MCP实例 "${instanceName}" 吗？\n\n删除后无法恢复。`)) return;
+                
+                const response = await fetch(`/api/mcp/instances/${instanceId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    showToast('success', '删除成功', `MCP实例 "${instanceName}" 已删除`);
+                    await refreshStatusOnce();
+                } else {
+                    const error = await response.json().catch(() => ({}));
+                    const errorMsg = error.detail || '删除失败，请稍后重试';
+                    showToast('error', '删除失败', errorMsg);
+                    console.error('删除MCP失败:', error);
+                }
+            } catch (error) {
+                showToast('error', '删除失败', `网络错误: ${error.message}`);
+                console.error('删除MCP异常:', error);
+            }
+        }
+        
+        async function importWorkflows() {
+            const statusDiv = document.getElementById('workflow-status');
+            statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm"></div> 导入中...';
+            
+            try {
+                const response = await fetch('/api/newflow/import', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.total === 0) {
+                    statusDiv.innerHTML = '<div class="alert alert-info mt-2">未找到需要导入的工作流文件</div>';
+                } else {
+                    // 构建状态消息
+                    let alertClass = 'alert-success';
+                    let icon = '✅';
+                    let message = '';
+                    
+                    if (result.success > 0 && result.failed === 0) {
+                        message = `全部处理成功！`;
+                    } else if (result.success === 0 && result.failed > 0) {
+                        alertClass = 'alert-danger';
+                        icon = '❌';
+                        message = `导入失败！`;
+                    } else if (result.success > 0 && result.failed > 0) {
+                        alertClass = 'alert-warning';
+                        icon = '⚠️';
+                        message = `部分导入成功`;
+                    } else if (result.success === 0 && result.failed === 0 && result.skipped > 0) {
+                        alertClass = 'alert-info';
+                        icon = 'ℹ️';
+                        message = `所有工作流均已存在`;
+                    }
+                    
+                    // 构建详细信息
+                    let details = `<strong>${icon} ${message}</strong><br>`;
+                    if (result.success > 0) {
+                        details += `✅ 新导入: ${result.success} 个<br>`;
+                    }
+                    if (result.skipped > 0) {
+                        details += `⏭️ 已跳过: ${result.skipped} 个（已存在）<br>`;
+                    }
+                    if (result.failed > 0) {
+                        details += `❌ 失败: ${result.failed} 个<br>`;
+                    }
+                    details += `📊 总计: ${result.total} 个文件`;
+                    
+                    statusDiv.innerHTML = `<div class="alert ${alertClass} mt-2">${details}</div>`;
+                }
+            } catch (error) {
+                console.error('导入工作流失败:', error);
+                statusDiv.innerHTML = `<div class="alert alert-danger mt-2">导入失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 工作流显示状态
+        let workflowsVisible = false;
+        
+        async function toggleWorkflows() {
+            const statusDiv = document.getElementById('workflow-status');
+            const toggleBtn = document.getElementById('workflow-toggle-btn');
+            
+            if (workflowsVisible) {
+                // 隐藏工作流
+                statusDiv.innerHTML = '';
+                toggleBtn.innerHTML = '<i class="fas fa-eye"></i> 查看工作流';
+                workflowsVisible = false;
+            } else {
+                // 显示工作流
+                statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm"></div> 加载中...';
+                toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i> 隐藏工作流';
+                
+                try {
+                    const response = await fetch('/api/newflow/workflows');
+                    if (!response.ok) {
+                        statusDiv.innerHTML = '<div class="alert alert-danger mt-2">加载失败：NewFlow服务未运行</div>';
+                        toggleBtn.innerHTML = '<i class="fas fa-eye"></i> 查看工作流';
+                        workflowsVisible = false;
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    const workflows = data.workflows || [];
+                    
+                    if (workflows.length === 0) {
+                        statusDiv.innerHTML = '<div class="alert alert-info mt-2">暂无工作流</div>';
+                        toggleBtn.innerHTML = '<i class="fas fa-eye"></i> 查看工作流';
+                        workflowsVisible = false;
+                        return;
+                    }
+                    
+                    // 显示工作流列表
+                    let html = '<div class="mt-2" style="max-height: 300px; overflow-y: auto;">';
+                    html += '<table class="table table-sm table-hover">';
+                    html += '<thead><tr><th>工作流名称</th><th>状态</th></tr></thead><tbody>';
+                    
+                    workflows.forEach(wf => {
+                        const activeClass = wf.active ? 'text-success' : 'text-muted';
+                        const activeIcon = wf.active ? 'fa-check-circle' : 'fa-circle';
+                        html += `<tr>
+                            <td>${wf.name}</td>
+                            <td class="${activeClass}"><i class="fas ${activeIcon}"></i> ${wf.active ? '已激活' : '未激活'}</td>
+                        </tr>`;
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    statusDiv.innerHTML = html;
+                    workflowsVisible = true;
+                    
+                } catch (error) {
+                    console.error('查看工作流失败:', error);
+                    statusDiv.innerHTML = `<div class="alert alert-danger mt-2">加载失败: ${error.message}</div>`;
+                    toggleBtn.innerHTML = '<i class="fas fa-eye"></i> 查看工作流';
+                    workflowsVisible = false;
+                }
+            }
+        }
+        
+        async function openLMStudio() {
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 启动中...';
+                
+                const response = await fetch('/api/open-lmstudio', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    button.innerHTML = '<i class="fas fa-check"></i> 已启动';
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }, 2000);
+                } else {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    alert('启动失败: ' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                alert('启动失败: ' + error.message);
+            }
+        }
+        
+        async function openNewChat() {
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 启动中...';
+                
+                const response = await fetch('/api/open-newchat', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    button.innerHTML = '<i class="fas fa-check"></i> 已启动';
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }, 2000);
+                } else {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    alert('启动失败: ' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                alert('启动失败: ' + error.message);
+            }
+        }
+        
+        async function toggleNewRAG() {
+            const button = document.getElementById('newrag-toggle-btn');
+            if (!button) return;
+            
+            const originalText = button.innerHTML;
+            const originalClass = button.className;
+            
+            try {
+                // 检查当前状态
+                const statusResponse = await fetch('/api/newrag/status');
+                const statusData = await statusResponse.json();
+                
+                if (statusData.status === 'running') {
+                    if (!confirm('确定要停止 NewRAG 服务吗？')) return;
+                }
+                
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+                
+                const response = await fetch('/api/newrag/toggle', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('success', data.action === 'started' ? 'NewRAG 启动成功' : 'NewRAG 已停止', data.message);
+                    // 自动刷新会在 updateDashboard 中处理
+                    setTimeout(refreshStatusOnce, 1000);
+                } else {
+                    alert('操作失败: ' + (data.detail || data.message));
+                    button.innerHTML = originalText;
+                    button.className = originalClass;
+                }
+            } catch (error) {
+                console.error('NewRAG操作失败:', error);
+                alert('操作失败: ' + error.message);
+                button.innerHTML = originalText;
+                button.className = originalClass;
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function toggleNewFlow() {
+            const button = document.getElementById('newflow-toggle-btn');
+            if (!button) return;
+            
+            const originalText = button.innerHTML;
+            const originalClass = button.className;
+            
+            try {
+                // 检查当前状态
+                const statusResponse = await fetch('/api/newflow/status');
+                const statusData = await statusResponse.json();
+                
+                if (statusData.status === 'running') {
+                    if (!confirm('确定要停止 NewFlow 服务吗？')) return;
+                }
+                
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+                
+                const response = await fetch('/api/newflow/toggle', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('success', data.action === 'started' ? 'NewFlow 启动成功' : 'NewFlow 已停止', data.message);
+                    // 立即请求状态更新
+                    fetchStatus();
+                } else {
+                    showToast('error', '操作失败', data.detail || data.message || data.error);
+                    button.innerHTML = originalText;
+                    button.className = originalClass;
+                }
+            } catch (error) {
+                console.error('NewFlow操作失败:', error);
+                showToast('error', '操作可能已执行但通讯中断', error.message);
+                // 即使报错，也尝试刷新状态，因为可能后端已经执行成功了
+                setTimeout(fetchStatus, 1000);
+                button.innerHTML = originalText;
+                button.className = originalClass;
+            } finally {
+                button.disabled = false;
+            }
+        }
+        
+        async function toggleDockerService(service) {
+            console.log('🔧 toggleDockerService 被调用，服务:', service);
+            const button = document.getElementById(`${service}-toggle-btn`);
+            if (!button) {
+                console.error('❌ 找不到按钮:', `${service}-toggle-btn`);
+                return;
+            }
+            console.log('✅ 找到按钮:', button);
+            
+            const originalText = button.innerHTML;
+            const originalClass = button.className;
+            
+            try {
+                console.log('📡 获取服务状态...');
+                // 先获取当前状态
+                const statusResponse = await fetch(`/api/docker/${service}/status`);
+                const statusData = await statusResponse.json();
+                const currentStatus = statusData.status || 'stopped';
+                console.log('📊 当前状态:', currentStatus);
+                
+                // 如果正在运行，需要确认停止
+                if (currentStatus === 'running' || currentStatus === 'partial') {
+                    if (!confirm(`确定要停止 ${service} 服务吗？`)) {
+                        return;
+                    }
+                }
+                
+                console.log('🔄 更新按钮状态...');
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+                
+                console.log('📡 发送toggle请求...');
+                const response = await fetch(`/api/docker/${service}/toggle`, { method: 'POST' });
+                const data = await response.json();
+                console.log('📊 API响应:', data);
+                
+                if (data.success) {
+                    const action = data.action === 'started' ? '启动' : '停止';
+                    button.innerHTML = `<i class="fas fa-check"></i> ${action}成功`;
+                    
+                    setTimeout(() => {
+                        button.disabled = false;
+                        // 更新按钮文本和样式
+                        if (data.new_status === 'running') {
+                            button.className = 'btn btn-sm btn-danger flex-grow-1';
+                            button.innerHTML = '<i class="fas fa-stop"></i> 停止';
+                        } else {
+                            button.className = 'btn btn-sm btn-success flex-grow-1';
+                            button.innerHTML = '<i class="fas fa-play"></i> 启动';
+                        }
+                        
+                        // 同时更新徽章状态
+                        const statusElement = document.getElementById(`${service}-status`);
+                        if (statusElement) {
+                            if (data.new_status === 'running') {
+                                statusElement.innerHTML = '<span class="badge badge-running">运行中</span>';
+                            } else {
+                                statusElement.innerHTML = '<span class="badge badge-stopped">离线</span>';
+                            }
+                        }
+                    }, 1500);
+                } else {
+                    alert(`${service} 操作失败: ${data.error || data.message}`);
+                    button.innerHTML = originalText;
+                    button.className = originalClass;
+                    button.disabled = false;
+                }
+            } catch (error) {
+                console.error(`操作${service}失败:`, error);
+                alert(`操作 ${service} 失败：${error.message}`);
+                button.innerHTML = originalText;
+                button.className = originalClass;
+                button.disabled = false;
+            }
+        }
+        
+        async function checkLicense() {
+            const response = await fetch('/api/es/license');
+            const license = await response.json();
+            document.getElementById('license-status').innerHTML = 
+                `<div class="alert alert-info mt-2">类型: ${license.license?.type || 'unknown'}</div>`;
+        }
+        
+        async function downloadNewChatConfig() {
+            const response = await fetch('/api/mcp/newchat-config');
+            const config = await response.json();
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'newchat-config.json';
+            a.click();
+        }
+        
+        function showNetworkHelp() {
+            const helpHTML = `
+                <div class="modal fade" id="networkHelpModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info text-white">
+                                <h5 class="modal-title"><i class="fas fa-network-wired"></i> Docker网络配置说明</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <h6><i class="fas fa-check-circle text-success"></i> 推荐方式：使用localhost（端口映射）</h6>
+                                <p>Docker已将容器端口映射到主机，MCP服务器可直接通过localhost访问：</p>
+                                <ul>
+                                    <li><code>http://localhost:9200</code> → Elasticsearch</li>
+                                    <li><code>http://localhost:5601</code> → Kibana</li>
+                                </ul>
+                                <p class="text-success"><strong>优点：</strong>简单稳定，容器重启后无需更改配置</p>
+                                
+                                <hr>
+                                
+                                <h6><i class="fas fa-info-circle text-warning"></i> 备用方式：使用Docker IP</h6>
+                                <p>如果localhost访问失败，可使用容器的内部IP地址：</p>
+                                <div class="alert alert-warning">
+                                    <strong>⚠️ 注意：</strong>容器重启后IP可能变化，需重新配置
+                                </div>
+                                <p>获取当前Docker IP：</p>
+                                <pre class="bg-light p-2"><code>bash scripts/get_docker_ips.sh</code></pre>
+                                
+                                <hr>
+                                
+                                <h6><i class="fas fa-book"></i> 详细文档</h6>
+                                <p>完整的网络架构和故障排查指南，请查看：<code>NETWORK_GUIDE.md</code></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除旧模态框
+            const oldModal = document.getElementById('networkHelpModal');
+            if (oldModal) oldModal.remove();
+            
+            // 添加新模态框
+            document.body.insertAdjacentHTML('beforeend', helpHTML);
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('networkHelpModal'));
+            modal.show();
+        }
+        
+        function showCreateModal() {
+            // 创建模态框HTML
+            const modalHTML = `
+                <div class="modal fade" id="createMCPModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> 创建MCP服务实例</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="createMCPForm">
+                                    <!-- 基本信息 -->
+                                    <div class="mb-3">
+                                        <label class="form-label">实例名称 *</label>
+                                        <input type="text" class="form-control" id="mcpName" required 
+                                               placeholder="例如: 生产环境ES">
+                                    </div>
+                                    
+                                    <!-- 类型选择 -->
+                                    <div class="mb-3">
+                                        <label class="form-label">服务类型 *</label>
+                                        <select class="form-select" id="mcpType" required onchange="updateConfigFields()">
+                                            <option value="">请选择...</option>
+                                            <option value="elasticsearch">Elasticsearch</option>
+                                            <option value="kibana">Kibana</option>
+                                            <option value="newflow">NewFlow</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- 模板选择 -->
+                                    <div class="mb-3">
+                                        <label class="form-label">使用模板（可选）</label>
+                                        <select class="form-select" id="mcpTemplate" onchange="applyTemplate()">
+                                            <option value="">自定义配置</option>
+                                            <optgroup label="本地Docker服务（推荐）">
+                                                <option value="local_es_cluster">本地ES集群（localhost）</option>
+                                                <option value="local_kibana">本地Kibana（localhost）</option>
+                                                <option value="local_newflow">本地NewFlow（localhost）</option>
+                                            </optgroup>
+                                            <optgroup label="Docker IP直接访问（备用）">
+                                                <option value="local_es_docker_ip">本地ES集群（Docker IP）</option>
+                                                <option value="local_kibana_docker_ip">本地Kibana（Docker IP）</option>
+                                            </optgroup>
+                                            <optgroup label="远程服务">
+                                                <option value="remote_es">远程ES集群</option>
+                                                <option value="production_kibana">生产环境Kibana</option>
+                                            </optgroup>
+                                        </select>
+                                        <small class="text-muted">
+                                            💡 推荐使用localhost模板。如遇连接问题，可尝试Docker IP模板。
+                                            <a href="#" onclick="showNetworkHelp(); return false;">查看网络配置说明</a>
+                                        </small>
+                                    </div>
+                                    
+                                    <!-- Elasticsearch配置 -->
+                                    <div id="esConfig" style="display:none;">
+                                        <h6 class="border-bottom pb-2 mb-3">Elasticsearch 配置</h6>
+                                        
+                                        <!-- ES URL -->
+                                        <div class="mb-3">
+                                            <label class="form-label">ES URL * <i class="fas fa-info-circle text-muted" title="Elasticsearch服务器地址"></i></label>
+                                            <input type="text" class="form-control" id="esUrl" 
+                                                   placeholder="http://localhost:9200 或 https://es.example.com:9200">
+                                            <small class="text-muted">支持HTTP和HTTPS协议</small>
+                                        </div>
+                                        
+                                        <!-- 认证方式选择 -->
+                                        <div class="mb-3">
+                                            <label class="form-label">认证方式</label>
+                                            <select class="form-select" id="esAuthType" onchange="toggleESAuthFields()">
+                                                <option value="basic">用户名/密码（Basic Auth）</option>
+                                                <option value="apikey">API Key</option>
+                                                <option value="none">无认证</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- Basic Auth -->
+                                        <div id="esBasicAuth">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">用户名</label>
+                                                    <input type="text" class="form-control" id="esUsername" 
+                                                           placeholder="elastic">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">密码</label>
+                                                    <input type="password" class="form-control" id="esPassword" 
+                                                           placeholder="输入密码">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- API Key Auth -->
+                                        <div id="esApiKeyAuth" style="display:none;">
+                                            <div class="mb-3">
+                                                <label class="form-label">API Key</label>
+                                                <input type="text" class="form-control" id="esApiKey" 
+                                                       placeholder="your-api-key-here">
+                                                <small class="text-muted">从ES创建的API Key</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- TLS/SSL配置 -->
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="esDisableTLS" onchange="toggleESCACert()">
+                                                <label class="form-check-label" for="esDisableTLS">
+                                                    禁用SSL证书验证 <span class="badge bg-warning">仅开发环境</span>
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">等同于设置 NODE_TLS_REJECT_UNAUTHORIZED=0</small>
+                                        </div>
+                                        
+                                        <!-- CA证书 -->
+                                        <div id="esCACertField" style="display:none;">
+                                            <div class="mb-3">
+                                                <label class="form-label">CA证书路径 <i class="fas fa-info-circle text-muted" title="自定义CA证书文件路径"></i></label>
+                                                <input type="text" class="form-control" id="esCACert" 
+                                                       placeholder="/path/to/ca-cert.pem">
+                                                <small class="text-muted">用于生产环境的自签名证书验证</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Kibana配置 -->
+                                    <div id="kibanaConfig" style="display:none;">
+                                        <h6 class="border-bottom pb-2 mb-3">Kibana 配置</h6>
+                                        
+                                        <!-- Kibana URL -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Kibana URL * <i class="fas fa-info-circle text-muted" title="Kibana服务器地址"></i></label>
+                                            <input type="text" class="form-control" id="kibanaUrl" 
+                                                   placeholder="http://localhost:5601 或 https://kibana.example.com:5601">
+                                            <small class="text-muted">支持HTTP和HTTPS协议</small>
+                                        </div>
+                                        
+                                        <!-- 认证方式选择 -->
+                                        <div class="mb-3">
+                                            <label class="form-label">认证方式</label>
+                                            <select class="form-select" id="kibanaAuthType" onchange="toggleKibanaAuthFields()">
+                                                <option value="basic">用户名/密码（Basic Auth）</option>
+                                                <option value="cookie">Cookie认证</option>
+                                                <option value="none">无认证</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- Basic Auth -->
+                                        <div id="kibanaBasicAuth">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">用户名</label>
+                                                    <input type="text" class="form-control" id="kibanaUsername" 
+                                                           placeholder="elastic">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">密码</label>
+                                                    <input type="password" class="form-control" id="kibanaPassword" 
+                                                           placeholder="输入密码">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Cookie Auth -->
+                                        <div id="kibanaCookieAuth" style="display:none;">
+                                            <div class="mb-3">
+                                                <label class="form-label">Session Cookies</label>
+                                                <input type="text" class="form-control" id="kibanaCookies" 
+                                                       placeholder="sid=xxx; security-session=yyy">
+                                                <small class="text-muted">从浏览器复制完整的Cookie字符串</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Space配置 -->
+                                        <div class="mb-3">
+                                            <label class="form-label">默认Space <i class="fas fa-info-circle text-muted" title="Kibana工作空间"></i></label>
+                                            <input type="text" class="form-control" id="kibanaSpace" 
+                                                   value="default" placeholder="default">
+                                            <small class="text-muted">多租户环境下的工作空间名称</small>
+                                        </div>
+                                        
+                                        <!-- TLS/SSL配置 -->
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="kibanaDisableTLS" onchange="toggleKibanaCACert()">
+                                                <label class="form-check-label" for="kibanaDisableTLS">
+                                                    禁用SSL证书验证 <span class="badge bg-warning">仅开发环境</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- CA证书 -->
+                                        <div id="kibanaCACertField" style="display:none;">
+                                            <div class="mb-3">
+                                                <label class="form-label">CA证书路径</label>
+                                                <input type="text" class="form-control" id="kibanaCACert" 
+                                                       placeholder="/path/to/ca-cert.pem">
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 高级设置 -->
+                                        <div class="mb-3">
+                                            <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                                    onclick="toggleKibanaAdvanced()">
+                                                <i class="fas fa-cog"></i> 高级设置
+                                            </button>
+                                        </div>
+                                        <div id="kibanaAdvanced" style="display:none;">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">请求超时（毫秒）</label>
+                                                    <input type="number" class="form-control" id="kibanaTimeout" 
+                                                           value="30000" placeholder="30000">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">最大重试次数</label>
+                                                    <input type="number" class="form-control" id="kibanaMaxRetries" 
+                                                           value="3" placeholder="3">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- NewFlow配置 -->
+                                    <div id="newflowConfig" style="display:none;">
+                                        <h6 class="border-bottom pb-2 mb-3">NewFlow 配置</h6>
+                                        
+                                        <!-- NewFlow URL -->
+                                        <div class="mb-3">
+                                            <label class="form-label">NewFlow URL * <i class="fas fa-info-circle text-muted" title="NewFlow 服务器地址"></i></label>
+                                            <input type="text" class="form-control" id="newflowUrl" 
+                                                   placeholder="http://localhost:5678">
+                                            <small class="text-muted">NewFlow 工作流服务地址，通常是 http://localhost:5678</small>
+                                        </div>
+                                        
+                                        <!-- NewFlow API Key -->
+                                        <div class="mb-3">
+                                            <label class="form-label">API Key <i class="fas fa-info-circle text-muted" title="NewFlow API密钥"></i></label>
+                                            <input type="text" class="form-control" id="newflowApiKey" 
+                                                   placeholder="输入 NewFlow API Key（可选）">
+                                            <small class="text-muted">如果 NewFlow 启用了 API 认证，需要填写 API Key</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 端口配置 -->
+                                    <div class="mb-3">
+                                        <label class="form-label">MCP服务端口</label>
+                                        <input type="number" class="form-control" id="mcpPort" 
+                                               placeholder="留空自动分配 (3001-3100)">
+                                        <small class="text-muted">建议留空，系统会自动分配可用端口</small>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary" id="mcpSubmitBtn">
+                                    <i class="fas fa-check"></i> 创建并启动
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除旧模态框
+            const oldModal = document.getElementById('createMCPModal');
+            if (oldModal) oldModal.remove();
+            
+            // 添加新模态框
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // 重置表单，清除所有字段
+            setTimeout(() => {
+                const form = document.getElementById('createMCPForm');
+                if (form) {
+                    form.reset();
+                    // 显式清空所有输入框
+                    form.querySelectorAll('input[type="text"], input[type="password"], input[type="number"], textarea').forEach(input => {
+                        input.value = '';
+                    });
+                    // 重置所有select为第一个选项
+                    form.querySelectorAll('select').forEach(select => {
+                        select.selectedIndex = 0;
+                    });
+                    // 重置所有checkbox
+                    form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                }
+                
+                // 移除编辑模式的提示信息（如果存在）
+                const editNotice = document.getElementById('edit-mode-notice');
+                if (editNotice) {
+                    editNotice.remove();
+                }
+                
+                // 确保标题和按钮是"创建"模式
+                const modalTitle = document.querySelector('#createMCPModal .modal-title');
+                if (modalTitle) {
+                    modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> 创建MCP服务实例';
+                }
+                
+                // 绑定创建按钮事件
+                const submitBtn = document.getElementById('mcpSubmitBtn');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> 创建并启动';
+                    submitBtn.onclick = createMCPInstance;
+                }
+            }, 0);
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('createMCPModal'));
+            modal.show();
+            
+            // 确保按钮事件在模态框显示后绑定
+            setTimeout(() => {
+                const submitBtn = document.getElementById('mcpSubmitBtn');
+                if (submitBtn && !submitBtn.onclick) {
+                    submitBtn.onclick = createMCPInstance;
+                }
+            }, 100);
+        }
+        
+        function updateConfigFields() {
+            const type = document.getElementById('mcpType').value;
+            document.getElementById('esConfig').style.display = type === 'elasticsearch' ? 'block' : 'none';
+            document.getElementById('kibanaConfig').style.display = type === 'kibana' ? 'block' : 'none';
+            document.getElementById('newflowConfig').style.display = type === 'newflow' ? 'block' : 'none';
+        }
+        
+        // ES认证字段切换
+        function toggleESAuthFields() {
+            const authType = document.getElementById('esAuthType').value;
+            document.getElementById('esBasicAuth').style.display = authType === 'basic' ? 'block' : 'none';
+            document.getElementById('esApiKeyAuth').style.display = authType === 'apikey' ? 'block' : 'none';
+        }
+        
+        // ES TLS设置切换
+        function toggleESCACert() {
+            const disabled = document.getElementById('esDisableTLS').checked;
+            document.getElementById('esCACertField').style.display = disabled ? 'none' : 'block';
+        }
+        
+        // Kibana认证字段切换
+        function toggleKibanaAuthFields() {
+            const authType = document.getElementById('kibanaAuthType').value;
+            document.getElementById('kibanaBasicAuth').style.display = authType === 'basic' ? 'block' : 'none';
+            document.getElementById('kibanaCookieAuth').style.display = authType === 'cookie' ? 'block' : 'none';
+        }
+        
+        // Kibana TLS设置切换
+        function toggleKibanaCACert() {
+            const disabled = document.getElementById('kibanaDisableTLS').checked;
+            document.getElementById('kibanaCACertField').style.display = disabled ? 'none' : 'block';
+        }
+        
+        // Kibana高级设置切换
+        function toggleKibanaAdvanced() {
+            const advanced = document.getElementById('kibanaAdvanced');
+            advanced.style.display = advanced.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        async function applyTemplate() {
+            const templateId = document.getElementById('mcpTemplate').value;
+            if (!templateId) return;
+            
+            // 获取模板
+            const response = await fetch('/api/mcp/templates');
+            const templates = await response.json();
+            const template = templates[templateId];
+            
+            if (template) {
+                // 填充表单
+                document.getElementById('mcpName').value = template.name;
+                document.getElementById('mcpType').value = template.type;
+                updateConfigFields();
+                
+                // 填充配置
+                if (template.type === 'elasticsearch') {
+                    document.getElementById('esUrl').value = template.config.es_url || '';
+                    document.getElementById('esUsername').value = template.config.es_username || '';
+                    document.getElementById('esPassword').value = template.config.es_password || '';
+                } else if (template.type === 'kibana') {
+                    document.getElementById('kibanaUrl').value = template.config.kibana_url || '';
+                    document.getElementById('kibanaUsername').value = template.config.kibana_username || '';
+                    document.getElementById('kibanaPassword').value = template.config.kibana_password || '';
+                    document.getElementById('kibanaSpace').value = template.config.kibana_space || 'default';
+                } else if (template.type === 'newflow') {
+                    document.getElementById('newflowUrl').value = template.config.newflow_url || '';
+                    document.getElementById('newflowApiKey').value = template.config.newflow_api_key || '';
+                }
+            }
+        }
+        
+        async function createMCPInstance() {
+            const name = document.getElementById('mcpName').value;
+            const type = document.getElementById('mcpType').value;
+            const port = document.getElementById('mcpPort').value;
+            
+            if (!name || !type) {
+                alert('请填写必填项');
+                return;
+            }
+            
+            // 构建配置
+            let config = {};
+            if (type === 'elasticsearch') {
+                const authType = document.getElementById('esAuthType').value;
+                config = {
+                    es_url: document.getElementById('esUrl').value || 'http://localhost:9200'
+                };
+                
+                // 认证配置
+                if (authType === 'basic') {
+                    config.es_username = document.getElementById('esUsername').value || '';
+                    config.es_password = document.getElementById('esPassword').value || '';
+                } else if (authType === 'apikey') {
+                    config.es_api_key = document.getElementById('esApiKey').value || '';
+                }
+                
+                // TLS配置
+                if (document.getElementById('esDisableTLS').checked) {
+                    config.disable_tls = true;
+                } else {
+                    const caCert = document.getElementById('esCACert').value;
+                    if (caCert) {
+                        config.es_ca_cert = caCert;
+                    }
+                }
+                
+            } else if (type === 'kibana') {
+                const authType = document.getElementById('kibanaAuthType').value;
+                config = {
+                    kibana_url: document.getElementById('kibanaUrl').value || 'http://localhost:5601',
+                    kibana_space: document.getElementById('kibanaSpace').value || 'default'
+                };
+                
+                // 认证配置
+                if (authType === 'basic') {
+                    config.kibana_username = document.getElementById('kibanaUsername').value || '';
+                    config.kibana_password = document.getElementById('kibanaPassword').value || '';
+                } else if (authType === 'cookie') {
+                    config.kibana_cookies = document.getElementById('kibanaCookies').value || '';
+                }
+                
+                // TLS配置
+                if (document.getElementById('kibanaDisableTLS').checked) {
+                    config.disable_tls = true;
+                } else {
+                    const caCert = document.getElementById('kibanaCACert').value;
+                    if (caCert) {
+                        config.kibana_ca_cert = caCert;
+                    }
+                }
+                
+                // 高级配置
+                const timeout = document.getElementById('kibanaTimeout').value;
+                const maxRetries = document.getElementById('kibanaMaxRetries').value;
+                if (timeout && timeout !== '30000') {
+                    config.kibana_timeout = parseInt(timeout);
+                }
+                if (maxRetries && maxRetries !== '3') {
+                    config.kibana_max_retries = parseInt(maxRetries);
+                }
+            } else if (type === 'newflow') {
+                config = {
+                    newflow_url: document.getElementById('newflowUrl').value || 'http://localhost:5678'
+                };
+                
+                const apiKey = document.getElementById('newflowApiKey').value;
+                if (apiKey) {
+                    config.newflow_api_key = apiKey;
+                }
+            }
+            
+            // 创建实例
+            const payload = {
+                name: name,
+                type: type,
+                config: config
+            };
+            
+            if (port) {
+                payload.port = parseInt(port);
+            }
+            
+            try {
+                const response = await fetch('/api/mcp/instances', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    const instance = await response.json();
+                    
+                    // 关闭模态框
+                    bootstrap.Modal.getInstance(document.getElementById('createMCPModal')).hide();
+                    
+                    // 显示成功提示
+                    showToast('success', 'MCP实例创建成功！', `端口: ${instance.port} | 端点: ${instance.endpoint}`);
+                    
+                    // 询问是否立即启动
+                    if (confirm(`是否立即启动MCP实例 "${name}"？`)) {
+                        await startMCP(instance.id);
+                    }
+                } else {
+                    const error = await response.json();
+                    showToast('error', '创建失败', error.detail || '未知错误');
+                }
+            } catch (error) {
+                showToast('error', '创建失败', error.message);
+            }
+        }
+        
+        // Toast通知系统
+        function showToast(type, title, message) {
+            // 移除旧的toast容器（如果存在）
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                    min-width: 300px;
+                    max-width: 400px;
+                `;
+                document.body.appendChild(toastContainer);
+            }
+            
+            // 创建toast元素
+            const toast = document.createElement('div');
+            const toastId = 'toast-' + Date.now();
+            toast.id = toastId;
+            
+            // 根据类型设置颜色和图标
+            let bgColor, icon, borderColor;
+            switch(type) {
+                case 'success':
+                    bgColor = 'rgba(16, 185, 129, 0.95)';
+                    borderColor = '#10b981';
+                    icon = '<i class="fas fa-check-circle"></i>';
+                    break;
+                case 'error':
+                    bgColor = 'rgba(239, 68, 68, 0.95)';
+                    borderColor = '#ef4444';
+                    icon = '<i class="fas fa-times-circle"></i>';
+                    break;
+                case 'warning':
+                    bgColor = 'rgba(245, 158, 11, 0.95)';
+                    borderColor = '#f59e0b';
+                    icon = '<i class="fas fa-exclamation-triangle"></i>';
+                    break;
+                case 'info':
+                    bgColor = 'rgba(59, 130, 246, 0.95)';
+                    borderColor = '#3b82f6';
+                    icon = '<i class="fas fa-info-circle"></i>';
+                    break;
+                default:
+                    bgColor = 'rgba(100, 116, 139, 0.95)';
+                    borderColor = '#64748b';
+                    icon = '<i class="fas fa-bell"></i>';
+            }
+            
+            toast.style.cssText = `
+                background: ${bgColor};
+                color: white;
+                padding: 16px 20px;
+                border-radius: 12px;
+                border-left: 4px solid ${borderColor};
+                margin-bottom: 10px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+                animation: slideIn 0.3s ease-out;
+                display: flex;
+                align-items: start;
+                gap: 12px;
+            `;
+            
+            toast.innerHTML = `
+                <div style="font-size: 20px; margin-top: 2px;">${icon}</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; margin-bottom: 4px;">${title}</div>
+                    <div style="font-size: 14px; opacity: 0.95;">${message}</div>
+                </div>
+                <button onclick="document.getElementById('${toastId}').remove()" 
+                        style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; padding: 0; opacity: 0.7; line-height: 1;"
+                        onmouseover="this.style.opacity='1'" 
+                        onmouseout="this.style.opacity='0.7'">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            // 添加动画样式（如果还没有）
+            if (!document.getElementById('toast-animations')) {
+                const style = document.createElement('style');
+                style.id = 'toast-animations';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from {
+                            transform: translateX(400px);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes slideOut {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(400px);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            toastContainer.appendChild(toast);
+            
+            // 5秒后自动关闭
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
+        // 初始化
+        connectWebSocket();
+    </script>
+</body>
+</html>
+

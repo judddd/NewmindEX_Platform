@@ -20,8 +20,11 @@ get_timestamp() {
     date '+%Y-%m-%d %H:%M:%S'
 }
 
-# 日志文件路径
-LOG_FILE="${LOG_FILE:-logs/install-$(date +%Y%m%d-%H%M%S).log}"
+# 获取项目根目录
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+# 日志文件路径 (使用绝对路径)
+LOG_FILE="${LOG_FILE:-$PROJECT_ROOT/logs/install-$(date +%Y%m%d-%H%M%S).log}"
 
 # 初始化日志文件
 init_log() {

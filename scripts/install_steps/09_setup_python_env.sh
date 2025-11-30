@@ -61,6 +61,14 @@ run_step() {
 create_venv() {
     log_info "创建 Python 虚拟环境..."
     
+    # 确保 uv 在 PATH 中
+    export PATH="$HOME/.local/bin:$PATH"
+    
+    if ! command -v uv &> /dev/null; then
+        log_error "找不到 uv 命令，请先安装 uv"
+        return 1
+    fi
+    
     # 如果已存在，询问是否重新创建
     if [ -d ".venv" ]; then
         log_warn "虚拟环境已存在"
@@ -77,23 +85,10 @@ create_venv() {
         fi
     fi
     
-    # 离线环境：使用已安装的Python 3.11创建venv
-    # 优先使用python3.11，否则使用python3
-    log_info "使用 Python 3.11 创建虚拟环境（离线模式）..."
+    # 使用 uv 创建 venv
+    log_info "使用 uv 创建 Python 3.11 虚拟环境..."
     
-    local python_cmd=""
-    if command -v python3.11 &> /dev/null; then
-        python_cmd="python3.11"
-        log_info "使用 Python 3.11"
-    elif command -v python3 &> /dev/null; then
-        python_cmd="python3"
-        log_warn "Python 3.11 未找到，使用系统 Python"
-    else
-        log_error "找不到 Python"
-        return 1
-    fi
-    
-    if $python_cmd -m venv .venv; then
+    if uv venv .venv --python 3.11; then
         log_success "虚拟环境创建成功"
         return 0
     fi
@@ -106,6 +101,9 @@ create_venv() {
 install_dependencies() {
     log_info "安装 Python 依赖（离线模式）..."
     
+    # 确保 uv 在 PATH 中
+    export PATH="$HOME/.local/bin:$PATH"
+    
     # 激活虚拟环境
     source .venv/bin/activate
     
@@ -113,22 +111,27 @@ install_dependencies() {
     if [ -d "../installers/python_deps/wheels" ] && [ -n "$(ls -A ../installers/python_deps/wheels/*.whl 2>/dev/null)" ]; then
         log_info "从本地 wheels 安装依赖（完全离线）..."
         
-        # 不升级pip（避免联网）
-        
-        # 安装wheels（纯离线模式）
-        # 使用虚拟环境中的python，不指定python3或python3.11
-        if python -m pip install --no-index --find-links=../installers/python_deps/wheels -e . 2>&1 | tee -a "../$LOG_FILE"; then
-            log_success "依赖安装完成（离线）"
-            return 0
+        # 使用 uv pip install 安装
+        # 使用 PIPESTATUS 获取 uv 的返回值，而不是 tee 的
+        if uv pip install --no-index --find-links=../installers/python_deps/wheels -e . 2>&1 | tee -a "$LOG_FILE"; then
+            # 检查 uv 的退出码 (Bash特有)
+            UV_STATUS=${PIPESTATUS[0]}
+            if [ $UV_STATUS -eq 0 ]; then
+                log_success "依赖安装完成（离线）"
+                return 0
+            else
+                log_error "本地 wheels 安装失败 (uv exit code: $UV_STATUS)"
+                log_error "请确保 installers/python_deps/wheels/ 包含所有依赖"
+                return 1
+            fi
         else
-            log_error "本地 wheels 安装失败"
-            log_error "请确保 installers/python_deps/wheels/ 包含所有依赖"
+            # 如果 tee 失败也会走这里
+            log_error "安装过程发生错误 (可能是日志写入失败)"
             return 1
         fi
     else
         log_error "找不到本地 wheels 目录或目录为空"
         log_error "路径: installers/python_deps/wheels/"
-        log_error "请先运行: pip3 download -r installers/python_deps/requirements.txt -d installers/python_deps/wheels"
         return 1
     fi
 }

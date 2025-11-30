@@ -29,10 +29,10 @@ echo ""
 
 # 检查 NewFlow
 echo "🔄 NewFlow状态:"
-if curl -s http://localhost:5677 >/dev/null 2>&1; then
-    echo "✅ NewFlow (5677) - 运行中"
+if curl -s http://localhost:5678 >/dev/null 2>&1; then
+    echo "✅ NewFlow (5678) - 运行中"
 else
-    echo "⚠️  NewFlow (5677) - 尚未就绪"
+    echo "⚠️  NewFlow (5678) - 尚未就绪"
 fi
 echo ""
 

@@ -32,6 +32,16 @@ run_step() {
         return 1
     fi
     
+    # 启动 NewRAG (本地)
+    if ! start_newrag; then
+        log_warn "NewRAG 启动失败"
+    fi
+
+    # 启动 NewFlow (本地)
+    if ! start_newflow; then
+        log_warn "NewFlow 启动失败"
+    fi
+    
     # 启动Python Dashboard
     if ! start_dashboard; then
         log_warn "Dashboard启动失败（可手动启动）"
@@ -66,6 +76,133 @@ start_docker_services() {
     fi
 }
 
+# 启动 NewRAG
+start_newrag() {
+    log_info "启动 NewRAG..."
+    local NEWRAG_PID_FILE="python_dashboard/newrag.pid"
+    
+    # 确保 uv 在 PATH 中
+    export PATH="$HOME/.local/bin:$PATH"
+    
+    # 检查是否已运行
+    if [ -f "$NEWRAG_PID_FILE" ]; then
+        local pid=$(cat "$NEWRAG_PID_FILE")
+        if ps -p $pid > /dev/null 2>&1; then
+            log_success "NewRAG 已在运行 (PID: $pid)"
+            return 0
+        fi
+        rm "$NEWRAG_PID_FILE"
+    fi
+
+    if [ ! -d "newrag-main" ]; then
+        log_error "NewRAG 目录不存在"
+        return 1
+    fi
+
+    cd newrag-main
+    mkdir -p ../python_dashboard
+    
+    # 启动
+    log_info "执行 uv run dev.py..."
+    nohup uv run dev.py > ../python_dashboard/newrag.log 2>&1 &
+    local PID=$!
+    
+    sleep 3
+    if ps -p $PID > /dev/null 2>&1; then
+        echo $PID > ../$NEWRAG_PID_FILE
+        log_success "NewRAG 已启动 (PID: $PID)"
+        cd ..
+        return 0
+    else
+        log_error "NewRAG 启动失败"
+        if [ -f "../python_dashboard/newrag.log" ]; then
+            echo "--- 日志片段 ---"
+            tail -n 5 ../python_dashboard/newrag.log
+            echo "----------------"
+        fi
+        cd ..
+        return 1
+    fi
+}
+
+# 启动 NewFlow
+start_newflow() {
+    log_info "启动 NewFlow..."
+    local NEWFLOW_PID_FILE="python_dashboard/newflow.pid"
+    local LOG_FILE="../python_dashboard/newflow.log"
+    local PORT=5678
+    
+    # 检查是否已运行
+    if [ -f "$NEWFLOW_PID_FILE" ]; then
+        local pid=$(cat "$NEWFLOW_PID_FILE")
+        if ps -p $pid > /dev/null 2>&1; then
+            log_success "NewFlow 已在运行 (PID: $pid)"
+            return 0
+        fi
+        rm "$NEWFLOW_PID_FILE"
+    fi
+
+    if [ ! -d "newflow-main" ]; then
+        log_error "NewFlow 目录不存在"
+        return 1
+    fi
+
+    cd newflow-main
+    mkdir -p ../python_dashboard
+    mkdir -p data
+    
+    # 设置环境变量
+    export PORT=$PORT
+    export N8N_PORT=$PORT
+    export N8N_USER_FOLDER="$(pwd)/data"
+    export N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    export DB_SQLITE_POOL_SIZE=5
+    
+    # 启动
+    log_info "执行 pnpm start..."
+    # 使用 nohup 和 setsid 启动
+    nohup pnpm start > "$LOG_FILE" 2>&1 &
+    local INITIAL_PID=$!
+    
+    log_info "等待端口 $PORT 就绪..."
+    local MAX_WAIT=30
+    local ELAPSED=0
+    local ACTUAL_PID=""
+    
+    while [ $ELAPSED -lt $MAX_WAIT ]; do
+        # 检查端口是否被监听
+        if lsof -i :$PORT > /dev/null 2>&1; then
+            # 获取监听端口的实际 PID
+            ACTUAL_PID=$(lsof -t -i :$PORT | tail -1)
+            break
+        fi
+        sleep 1
+        ELAPSED=$((ELAPSED + 1))
+    done
+    
+    if [ -n "$ACTUAL_PID" ]; then
+        echo "$ACTUAL_PID" > ../$NEWFLOW_PID_FILE
+        log_success "NewFlow 已启动 (PID: $ACTUAL_PID)"
+        cd ..
+        return 0
+    elif ps -p $INITIAL_PID > /dev/null 2>&1; then
+        # 端口未就绪但进程还在，可能是启动慢
+        log_warn "NewFlow 进程运行中，但端口尚未就绪。保存初始 PID。"
+        echo "$INITIAL_PID" > ../$NEWFLOW_PID_FILE
+        cd ..
+        return 0
+    else
+        log_error "NewFlow 启动失败"
+        if [ -f "$LOG_FILE" ]; then
+            echo "--- 日志片段 ---"
+            tail -n 5 "$LOG_FILE"
+            echo "----------------"
+        fi
+        cd ..
+        return 1
+    fi
+}
+
 # 启动Dashboard
 start_dashboard() {
     log_info "启动 Python Dashboard..."
@@ -83,25 +220,17 @@ start_dashboard() {
         rm -f dashboard.pid
     fi
     
-    # 激活虚拟环境
-    if [ ! -f ".venv/bin/activate" ]; then
-        log_error "虚拟环境不存在"
-        cd ..
-        return 1
-    fi
-    
-    source .venv/bin/activate
-    
     # 加载环境变量
     set -a
     source ../.env 2>/dev/null || true
     set +a
     
     # 启动Dashboard
-    local port=${DASHBOARD_PORT:-8000}
+    local port=${DASHBOARD_PORT:-80}
     log_info "在端口 $port 启动Dashboard..."
     
-    nohup uvicorn main:app --host 0.0.0.0 --port $port > dashboard.log 2>&1 &
+    # 使用 uv 启动
+    nohup uv run uvicorn main:app --host 0.0.0.0 --port $port > dashboard.log 2>&1 &
     local pid=$!
     echo $pid > dashboard.pid
     
@@ -179,7 +308,7 @@ verify_step() {
     # 检查端口
     echo -e "${CYAN}端口监听状态:${NC}"
     
-    for port_info in "9200:Elasticsearch" "5601:Kibana" "5677:NewFlow" "8000:Dashboard"; do
+    for port_info in "9200:Elasticsearch" "5601:Kibana" "5678:NewFlow" "80:Dashboard"; do
         local port=$(echo $port_info | cut -d: -f1)
         local service=$(echo $port_info | cut -d: -f2)
         

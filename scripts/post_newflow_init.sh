@@ -78,7 +78,7 @@ is_database_initialized() {
 # 检查 Newflow API 是否可访问
 is_api_ready() {
     local response
-    response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5677/ 2>/dev/null || echo "000")
+    response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5678/ 2>/dev/null || echo "000")
     
     if [[ "${response}" == "200" ]] || [[ "${response}" == "302" ]]; then
         return 0
@@ -207,7 +207,7 @@ main() {
         log_success "✅ Newflow 已就绪，可以正常使用"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""
-        log_info "🌐 访问地址: http://localhost:5677"
+        log_info "🌐 访问地址: http://localhost:5678"
         
     else
         log_error "等待超时（${MAX_WAIT_TIME}秒），初始化可能失败"

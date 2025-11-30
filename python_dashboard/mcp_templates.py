@@ -51,7 +51,7 @@ MCP_TEMPLATES = {
         "type": "newflow",
         "description": "MCP Docker容器通过host.docker.internal访问宿主机NewFlow",
         "config": {
-            "newflow_url": "http://host.docker.internal:5677/api/v1",
+            "newflow_url": "http://host.docker.internal:5678/api/v1",
             "newflow_api_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYTg3YzdkOS1kYTk2LTQ3NDMtOGEwOS0wYzBhMWI5YWRiZjYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwMzc4OTYwfQ.AeMI20moNigjQwcMTi8FRaaOgupTuZ3Apso3jNyQg5Q"
         }
     },
@@ -60,7 +60,7 @@ MCP_TEMPLATES = {
         "type": "newflow",
         "description": "适用于MCP Node模式或测试环境",
         "config": {
-            "newflow_url": "http://localhost:5677",
+            "newflow_url": "http://localhost:5678",
             "newflow_api_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYTg3YzdkOS1kYTk2LTQ3NDMtOGEwOS0wYzBhMWI5YWRiZjYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwMzc4OTYwfQ.AeMI20moNigjQwcMTi8FRaaOgupTuZ3Apso3jNyQg5Q"
         }
     },

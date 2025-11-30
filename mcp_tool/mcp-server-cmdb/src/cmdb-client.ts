@@ -4,6 +4,7 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import https from 'https';
+import fs from 'fs';
 import type {
   CmdbConfig,
   LoginResponse,
@@ -37,9 +38,33 @@ export class CmdbClient {
 
     // Add HTTPS agent only for HTTPS connections
     if (config.domain.startsWith('https')) {
-      axiosConfig.httpsAgent = new https.Agent({
-        rejectUnauthorized: config.verifySsl,
-      });
+      let verifySsl = config.verifySsl;
+
+      // Add custom CA certificate if provided
+      const agentOptions: https.AgentOptions = {};
+      
+      if (config.caCertPath) {
+        try {
+          const caCert = fs.readFileSync(config.caCertPath, 'utf8');
+          agentOptions.ca = caCert;
+          agentOptions.rejectUnauthorized = true; // Enable verification when using custom CA
+          verifySsl = true;
+          process.stderr.write(`[CMDB] ✓ Loaded custom CA certificate from: ${config.caCertPath}\n`);
+          process.stderr.write(`[CMDB] SSL verification: ENABLED (custom CA)\n`);
+        } catch (error) {
+          process.stderr.write(`[CMDB] ✗ Warning: Failed to load CA certificate from ${config.caCertPath}: ${error}\n`);
+          agentOptions.rejectUnauthorized = config.verifySsl;
+        }
+      } else {
+        agentOptions.rejectUnauthorized = verifySsl;
+        if (!verifySsl) {
+          process.stderr.write(`[CMDB] ⚠ SSL verification: DISABLED (not recommended for production)\n`);
+        } else {
+          process.stderr.write(`[CMDB] SSL verification: ENABLED\n`);
+        }
+      }
+
+      axiosConfig.httpsAgent = new https.Agent(agentOptions);
     }
 
     this.axiosInstance = axios.create(axiosConfig);

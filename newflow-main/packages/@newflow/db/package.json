@@ -1,0 +1,49 @@
+{
+  "name": "@newflow/db",
+  "version": "0.23.0",
+  "scripts": {
+    "clean": "rimraf dist .turbo",
+    "dev": "pnpm watch",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "format": "biome format --write .",
+    "format:check": "biome ci .",
+    "lint": "eslint . --quiet",
+    "lint:fix": "eslint . --fix",
+    "watch": "tsc -p tsconfig.build.json --watch",
+    "test": "jest",
+    "test:dev": "jest --watch"
+  },
+  "main": "dist/index.js",
+  "module": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "dependencies": {
+    "@newflow/api-types": "workspace:^",
+    "@newflow/backend-common": "workspace:^",
+    "@newflow/config": "workspace:^",
+    "@newflow/constants": "workspace:^",
+    "@newflow/decorators": "workspace:^",
+    "@newflow/di": "workspace:^",
+    "@newflow/permissions": "workspace:^",
+    "@n8n/typeorm": "catalog:",
+    "class-validator": "0.14.0",
+    "flatted": "catalog:",
+    "lodash": "catalog:",
+    "n8n-core": "workspace:^",
+    "n8n-workflow": "workspace:^",
+    "nanoid": "catalog:",
+    "p-lazy": "3.1.0",
+    "reflect-metadata": "catalog:",
+    "uuid": "catalog:",
+    "xss": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@newflow/typescript-config": "workspace:*",
+    "@types/lodash": "catalog:",
+    "express": "5.1.0"
+  }
+}

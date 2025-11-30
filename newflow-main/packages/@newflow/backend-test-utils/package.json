@@ -1,0 +1,39 @@
+{
+  "name": "@newflow/backend-test-utils",
+  "version": "0.15.0",
+  "scripts": {
+    "clean": "rimraf dist .turbo",
+    "dev": "pnpm watch",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "format": "biome format --write .",
+    "format:check": "biome ci .",
+    "lint": "eslint . --quiet",
+    "lint:fix": "eslint . --fix",
+    "watch": "tsc -p tsconfig.build.json --watch",
+    "test": "echo \"WARNING: no test specified\" && exit 0",
+    "test:dev": "echo \"WARNING: no test specified\" && exit 0"
+  },
+  "main": "dist/index.js",
+  "module": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "dependencies": {
+    "@newflow/backend-common": "workspace:^",
+    "@newflow/config": "workspace:^",
+    "@newflow/constants": "workspace:^",
+    "@newflow/db": "workspace:^",
+    "@newflow/di": "workspace:^",
+    "@newflow/permissions": "workspace:^",
+    "@n8n/typeorm": "catalog:",
+    "jest-mock-extended": "^3.0.4",
+    "n8n-workflow": "workspace:^",
+    "reflect-metadata": "catalog:",
+    "uuid": "catalog:"
+  },
+  "devDependencies": {
+    "@newflow/typescript-config": "workspace:*"
+  }
+}

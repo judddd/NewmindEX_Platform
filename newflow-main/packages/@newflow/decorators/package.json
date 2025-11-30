@@ -1,0 +1,35 @@
+{
+  "name": "@newflow/decorators",
+  "version": "0.22.0",
+  "scripts": {
+    "clean": "rimraf dist .turbo",
+    "dev": "pnpm watch",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "format": "biome format --write .",
+    "format:check": "biome ci .",
+    "lint": "eslint . --quiet",
+    "lint:fix": "eslint . --fix",
+    "watch": "tsc -p tsconfig.build.json --watch",
+    "test": "jest",
+    "test:dev": "jest --watch"
+  },
+  "main": "dist/index.js",
+  "module": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "devDependencies": {
+    "@newflow/typescript-config": "workspace:*",
+    "@types/express": "catalog:",
+    "@types/lodash": "catalog:"
+  },
+  "dependencies": {
+    "@newflow/constants": "workspace:^",
+    "@newflow/di": "workspace:^",
+    "@newflow/permissions": "workspace:^",
+    "lodash": "catalog:",
+    "n8n-workflow": "workspace:^"
+  }
+}

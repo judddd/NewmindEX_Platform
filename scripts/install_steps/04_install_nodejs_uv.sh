@@ -58,13 +58,16 @@ install_nodejs() {
     
     # 查找安装包
     local node_pkg=""
-    if [ -f "installers/system/node-v20.18.1.pkg" ]; then
-        node_pkg="installers/system/node-v20.18.1.pkg"
-    elif [ -f "installers/node-v20.18.1.pkg" ]; then
-        node_pkg="installers/node-v20.18.1.pkg"
-    else
-        # 尝试查找任何Node.js安装包
-        node_pkg=$(find installers -name "node-*.pkg" 2>/dev/null | head -1)
+    # 优先查找 Node 22
+    node_pkg=$(find installers -name "node-v22*.pkg" 2>/dev/null | head -1)
+    
+    if [ -z "$node_pkg" ]; then
+        if [ -f "installers/system/node-v20.18.1.pkg" ]; then
+            node_pkg="installers/system/node-v20.18.1.pkg"
+        else
+            # 尝试查找任何Node.js安装包
+            node_pkg=$(find installers -name "node-*.pkg" 2>/dev/null | head -1)
+        fi
     fi
     
     if [ -z "$node_pkg" ]; then
@@ -106,6 +109,21 @@ install_uv() {
         return 0
     fi
     
+    # 查找 UV 安装方式 (优先使用 installer 脚本)
+    if [ -f "installers/system/uv-installer.sh" ]; then
+        log_info "发现 UV 安装脚本，正在运行..."
+        if sh installers/system/uv-installer.sh; then
+             # 添加到PATH (标准安装路径)
+            export PATH="$HOME/.local/bin:$PATH"
+            if command -v uv &> /dev/null; then
+                log_success "UV 安装完成: $(uv --version)"
+                return 0
+            fi
+        else
+            log_warn "UV 安装脚本执行失败，尝试寻找压缩包..."
+        fi
+    fi
+
     # 查找UV二进制压缩包
     local uv_tarball=""
     if [ -f "installers/uv-aarch64-apple-darwin.tar.gz" ]; then

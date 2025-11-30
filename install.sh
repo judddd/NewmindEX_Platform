@@ -16,9 +16,9 @@ source scripts/lib/checks.sh
 source scripts/lib/state.sh
 
 # 总步骤数
-export TOTAL_STEPS=11
-
-# ==================== 主函数 ====================
+    export TOTAL_STEPS=13
+    
+    # ==================== 主函数 ====================
 
 main() {
     # 显示欢迎界面
@@ -47,6 +47,8 @@ main() {
         "07_copy_models:复制AI模型(135GB)"
         "08_load_docker_images:加载Docker镜像"
         "09_setup_python_env:配置Python环境"
+        "12_install_newrag:安装NewRAG模块"
+        "13_install_newflow:安装NewFlow模块"
         "10_start_services:启动所有服务"
         "11_verify_installation:验证安装"
     )
@@ -145,7 +147,7 @@ show_installation_summary() {
     echo -e "${BLUE}║${NC} 📊 管理控制台:     http://localhost:8000"
     echo -e "${BLUE}║${NC} 🔍 Elasticsearch:  http://localhost:9200"
     echo -e "${BLUE}║${NC} 📈 Kibana:         http://localhost:5601"
-    echo -e "${BLUE}║${NC} 🔄 NewFlow:        http://localhost:5677"
+    echo -e "${BLUE}║${NC} 🔄 NewFlow:        http://localhost:5678"
     echo -e "${BLUE}║${NC} 🤖 LM Studio:      http://localhost:1234"
     echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
     echo ""

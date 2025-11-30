@@ -1,0 +1,22 @@
+/**
+ * Modified by NewFlow Team
+ * Original work: Copyright (c) 2019-2024, Jan Oberhauser (n8n)
+ * Modified work: Copyright (c) 2024, NewFlow Team
+ *
+ * This file is part of NewFlow, a modified version of n8n.
+ * License: Sustainable Use License (see LICENSE.md)
+ */
+
+import type { MigrationContext, ReversibleMigration } from '../migration-types';
+
+export class WebhookModel1589476000887 implements ReversibleMigration {
+	async up({ queryRunner, tablePrefix }: MigrationContext) {
+		await queryRunner.query(
+			`CREATE TABLE IF NOT EXISTS ${tablePrefix}webhook_entity ("workflowId" integer NOT NULL, "webhookPath" character varying NOT NULL, "method" character varying NOT NULL, "node" character varying NOT NULL, CONSTRAINT "PK_${tablePrefix}b21ace2e13596ccd87dc9bf4ea6" PRIMARY KEY ("webhookPath", "method"))`,
+		);
+	}
+
+	async down({ queryRunner, tablePrefix }: MigrationContext) {
+		await queryRunner.query(`DROP TABLE ${tablePrefix}webhook_entity`);
+	}
+}

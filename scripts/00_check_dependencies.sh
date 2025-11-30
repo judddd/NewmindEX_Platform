@@ -166,14 +166,14 @@ else
     check_port ${LOGSTASH_PORT:-5044} "Logstash"
 fi
 
-if lsof -Pi :${NEWFLOW_PORT:-5677} -sTCP:LISTEN 2>/dev/null | grep -q "com.docke"; then
-    echo "✅ 端口 ${NEWFLOW_PORT:-5677} (NewFlow) - Docker容器已运行"
+if lsof -Pi :${NEWFLOW_PORT:-5678} -sTCP:LISTEN 2>/dev/null | grep -E "node|com.docke"; then
+    echo "✅ 端口 ${NEWFLOW_PORT:-5678} (NewFlow) - NewFlow进程已运行"
 else
-    check_port ${NEWFLOW_PORT:-5677} "NewFlow"
+    check_port ${NEWFLOW_PORT:-5678} "NewFlow"
 fi
 
 # LM Studio端口特殊处理（允许LM Studio进程占用）
-if lsof -Pi :${LMSTUDIO_PORT:-1234} -sTCP:LISTEN 2>/dev/null | grep -q "lmstudio"; then
+if lsof -Pi :${LMSTUDIO_PORT:-1234} -sTCP:LISTEN 2>/dev/null | grep -Ei "lm.*stu|lm\s*studio"; then
     echo "✅ 端口 ${LMSTUDIO_PORT:-1234} (LM Studio) - LM Studio进程已运行"
 elif lsof -Pi :${LMSTUDIO_PORT:-1234} -sTCP:LISTEN 2>/dev/null | grep -q "."; then
     echo "⚠️  端口 ${LMSTUDIO_PORT:-1234} (LM Studio) 被其他进程占用"

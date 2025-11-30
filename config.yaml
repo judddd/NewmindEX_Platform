@@ -11,8 +11,8 @@ system:
     file: "installers/Docker.dmg"
     version: "latest"
   nodejs:
-    file: "installers/system/node-v20.18.1.pkg"
-    version: "20.18.1"
+    file: "installers/system/node-v22.20.0.pkg"
+    version: "22.20.0"
   uv:
     file: "installers/system/uv-installer.sh"
     version: "latest"
@@ -20,12 +20,12 @@ system:
 # 应用程序
 applications:
   lmstudio:
-    file: "installers/LM-Studio-0.3.30-1-arm64.dmg"
-    version: "0.3.30-1"
+    file: "installers/LM-Studio-0.3.32-2-arm64.dmg"
+    version: "0.3.32-2"
     install_path: "/Applications/LM Studio.app"
   newchat:
-    file: "installers/NewChat-1.0.4-mac-arm64.dmg"
-    version: "1.0.4"
+    file: "installers/NewChat-1.1.0-mac-arm64.dmg"
+    version: "1.1.0"
     install_path: "/Applications/NewChat.app"
 
 # Docker镜像
@@ -42,10 +42,6 @@ docker_images:
     file: "installers/docker_images/logstash-8.17.3.tar"
     image: "docker.elastic.co/logstash/logstash:8.17.3"
     version: "8.17.3"
-  newflow:
-    file: "installers/newflow-1.0.4.tar"
-    image: "newflow:1.0.4"
-    version: "1.0.4"
   newflow_docs:
     file: "installers/newflow-docs-1.0.tar"
     image: "newflow-docs:1.0"
@@ -71,19 +67,32 @@ docker_images:
     image: "minio/minio:latest"
     version: "latest"
 
-# AI模型（永不删除）
+# 本地模块 (非Docker)
+local_modules:
+  newrag:
+    file: "installers/newrag-main-1.0.0.zip"
+    version: "1.0.0"
+    description: "RAG 知识库系统 (Frontend + Backend + MCP)"
+    install_path: "newrag-main"
+  newflow:
+    file: "installers/newflow-main-1.0.0.zip"
+    version: "1.0.0"
+    description: "NewFlow 工作流引擎 (Node.js)"
+    install_path: "newflow-main"
+
+# AI模型（需手动下载）
 ai_models:
   base_path: "installers/models"
   runtime_path: "~/.lmstudio/models"
-  models:
-    - name: "Qwen3-Coder-30B"
-      path: "installers/models/qwen3-coder-30b"
-      size: "30GB"
-      description: "代码生成和补全专用模型"
-    - name: "Qwen3-Next-80B"
-      path: "installers/models/qwen3-next-80b"
-      size: "42GB"
-      description: "最强性能通用模型"
+  models: []  # 不再预置模型，请使用 LM Studio 手动下载
+    # - name: "Qwen3-Coder-30B"
+    #   path: "installers/models/qwen3-coder-30b"
+    #   size: "30GB"
+    #   description: "代码生成和补全专用模型"
+    # - name: "Qwen3-Next-80B"
+    #   path: "installers/models/qwen3-next-80b"
+    #   size: "42GB"
+    #   description: "最强性能通用模型"
 
 # Python依赖
 python:
@@ -105,7 +114,7 @@ ports:
   dashboard: 8000
   elasticsearch: 9200
   kibana: 5601
-  newflow: 5677
+  newflow: 5678
   lmstudio: 1234
   newchat: 61990
   minio_api: 9000
@@ -162,8 +171,8 @@ download_sources:
       md5: ""
       required: true
     lmstudio:
-      remote: "LM-Studio-0.3.30-1-arm64.dmg"
-      local: "installers/LM-Studio-0.3.30-1-arm64.dmg"
+      remote: "LM-Studio-0.3.32-2-arm64.dmg"
+      local: "installers/LM-Studio-0.3.32-2-arm64.dmg"
       size: "508M"
       md5: ""
       required: true
@@ -186,12 +195,6 @@ download_sources:
       remote: "logstash-8.17.3.tar"
       local: "installers/docker_images/logstash-8.17.3.tar"
       size: "511M"
-      md5: ""
-      required: true
-    newflow:
-      remote: "newflow-1.0.4.tar"
-      local: "installers/newflow-1.0.4.tar"
-      size: "256M"
       md5: ""
       required: true
     newflow_docs:
@@ -231,22 +234,9 @@ download_sources:
       md5: ""
       required: false
   
-  # AI模型（压缩包）
-  ai_models:
-    qwen3_coder_30b:
-      remote: "qwen3-coder-30b.tar.gz"
-      local: "installers/models/qwen3-coder-30b"
-      compressed_size: "~29G"
-      uncompressed_size: "30G"
-      md5: ""
-      required: false
-      description: "代码生成和补全专用模型"
-    qwen3_next_80b:
-      remote: "qwen3-next-80b.tar.gz"
-      local: "installers/models/qwen3-next-80b"
-      compressed_size: "~38G"
-      uncompressed_size: "42G"
-      md5: ""
-      required: false
-      description: "最强性能通用模型"
+  # AI模型（压缩包）- 已弃用，改为手动下载
+  ai_models: {}
+    # qwen3_coder_30b:
+    #   remote: "qwen3-coder-30b.tar.gz"
+    # ...
 

@@ -89,6 +89,30 @@ if [ -f "python_dashboard/dashboard.pid" ]; then
     rm -f python_dashboard/dashboard.pid
 fi
 
+# 停止 NewRAG
+if [ -f "python_dashboard/newrag.pid" ]; then
+    PID=$(cat python_dashboard/newrag.pid)
+    echo "  • 停止 NewRAG (PID: $PID)"
+    kill -- -$PID 2>/dev/null || kill $PID 2>/dev/null || true
+    rm -f python_dashboard/newrag.pid
+fi
+
+# 停止 NewFlow
+if [ -f "python_dashboard/newflow.pid" ]; then
+    PID=$(cat python_dashboard/newflow.pid)
+    echo "  • 停止 NewFlow (PID: $PID)"
+    kill -- -$PID 2>/dev/null || kill $PID 2>/dev/null || true
+    rm -f python_dashboard/newflow.pid
+fi
+
+# 深度清理 NewRAG
+pkill -f "newrag-main/dev.py" 2>/dev/null || true
+pkill -f "web/app.py" 2>/dev/null || true
+pkill -f "newrag-search-mcp" 2>/dev/null || true
+
+# 深度清理 NewFlow
+pkill -f "newflow-main" 2>/dev/null || true
+
 # 停止Docker容器
 if command -v docker &> /dev/null; then
     echo "  • 停止 Docker 容器"
@@ -182,6 +206,39 @@ echo "步骤 5/7: 删除 Python 环境..."
 if [ -d "python_dashboard/.venv" ]; then
     echo "  • 删除 Python 虚拟环境"
     rm -rf python_dashboard/.venv
+fi
+
+# NewRAG 清理
+if [ -d "newrag-main" ]; then
+    echo "  • 清理 NewRAG"
+    if [ "$KEEP_DATA" = false ]; then
+        # 完全删除
+        rm -rf newrag-main
+    else
+        # 只清理环境和构建产物，保留数据
+        rm -rf newrag-main/.venv
+        rm -rf newrag-main/frontend/node_modules
+        rm -rf newrag-main/frontend/dist
+        rm -rf newrag-main/newrag-mcp/node_modules
+        rm -rf newrag-main/newrag-mcp/dist
+        # 清理临时文件
+        rm -f newrag-main/*.log
+        rm -f newrag-main/*.pid
+    fi
+fi
+
+# NewFlow 清理
+if [ -d "newflow-main" ]; then
+    echo "  • 清理 NewFlow"
+    if [ "$KEEP_DATA" = false ]; then
+        # 完全删除
+        rm -rf newflow-main
+    else
+        # 只清理依赖和构建产物，保留数据
+        rm -rf newflow-main/node_modules
+        # 清理临时文件
+        rm -f newflow-main/*.log
+    fi
 fi
 
 if [ -f "python_dashboard/mcp_instances.db" ] && [ "$KEEP_DATA" = false ]; then

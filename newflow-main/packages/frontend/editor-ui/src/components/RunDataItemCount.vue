@@ -1,0 +1,67 @@
+<!--
+  Modified by NewFlow Team
+  Original work: Copyright (c) 2019-2024, Jan Oberhauser (n8n)
+  Modified work: Copyright (c) 2024, NewFlow Team
+  
+  This file is part of NewFlow, a modified version of n8n.
+  License: Sustainable Use License (see LICENSE.md)
+-->
+
+<script setup lang="ts">
+import { useI18n } from '@newflow/i18n';
+import { N8nText } from '@newflow/design-system';
+
+const {
+	dataCount,
+	unfilteredDataCount,
+	subExecutionsCount = 0,
+	search,
+} = defineProps<{
+	dataCount: number;
+	unfilteredDataCount: number;
+	subExecutionsCount?: number;
+	search: string;
+}>();
+
+const i18n = useI18n();
+</script>
+
+<template>
+	<N8nText v-if="search" :class="$style.itemsText">
+		{{
+			i18n.baseText('ndv.search.items', {
+				adjustToNumber: unfilteredDataCount,
+				interpolate: { matched: dataCount, count: unfilteredDataCount },
+			})
+		}}
+	</N8nText>
+	<N8nText v-else :class="$style.itemsText">
+		<span>
+			{{
+				i18n.baseText('ndv.output.items', {
+					adjustToNumber: dataCount,
+					interpolate: { count: dataCount },
+				})
+			}}
+		</span>
+		<span v-if="subExecutionsCount > 0">
+			{{
+				i18n.baseText('ndv.output.andSubExecutions', {
+					adjustToNumber: subExecutionsCount,
+					interpolate: { count: subExecutionsCount },
+				})
+			}}
+		</span>
+	</N8nText>
+</template>
+
+<style lang="scss" module>
+.itemsText {
+	flex-shrink: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--color-text-light);
+	font-size: var(--font-size-2xs);
+}
+</style>

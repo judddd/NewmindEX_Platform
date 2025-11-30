@@ -167,14 +167,6 @@ else
     SERVICES_TO_START+=("logstash")
 fi
 
-# 检查NewFlow
-if docker ps --format '{{.Names}}' | grep -q '^newflow$'; then
-    SERVICES_RUNNING+=("NewFlow")
-    echo "   ✅ NewFlow 已运行，跳过启动"
-else
-    SERVICES_TO_START+=("newflow")
-fi
-
 # 检查MinIO
 if docker ps --format '{{.Names}}' | grep -q '^minio$'; then
     SERVICES_RUNNING+=("MinIO")
@@ -231,25 +223,6 @@ else
         done
         if [ $ELAPSED -ge $MAX_WAIT ]; then
             echo "⚠️  Kibana 启动超时，请检查日志: docker logs kibana"
-        fi
-    fi
-    
-    # 如果启动了NewFlow，等待其就绪
-    if [[ " ${SERVICES_TO_START[@]} " =~ " newflow " ]]; then
-        echo "⏳ 等待 NewFlow 就绪..."
-        sleep 5
-        MAX_WAIT=60
-        ELAPSED=0
-        while [ $ELAPSED -lt $MAX_WAIT ]; do
-            if curl -s http://localhost:${NEWFLOW_PORT:-5677} > /dev/null 2>&1; then
-                echo "✅ NewFlow 已就绪"
-                break
-            fi
-            sleep 5
-            ELAPSED=$((ELAPSED + 5))
-        done
-        if [ $ELAPSED -ge $MAX_WAIT ]; then
-            echo "⚠️  NewFlow 启动超时，请检查日志: docker logs newflow"
         fi
     fi
     
@@ -326,7 +299,7 @@ fi
 # 检查 Newflow 是否就绪
 NEWFLOW_READY=false
 for i in {1..30}; do
-    if curl -s http://localhost:${NEWFLOW_PORT:-5677} > /dev/null 2>&1; then
+    if curl -s http://localhost:${NEWFLOW_PORT:-5678} > /dev/null 2>&1; then
         echo "✅ Newflow 已就绪"
         NEWFLOW_READY=true
         break
@@ -373,16 +346,144 @@ if ! $DASHBOARD_RUNNING; then
     # 清理可能残留的旧PID文件
     rm -f dashboard.pid
     
-    source .venv/bin/activate
     # 加载环境变量
     set -a; source ../.env 2>/dev/null || true; set +a
-    nohup uvicorn main:app --host 0.0.0.0 --port ${DASHBOARD_PORT:-8000} > dashboard.log 2>&1 &
+    
+    # 使用 uv 启动
+    nohup uv run uvicorn main:app --host 0.0.0.0 --port ${DASHBOARD_PORT:-80} > dashboard.log 2>&1 &
     DASHBOARD_PID=$!
     echo $DASHBOARD_PID > dashboard.pid
     echo "✅ Python Dashboard已在后台启动，PID: $DASHBOARD_PID。日志文件: python_dashboard/dashboard.log"
 fi
 
 cd ..
+echo ""
+
+# 步骤13：启动 NewRAG
+echo "步骤 13/13: 启动 NewRAG..."
+
+# 定义启动函数
+start_newrag() {
+    local NEWRAG_PID_FILE="python_dashboard/newrag.pid"
+    
+    cd newrag-main
+    # 确保日志目录存在
+    mkdir -p ../python_dashboard
+    
+    # 启动
+    # 使用 nohup 和 setsid 启动
+    nohup uv run dev.py > ../python_dashboard/newrag.log 2>&1 &
+    local PID=$!
+    
+    # 等待一小会儿确认没立即挂掉
+    sleep 3
+    if ps -p $PID > /dev/null 2>&1; then
+        echo $PID > ../$NEWRAG_PID_FILE
+        echo "✅ NewRAG 已启动 (PID: $PID)"
+        cd ..
+        return 0
+    else
+        echo "❌ NewRAG 启动失败，进程已退出"
+        # 显示最后几行日志
+        if [ -f "../python_dashboard/newrag.log" ]; then
+            echo "--- 日志片段 ---"
+            tail -n 5 ../python_dashboard/newrag.log
+            echo "----------------"
+        fi
+        cd ..
+        return 1
+    fi
+}
+
+# 1. 尝试智能安装 (只会补全缺失的部分)
+# 引用安装脚本
+if [ -f "scripts/install_steps/12_install_newrag.sh" ]; then
+    source scripts/install_steps/12_install_newrag.sh
+    
+    # 运行安装检查 (force=false)
+    echo "🔍 检查 NewRAG 环境..."
+    if run_step "false"; then
+        # 2. 尝试启动
+        NEWRAG_PID_FILE="python_dashboard/newrag.pid"
+        NEWRAG_RUNNING=false
+        
+        if [ -f "$NEWRAG_PID_FILE" ]; then
+            if [ -s "$NEWRAG_PID_FILE" ]; then
+                PID=$(cat "$NEWRAG_PID_FILE")
+                if ps -p $PID > /dev/null 2>&1; then
+                    NEWRAG_RUNNING=true
+                    echo "✅ NewRAG 已经在运行 (PID: $PID)"
+                else
+                    rm "$NEWRAG_PID_FILE"
+                fi
+            else
+                rm "$NEWRAG_PID_FILE"
+            fi
+        fi
+        
+        if ! $NEWRAG_RUNNING; then
+            if ! start_newrag; then
+                echo "⚠️  启动失败，尝试强制修复依赖并重试..."
+                # 3. 启动失败，强制重装 (force=true)
+                if run_step "true"; then
+                    echo "🔄 依赖修复完成，再次尝试启动..."
+                    if ! start_newrag; then
+                        echo "❌ 重试启动仍然失败，请检查 logs/newrag.log"
+                    fi
+                else
+                    echo "❌ 依赖修复失败"
+                fi
+            fi
+        fi
+    else
+        echo "❌ NewRAG 环境检查/安装失败"
+    fi
+else
+    echo "⚠️  找不到安装脚本 scripts/install_steps/12_install_newrag.sh，跳过 NewRAG 启动"
+fi
+echo ""
+
+# 步骤14：启动 NewFlow
+echo "步骤 14/14: 启动 NewFlow..."
+
+# NewFlow 安装与启动（通过 Python Dashboard API 统一管理）
+if [ -f "scripts/install_steps/13_install_newflow.sh" ]; then
+    source scripts/install_steps/13_install_newflow.sh
+    
+    echo "🔍 检查 NewFlow 环境..."
+    if run_step "false"; then
+        echo "✅ NewFlow 环境就绪"
+        
+        # 通过 Dashboard API 启动 NewFlow（确保使用统一的启动逻辑）
+        echo "🚀 通过 Dashboard API 启动 NewFlow..."
+        
+        # 等待 Dashboard API 就绪
+        MAX_WAIT=30
+        ELAPSED=0
+        while [ $ELAPSED -lt $MAX_WAIT ]; do
+            if curl -s http://localhost:${DASHBOARD_PORT:-80}/api/status > /dev/null 2>&1; then
+                break
+            fi
+            sleep 1
+            ELAPSED=$((ELAPSED + 1))
+        done
+        
+        # 调用 API 启动 NewFlow
+        RESPONSE=$(curl -s -X POST http://localhost:${DASHBOARD_PORT:-80}/api/newflow/toggle 2>&1)
+        
+        # 检查启动结果
+        sleep 3
+        if curl -s http://localhost:5678 > /dev/null 2>&1; then
+            echo "✅ NewFlow 已启动"
+        else
+            echo "⚠️  NewFlow 启动可能失败，请检查 Dashboard 或手动启动"
+        fi
+    else
+        echo "❌ NewFlow 环境检查/安装失败"
+    fi
+else
+    echo "⚠️  找不到安装脚本 13_install_newflow.sh"
+fi
 echo ""
 
 # 步骤11：初始化默认MCP实例
@@ -395,11 +496,11 @@ echo ""
 echo "===================================="
 echo "🔗 服务访问地址："
 echo "===================================="
-echo "📊 管理控制台: http://localhost:8000"
+echo "📊 管理控制台: http://localhost:${DASHBOARD_PORT:-80}"
 echo "🔍 Elasticsearch: http://localhost:9200"
 echo "📈 Kibana: http://localhost:5601"
 echo "📮 Logstash: localhost:5044"
-echo "🔄 NewFlow: http://localhost:5677"
+echo "🔄 NewFlow: http://localhost:5678"
 echo "🤖 LM Studio: http://localhost:1234"
 echo ""
 echo "🔐 默认凭据:"
@@ -413,6 +514,6 @@ echo ""
 echo "📝 提示："
 echo "   • 查看日志: tail -f python_dashboard/dashboard.log"
 echo "   • 停止服务: bash scripts/stop_all.sh"
-echo "   • MCP服务器管理: http://localhost:8000 (Dashboard)"
+echo "   • MCP服务器管理: http://localhost:${DASHBOARD_PORT:-80} (Dashboard)"
 echo ""
 

@@ -1,0 +1,52 @@
+/**
+ * Modified by NewFlow Team
+ * Original work: Copyright (c) 2019-2024, Jan Oberhauser (n8n)
+ * Modified work: Copyright (c) 2024, NewFlow Team
+ *
+ * This file is part of NewFlow, a modified version of n8n.
+ * License: Sustainable Use License (see LICENSE.md)
+ */
+
+import { Service } from '@newflow/di';
+
+export interface IExternalSecretsManager {
+	updateSecrets(): Promise<void>;
+	hasSecret(provider: string, name: string): boolean;
+	getSecret(provider: string, name: string): unknown;
+	getSecretNames(provider: string): string[];
+	hasProvider(provider: string): boolean;
+	getProviderNames(): string[];
+}
+
+@Service()
+export class ExternalSecretsProxy {
+	private manager?: IExternalSecretsManager;
+
+	setManager(manager: IExternalSecretsManager) {
+		this.manager = manager;
+	}
+
+	async update() {
+		await this.manager?.updateSecrets();
+	}
+
+	getSecret(provider: string, name: string) {
+		return this.manager?.getSecret(provider, name);
+	}
+
+	hasSecret(provider: string, name: string): boolean {
+		return !!this.manager && this.manager.hasSecret(provider, name);
+	}
+
+	hasProvider(provider: string): boolean {
+		return !!this.manager && this.manager.hasProvider(provider);
+	}
+
+	listProviders(): string[] {
+		return this.manager?.getProviderNames() ?? [];
+	}
+
+	listSecrets(provider: string): string[] {
+		return this.manager?.getSecretNames(provider) ?? [];
+	}
+}

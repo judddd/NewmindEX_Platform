@@ -231,11 +231,25 @@ check_all_installers() {
         all_ok=false
     fi
     
-    if [ -f "installers/system/node-v20.18.1.pkg" ] || command -v node &> /dev/null; then
-        check_installer_exists "installers/system/node-v20.18.1.pkg" "Node.js" || \
+    # 检查 Node.js
+    local node_file=$(get_nodejs_file)
+    if [ -n "$node_file" ] && [ -f "$node_file" ]; then
+        check_installer_exists "$node_file" "Node.js" || \
+        log_info "Node.js 已安装，跳过"
+    elif command -v node &> /dev/null; then
         log_info "Node.js 已安装，跳过"
     else
-        log_warn "Node.js 安装包不存在（可选）"
+        # 尝试查找任何 Node.js 包
+        local any_node=$(find installers -name "node-*.pkg" 2>/dev/null | head -1)
+        if [ -n "$any_node" ]; then
+            check_installer_exists "$any_node" "Node.js (自动发现)"
+        else
+            if [ -n "$node_file" ]; then
+                 log_warn "Node.js 安装包不存在: $node_file"
+            else
+                 log_warn "Node.js 安装包未配置"
+            fi
+        fi
     fi
     
     echo ""

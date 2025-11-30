@@ -23,6 +23,9 @@ read_config_yaml() {
     # 使用 grep + awk 简单解析 YAML
     # 例如：读取 applications.newchat.file
     case "$key_path" in
+        ".system.nodejs.file")
+            grep -A3 "nodejs:" "$config_file" | grep "file:" | head -1 | awk -F'"' '{print $2}'
+            ;;
         ".applications.newchat.file")
             grep -A3 "newchat:" "$config_file" | grep "file:" | head -1 | awk -F'"' '{print $2}'
             ;;
@@ -77,6 +80,10 @@ get_newchat_file() {
 
 get_newchat_version() {
     read_config_yaml ".applications.newchat.version"
+}
+
+get_nodejs_file() {
+    read_config_yaml ".system.nodejs.file"
 }
 
 # 获取 LM Studio 配置

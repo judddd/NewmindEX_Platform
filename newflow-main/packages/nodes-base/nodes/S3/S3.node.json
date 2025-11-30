@@ -1,0 +1,18 @@
+{
+	"node": "n8n-nodes-base.s3",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Development", "Data & Storage"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "http://newflow.ee/integrations/builtin/credentials/s3/"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "http://newflow.ee/integrations/builtin/app-nodes/n8n-nodes-base.s3/"
+			}
+		]
+	}
+}

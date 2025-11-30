@@ -30,6 +30,58 @@ def init_db():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS module_versions (
+            name TEXT PRIMARY KEY,
+            version TEXT NOT NULL,
+            install_path TEXT,
+            status TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def get_module_version(name: str) -> Optional[Dict]:
+    """获取模块版本信息"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM module_versions WHERE name = ?", (name,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_module_version(name: str, version: str, install_path: str = None, status: str = None):
+    """更新模块版本信息"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # 检查是否存在
+    cursor.execute("SELECT name FROM module_versions WHERE name = ?", (name,))
+    exists = cursor.fetchone()
+    
+    if exists:
+        updates = ["version = ?", "updated_at = CURRENT_TIMESTAMP"]
+        params = [version]
+        if install_path:
+            updates.append("install_path = ?")
+            params.append(install_path)
+        if status:
+            updates.append("status = ?")
+            params.append(status)
+        
+        params.append(name)
+        cursor.execute(f"UPDATE module_versions SET {', '.join(updates)} WHERE name = ?", params)
+    else:
+        cursor.execute(
+            "INSERT INTO module_versions (name, version, install_path, status) VALUES (?, ?, ?, ?)",
+            (name, version, install_path, status or 'installed')
+        )
+    
     conn.commit()
     conn.close()
 

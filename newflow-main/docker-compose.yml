@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  newflow:
+    image: ozlan/newflow:latest
+    container_name: newflow
+    restart: unless-stopped
+    ports:
+      - "5677:5677"  # 统一使用 5677 端口
+    environment:
+      - NEWFLOW_PORT=5677
+      - NEWFLOW_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5677/
+      - GENERIC_TIMEZONE=Asia/Shanghai
+      # 优化配置
+      - DB_SQLITE_POOL_SIZE=5
+      - NEWFLOW_RUNNERS_ENABLED=true
+      - NEWFLOW_BLOCK_ENV_ACCESS_IN_NODE=false
+      - NEWFLOW_GIT_NODE_DISABLE_BARE_REPOS=true
+      - DB_TYPE=sqlite
+
+    volumes:
+      - newflow_data:/home/node/.newflow
+    networks:
+      - newflow_network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5677/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  newflow_data:
+    driver: local
+
+networks:
+  newflow_network:
+    driver: bridge
+
+

@@ -190,37 +190,9 @@ else
     fi
 fi
 
-# 3. NewFlow Docker镜像 (从 .env 和 config.yaml 读取)
-NEWFLOW_VERSION=$(get_newflow_version)
-NEWFLOW_TAR="installers/newflow-${NEWFLOW_VERSION}.tar"
-NEWFLOW_URL="${DOWNLOAD_BASE_URL}/newflow-${NEWFLOW_VERSION}.tar"
-
-# 检查是否已有newflow镜像文件
-if ls installers/newflow-1.0.*.tar 1> /dev/null 2>&1; then
-    NEWFLOW_TAR=$(ls installers/newflow-1.0.*.tar | head -1)
-fi
-
-check_or_download "$NEWFLOW_TAR" "$NEWFLOW_URL" || echo -e "${YELLOW}⚠️  NewFlow 镜像需要手动提供${NC}"
-
-# 加载NewFlow Docker镜像
-if [ -f "$NEWFLOW_TAR" ]; then
-    echo ""
-    echo -e "${BLUE}🐳 检查 NewFlow Docker 镜像...${NC}"
-    if ! docker images | grep -q "newflow.*1.0"; then
-        echo -e "${YELLOW}📦 加载 NewFlow Docker 镜像...${NC}"
-        if docker load -i "$NEWFLOW_TAR"; then
-            echo -e "${GREEN}✅ NewFlow 镜像加载完成${NC}"
-        else
-            echo -e "${RED}❌ NewFlow 镜像加载失败${NC}"
-        fi
-    else
-        echo -e "${GREEN}✅ NewFlow 镜像已加载到 Docker${NC}"
-    fi
-fi
-
-# 4. NewFlow Docs
-NEWFLOW_DOCS="installers/newflow-docs-1.0.tar"
-NEWFLOW_DOCS_URL="${DOWNLOAD_BASE_URL}/newflow-docs-1.0.tar"
+# 3. NewFlow Docs
+NEWFLOW_DOCS="installers/newflow-docs-1.0.0.tar"
+NEWFLOW_DOCS_URL="${DOWNLOAD_BASE_URL}/newflow-docs-1.0.0.tar"
 check_or_download "$NEWFLOW_DOCS" "$NEWFLOW_DOCS_URL" || echo -e "${YELLOW}⚠️  NewFlow Docs 可选${NC}"
 
 # 5. NewChat Docs (从 config.yaml 读取)
@@ -248,112 +220,10 @@ check_or_download "$MCP_NEWFLOW" "$MCP_NEWFLOW_URL" || echo -e "${YELLOW}⚠️ 
 # AI模型下载和解压（可选）
 # ============================================
 
+# 用户要求手动管理模型，跳过自动检查和下载
 echo ""
-echo -e "${BLUE}╔════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║         检查AI模型                         ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════╝${NC}"
+echo -e "${BLUE}ℹ️  AI模型管理: 请手动通过 LM Studio 下载模型${NC}"
 echo ""
-
-# 函数：下载并解压模型
-download_and_extract_model() {
-    local model_name=$1
-    local remote_file=$2
-    local target_dir=$3
-    local description=$4
-    
-    # 如果目录已存在，跳过
-    if [ -d "$target_dir" ]; then
-        echo -e "${GREEN}✅ 模型已存在: $model_name${NC}"
-        return 0
-    fi
-    
-    echo -e "${YELLOW}📦 模型: $model_name${NC}"
-    echo -e "   $description"
-    echo -e "   目标: $target_dir"
-    
-    # 询问是否下载
-    read -p "   是否下载此模型? (y/N): " -n 1 -r
-    echo ""
-    
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${BLUE}   ⏭  跳过${NC}"
-        return 0
-    fi
-    
-    local url="${DOWNLOAD_BASE_URL}/${remote_file}"
-    local temp_file="/tmp/${remote_file}"
-    
-    echo -e "${BLUE}   📥 下载中...${NC}"
-    
-    if curl -k -L --fail --progress-bar "$url" -o "$temp_file"; then
-        # 检查下载的文件大小
-        local file_size=$(stat -f%z "$temp_file" 2>/dev/null || stat -c%s "$temp_file" 2>/dev/null)
-        local size_gb=$(echo "scale=2; $file_size / 1024 / 1024 / 1024" | bc)
-        
-        echo -e "${GREEN}   ✅ 下载完成: ${size_gb}GB${NC}"
-        echo -e "${BLUE}   📂 解压中...${NC}"
-        
-        # 创建目标目录的父目录
-        mkdir -p "$(dirname "$target_dir")"
-        
-        # 解压
-        if tar -xzf "$temp_file" -C "$(dirname "$target_dir")"; then
-            echo -e "${GREEN}   ✅ 解压完成${NC}"
-            rm -f "$temp_file"
-            return 0
-        else
-            echo -e "${RED}   ❌ 解压失败${NC}"
-            rm -f "$temp_file"
-            return 1
-        fi
-    else
-        echo -e "${RED}   ❌ 下载失败${NC}"
-        rm -f "$temp_file"
-        return 1
-    fi
-}
-
-# 检查是否需要下载模型
-if [ ! -d "installers/models/qwen3-coder-30b" ] && \
-   [ ! -d "installers/models/qwen3-next-80b" ]; then
-    
-    echo -e "${YELLOW}ℹ️  未检测到AI模型，可以从服务器下载（可选）${NC}"
-    echo ""
-    
-    read -p "是否下载AI模型? (y/N): " -n 1 -r
-    echo ""
-    echo ""
-    
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        # 下载各个模型（根据 config.yaml 配置）
-        download_and_extract_model \
-            "Qwen3-Coder-30B" \
-            "qwen3-coder-30b.tar.gz" \
-            "installers/models/qwen3-coder-30b" \
-            "代码生成和补全专用模型 (30GB)"
-        
-        download_and_extract_model \
-            "Qwen3-Next-80B" \
-            "qwen3-next-80b.tar.gz" \
-            "installers/models/qwen3-next-80b" \
-            "最强性能通用模型 (42GB)"
-    else
-        echo -e "${BLUE}ℹ️  跳过AI模型下载${NC}"
-        echo -e "${YELLOW}   提示: 如需使用AI功能，请手动复制模型到 installers/models/${NC}"
-    fi
-else
-    echo -e "${GREEN}✅ 检测到已有AI模型${NC}"
-    if [ -d "installers/models" ]; then
-        echo ""
-        echo -e "${CYAN}已有模型:${NC}"
-        for model_dir in installers/models/qwen3-*; do
-            if [ -d "$model_dir" ]; then
-                model_size=$(du -sh "$model_dir" | cut -f1)
-                echo -e "  • $(basename "$model_dir"): $model_size"
-            fi
-        done
-    fi
-fi
 
 # ============================================
 # 总结

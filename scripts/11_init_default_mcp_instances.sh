@@ -104,68 +104,36 @@ if [ -n "$INSTANCE_ID" ]; then
     echo "✅ Kibana MCP: http://localhost:3002/mcp"
 fi
 
-# 3. 创建NewFlow MCP实例（端口3003）
+# 3. 创建NewFlow MCP实例
 echo ""
 echo "🔄 创建NewFlow MCP实例..."
 if instance_exists "本地NewFlow"; then
-    echo "ℹ️  NewFlow MCP实例已存在，检查状态..."
-    INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地NewFlow']; print(matches[0] if matches else '')")
+   echo "ℹ️  NewFlow MCP实例已存在，检查状态..."
+   INSTANCE_ID=$(curl -s "${API_BASE}/instances" | python3 -c "import sys, json; data = json.load(sys.stdin); instances = data if isinstance(data, list) else data.get('instances', []); matches = [i['id'] for i in instances if i.get('name') == '本地NewFlow']; print(matches[0] if matches else '')")
 else
-    # MCP Docker容器通过host.docker.internal访问宿主机上的NewFlow
-    NEWFLOW_URL="http://host.docker.internal:5677/api/v1"
-    
-    echo "ℹ️  NewFlow URL: $NEWFLOW_URL"
-    echo "ℹ️  (MCP容器通过host.docker.internal访问宿主机NewFlow)"
-    
-    # 🔑 自动提取NewFlow生成的API Key
-    echo "🔑 从NewFlow提取API Key..."
-    
-    # 方法1: 从日志中提取（优先）
-    EXTRACTED_API_KEY=$(docker logs newflow 2>&1 | grep "API Key:" | tail -1 | awk '{print $NF}')
-    
-    # 方法2: 如果日志中没找到，从数据库提取
-    if [ -z "$EXTRACTED_API_KEY" ]; then
-        echo "   ⚠️  日志中未找到，尝试从数据库提取..."
-        EXTRACTED_API_KEY=$(sqlite3 newflow_data/database.sqlite "SELECT apiKey FROM user_api_keys LIMIT 1;" 2>/dev/null)
-    fi
-    
-    # 使用提取的Key，如果都没找到则使用环境变量
-    if [ -n "$EXTRACTED_API_KEY" ]; then
-        NEWFLOW_API_KEY="$EXTRACTED_API_KEY"
-        echo "   ✅ 成功提取API Key: ${NEWFLOW_API_KEY:0:50}..."
-        
-        # 更新配置文件以便后续使用
-        echo "   📝 更新配置文件..."
-        sed -i '' "s|^NEWFLOW_API_KEY=.*|NEWFLOW_API_KEY=$NEWFLOW_API_KEY|" env.copy 2>/dev/null || true
-        sed -i '' "s|^NEWFLOW_API_KEY=.*|NEWFLOW_API_KEY=$NEWFLOW_API_KEY|" .env 2>/dev/null || true
-    else
-        echo "   ⚠️  未能提取API Key，使用环境变量中的值"
-        NEWFLOW_API_KEY="${NEWFLOW_API_KEY:-}"
-    fi
-    
-    # 创建实例并直接获取ID
-    RESPONSE=$(curl -s -X POST "${API_BASE}/instances" \
-      -H "Content-Type: application/json" \
-      -d '{
-        "name": "本地NewFlow",
-        "type": "newflow",
-        "port": 3003,
-        "config": {
-          "newflow_url": "'"${NEWFLOW_URL}"'",
-          "newflow_api_key": "'"${NEWFLOW_API_KEY}"'"
-        }
-      }')
-    
-    echo "$RESPONSE" | python3 -m json.tool
-    INSTANCE_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('id', ''))")
+   # 创建实例并直接获取ID
+   RESPONSE=$(curl -s -X POST "${API_BASE}/instances" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "name": "本地NewFlow",
+       "type": "newflow",
+       "port": 3003,
+       "config": {
+         "newflow_url": "http://host.docker.internal:5678",
+         "disable_tls": true
+       }
+     }')
+   
+   echo "$RESPONSE" | python3 -m json.tool
+   INSTANCE_ID=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('id', ''))")
 fi
 
 # 启动实例
 if [ -n "$INSTANCE_ID" ]; then
-    echo "🚀 启动NewFlow MCP实例..."
-    curl -s -X POST "${API_BASE}/instances/${INSTANCE_ID}/start" | python3 -m json.tool
-    sleep 3
-    echo "✅ NewFlow MCP: http://localhost:3003/mcp"
+   echo "🚀 启动NewFlow MCP实例..."
+   curl -s -X POST "${API_BASE}/instances/${INSTANCE_ID}/start" | python3 -m json.tool
+   sleep 3
+   echo "✅ NewFlow MCP: http://localhost:3003/mcp"
 fi
 
 echo ""
@@ -186,7 +154,7 @@ echo "📍 网络架构说明："
 echo "   🐳 Docker Compose服务（elastic网络）："
 echo "      • Elasticsearch:  localhost:9200"
 echo "      • Kibana:         localhost:5601"
-echo "      • NewFlow:        localhost:5677"
+echo "      • NewFlow:        localhost:5678"
 echo ""
 echo "   🖥️  宿主机服务："
 echo "      • LM Studio:      localhost:1234"
