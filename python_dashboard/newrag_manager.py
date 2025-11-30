@@ -99,12 +99,12 @@ def install_newrag(force=False):
         # 确保 .python-version 正确或使用当前环境
         subprocess.run(["uv", "sync"], cwd=NEWRAG_DIR, check=True)
         
-        # 3. Frontend Setup
+        # 3. Frontend Setup (开发模式：只需要 npm install，不需要 build)
         frontend_dir = NEWRAG_DIR / "frontend"
         if frontend_dir.exists():
-            logger.info("Setting up Frontend (npm install & build)...")
+            logger.info("Setting up Frontend (npm install)...")
             subprocess.run(["npm", "install"], cwd=frontend_dir, check=True)
-            subprocess.run(["npm", "run", "build"], cwd=frontend_dir, check=True)
+            logger.info("Frontend setup complete (development mode, no build needed)")
             
         # 4. MCP Setup
         mcp_dir = NEWRAG_DIR / "newrag-mcp"
