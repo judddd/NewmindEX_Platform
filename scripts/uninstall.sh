@@ -162,6 +162,28 @@ if command -v docker &> /dev/null; then
             rm -rf newflow_data/config
             rm -rf newflow_data/binaryData/*
         fi
+        
+        # MinIO 数据
+        if [ -d "minio_data" ]; then
+            echo "  • 删除 MinIO 数据"
+            rm -rf minio_data/*
+        fi
+        
+        # NewRAG 数据
+        if [ -d "newrag-main/data" ]; then
+            echo "  • 删除 NewRAG 数据库"
+            rm -rf newrag-main/data/*
+        fi
+        
+        if [ -d "newrag-main/uploads" ]; then
+            echo "  • 删除 NewRAG 上传文件"
+            rm -rf newrag-main/uploads/*
+        fi
+        
+        if [ -d "newrag-main/logs" ]; then
+            echo "  • 删除 NewRAG 日志"
+            rm -rf newrag-main/logs/*
+        fi
     else
         echo "  • 保留 Docker 数据卷"
     fi
@@ -216,14 +238,19 @@ if [ -d "newrag-main" ]; then
         rm -rf newrag-main
     else
         # 只清理环境和构建产物，保留数据
+        echo "    - 清理虚拟环境"
         rm -rf newrag-main/.venv
+        echo "    - 清理前端依赖和构建"
         rm -rf newrag-main/frontend/node_modules
         rm -rf newrag-main/frontend/dist
+        rm -rf newrag-main/frontend/.vite
+        echo "    - 清理 MCP 依赖和构建"
         rm -rf newrag-main/newrag-mcp/node_modules
         rm -rf newrag-main/newrag-mcp/dist
-        # 清理临时文件
+        # 清理临时文件（保留 data/ 和 uploads/）
         rm -f newrag-main/*.log
         rm -f newrag-main/*.pid
+        echo "    - 保留数据: data/, uploads/"
     fi
 fi
 
@@ -234,10 +261,13 @@ if [ -d "newflow-main" ]; then
         # 完全删除
         rm -rf newflow-main
     else
-        # 只清理依赖和构建产物，保留数据
+        # 只清理依赖和构建产物，保留工作流数据
+        echo "    - 清理 node_modules"
         rm -rf newflow-main/node_modules
-        # 清理临时文件
+        rm -rf newflow-main/packages/*/node_modules
+        # 清理临时文件（保留 newflow_data/）
         rm -f newflow-main/*.log
+        echo "    - 保留工作流数据: newflow_data/"
     fi
 fi
 
@@ -266,8 +296,19 @@ rm -f .install_state
 rm -f python_dashboard/dashboard.pid
 rm -rf python_dashboard/mcp_pids/*
 rm -rf python_dashboard/__pycache__
+
+# 删除前端构建产物和缓存
+echo "  • 删除前端构建缓存"
+rm -rf newrag-main/frontend/.vite
+rm -rf newrag-main/frontend/dist
+rm -rf react_dashboard/dist
+rm -rf react_dashboard/node_modules
+rm -rf python_dashboard/static_backup*
+
+# 删除通用缓存文件
 find . -type f -name ".DS_Store" -delete 2>/dev/null || true
 find . -type f -name "*.pyc" -delete 2>/dev/null || true
+find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 
 echo -e "${GREEN}✓ 临时文件已清理${NC}"
 echo ""
@@ -280,10 +321,14 @@ echo ""
 if [ "$KEEP_DATA" = true ]; then
     echo -e "${CYAN}保留的内容:${NC}"
     echo "  • Elasticsearch 数据: elasticsearch/node*"
-    echo "  • NewFlow 数据: newflow_data/"
+    echo "  • NewFlow 工作流数据: newflow_data/"
+    echo "  • NewRAG 数据库: newrag-main/data/"
+    echo "  • NewRAG 上传文件: newrag-main/uploads/"
+    echo "  • MinIO 对象存储: minio_data/"
     echo "  • MCP 配置: python_dashboard/mcp_instances.db"
+    echo "  • 日志文件: logs/, python_dashboard/*.log"
 else
-    echo -e "${GREEN}应用程序和服务已删除${NC}"
+    echo -e "${GREEN}应用程序、服务和所有数据已删除${NC}"
 fi
 
 echo ""
