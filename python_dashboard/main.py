@@ -56,7 +56,7 @@ from newrag_manager import (
 from newflow_manager import (
     start_newflow, stop_newflow, check_newflow_status
 )
-from mcp_templates import list_templates, get_template, generate_newchat_config
+from mcp_templates import list_templates, get_template, generate_newchat_config, generate_claude_config
 from audit_logger import (
     setup_loggers, log_operation, log_audit, log_mcp_call, log_dashboard,
     get_operation_logs, get_mcp_call_logs, get_audit_logs, get_dashboard_logs
@@ -925,6 +925,16 @@ async def mcp_newchat_config():
     # 只包含运行中的实例
     running_instances = [i for i in instances if check_mcp_health(i['id'])]
     config = generate_newchat_config(running_instances)
+    return config
+
+
+@app.get("/api/mcp/claude-config")
+async def mcp_claude_config():
+    """生成Claude Desktop配置"""
+    instances = get_all_instances()
+    # 只包含运行中的实例
+    running_instances = [i for i in instances if check_mcp_health(i['id'])]
+    config = generate_claude_config(running_instances)
     return config
 
 

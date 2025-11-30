@@ -130,6 +130,11 @@ export const DashboardAPI = {
     return response.data;
   },
 
+  getClaudeConfig: async () => {
+    const response = await api.get('/api/mcp/claude-config');
+    return response.data;
+  },
+
   // Logs
   getLogs: async (type: 'operations' | 'mcp-calls' | 'audit' | 'dashboard', lines: number = 100) => {
     const response = await api.get<LogEntry>(`/api/logs/${type}?lines=${lines}`);

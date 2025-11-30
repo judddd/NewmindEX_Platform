@@ -64,18 +64,11 @@ def list_templates() -> dict:
 
 def generate_newchat_config(mcp_instances: list) -> dict:
     """
-    生成NewChat配置 (标准 MCP streamable 模式)
-    
-    Args:
-        mcp_instances: MCP实例列表
-        
-    Returns:
-        dict: NewChat配置格式
+    生成 NewChat 兼容的配置
     """
     config = {"mcpServers": {}}
     
     for instance in mcp_instances:
-        # 生成服务器键名
         server_key = instance["id"].replace("mcp-", "").replace("-", "_")
         
         config["mcpServers"][server_key] = {
@@ -83,6 +76,22 @@ def generate_newchat_config(mcp_instances: list) -> dict:
             "enabled": True,
             "url": instance["endpoint"],
             "name": instance["name"]
+        }
+    
+    return config
+
+
+def generate_claude_config(mcp_instances: list) -> dict:
+    """
+    生成 Claude Desktop 兼容的配置 (HTTP/SSE 模式)
+    """
+    config = {"mcpServers": {}}
+    
+    for instance in mcp_instances:
+        server_key = instance["id"].replace("mcp-", "").replace("-", "_")
+        # Claude Desktop 支持简单的 url 配置用于 SSE
+        config["mcpServers"][server_key] = {
+            "url": instance["endpoint"]
         }
     
     return config

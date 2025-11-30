@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { DashboardAPI } from '../services/api';
 import type { MCPInstance } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge, StatusIndicator } from '../components/ui/common';
-import { Play, Square, Trash2, Plus, X, Copy } from 'lucide-react';
+import { Play, Square, Trash2, Plus, X, Copy, Download } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export const MCPManager = () => {
   const [instances, setInstances] = useState<MCPInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [claudeConfig, setClaudeConfig] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [templates, setTemplates] = useState<any[]>([]);
 
@@ -26,7 +28,6 @@ export const MCPManager = () => {
   const fetchTemplates = async () => {
       try {
           const data = await DashboardAPI.getMCPTemplates();
-          // Convert dictionary to array if necessary
           const templatesList = Array.isArray(data) 
             ? data 
             : Object.entries(data).map(([key, value]: [string, any]) => ({
@@ -60,7 +61,6 @@ export const MCPManager = () => {
   };
 
   const handleCopy = (instance: MCPInstance) => {
-      // Create a "copy" template from the instance
       const template = {
           id: 'copy',
           name: `${instance.name} (Copy)`,
@@ -72,6 +72,16 @@ export const MCPManager = () => {
       setShowCreateModal(true);
   };
 
+  const handleExportConfig = async () => {
+      try {
+          const config = await DashboardAPI.getClaudeConfig();
+          setClaudeConfig(JSON.stringify(config, null, 2));
+          setShowExportModal(true);
+      } catch (e) {
+          alert('获取配置失败');
+      }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -79,9 +89,14 @@ export const MCPManager = () => {
           <h2 className="text-3xl font-bold tracking-tight">MCP 服务</h2>
           <p className="text-muted-foreground">管理 Model Context Protocol (MCP) 服务实例。</p>
         </div>
-        <Button onClick={() => { setSelectedTemplate(null); setShowCreateModal(true); }}>
-          <Plus className="w-4 h-4 mr-2" /> 创建实例
-        </Button>
+        <div className="flex gap-2">
+            <Button variant="secondary" onClick={handleExportConfig}>
+                <Download className="w-4 h-4 mr-2" /> 导出 Claude 配置
+            </Button>
+            <Button onClick={() => { setSelectedTemplate(null); setShowCreateModal(true); }}>
+                <Plus className="w-4 h-4 mr-2" /> 创建实例
+            </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -145,6 +160,13 @@ export const MCPManager = () => {
             initialTemplate={selectedTemplate}
         />
       )}
+
+      {showExportModal && (
+        <ExportConfigModal 
+            config={claudeConfig} 
+            onClose={() => setShowExportModal(false)} 
+        />
+      )}
     </div>
   );
 };
@@ -153,6 +175,36 @@ const ServerIcon = ({className}: {className?: string}) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
 )
 
+const ExportConfigModal = ({ config, onClose }: { config: string, onClose: () => void }) => {
+    const handleCopy = () => {
+        navigator.clipboard.writeText(config);
+        alert('已复制到剪贴板');
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-background rounded-xl border shadow-lg w-full max-w-lg p-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">Claude Desktop 配置</h3>
+                    <button onClick={onClose}><X className="w-4 h-4" /></button>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                    将此配置添加到您的 <code>claude_desktop_config.json</code> 文件中。
+                </p>
+                <pre className="bg-slate-950 text-slate-50 p-4 rounded-md text-xs overflow-auto max-h-[300px] mb-4 font-mono">
+                    {config}
+                </pre>
+                <div className="flex justify-end gap-2">
+                    <Button variant="ghost" onClick={onClose}>关闭</Button>
+                    <Button onClick={handleCopy}>
+                        <Copy className="w-4 h-4 mr-2" /> 复制配置
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const CreateMCPModal = ({ onClose, onCreated, templates, initialTemplate }: { onClose: () => void; onCreated: () => void; templates: any[], initialTemplate?: any }) => {
     const [name, setName] = useState(initialTemplate?.name || '');
     const [type, setType] = useState(initialTemplate?.type || templates[0]?.id || 'elasticsearch');
@@ -160,14 +212,10 @@ const CreateMCPModal = ({ onClose, onCreated, templates, initialTemplate }: { on
     const [configJson, setConfigJson] = useState(initialTemplate?.config ? JSON.stringify(initialTemplate.config, null, 2) : '{}');
     const [loading, setLoading] = useState(false);
 
-    // Effect to update config when template changes (if not copying)
     useEffect(() => {
         if (!initialTemplate && type) {
             const template = templates.find(t => t.id === type);
             if (template && template.config) {
-                // If switching templates, pre-fill config
-                // Don't overwrite if user has typed something custom? 
-                // For simplicity, we overwrite when type changes, assuming user wants the template defaults
                 setConfigJson(JSON.stringify(template.config, null, 2));
                 if (!name) setName(template.name);
             }
@@ -228,7 +276,7 @@ const CreateMCPModal = ({ onClose, onCreated, templates, initialTemplate }: { on
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                 value={type} 
                                 onChange={e => setType(e.target.value)}
-                                disabled={!!initialTemplate} // Disable changing type when copying
+                                disabled={!!initialTemplate}
                             >
                                 {templates.map(t => (
                                     <option key={t.id} value={t.id}>{t.name}</option>
