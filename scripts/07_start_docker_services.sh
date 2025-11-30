@@ -64,6 +64,52 @@ else
 fi
 echo ""
 
+# 导入 MCP 镜像
+echo "📦 检查 MCP 镜像..."
+
+# MCP Elasticsearch
+if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newmind-mcp-elasticsearch:1\.0\.0$"; then
+    MCP_ES_TAR="installers/newmind-mcp-elasticsearch-1.0.0.tar"
+    if [ -f "$MCP_ES_TAR" ]; then
+        echo "📦 导入 MCP Elasticsearch 镜像..."
+        docker load -i "$MCP_ES_TAR"
+        echo "✅ MCP Elasticsearch 镜像导入成功"
+    else
+        echo "⚠️  找不到 MCP Elasticsearch 镜像文件: $MCP_ES_TAR"
+    fi
+else
+    echo "✅ MCP Elasticsearch 镜像 (1.0.0) 已存在"
+fi
+
+# MCP Kibana
+if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newmind-mcp-kibana:1\.0\.0$"; then
+    MCP_KIBANA_TAR="installers/newmind-mcp-kibana-1.0.0.tar"
+    if [ -f "$MCP_KIBANA_TAR" ]; then
+        echo "📦 导入 MCP Kibana 镜像..."
+        docker load -i "$MCP_KIBANA_TAR"
+        echo "✅ MCP Kibana 镜像导入成功"
+    else
+        echo "⚠️  找不到 MCP Kibana 镜像文件: $MCP_KIBANA_TAR"
+    fi
+else
+    echo "✅ MCP Kibana 镜像 (1.0.0) 已存在"
+fi
+
+# MCP NewFlow
+if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newmind-mcp-newflow:1\.0\.0$"; then
+    MCP_NEWFLOW_TAR="installers/newmind-mcp-newflow-1.0.0.tar"
+    if [ -f "$MCP_NEWFLOW_TAR" ]; then
+        echo "📦 导入 MCP NewFlow 镜像..."
+        docker load -i "$MCP_NEWFLOW_TAR"
+        echo "✅ MCP NewFlow 镜像导入成功"
+    else
+        echo "⚠️  找不到 MCP NewFlow 镜像文件: $MCP_NEWFLOW_TAR"
+    fi
+else
+    echo "✅ MCP NewFlow 镜像 (1.0.0) 已存在"
+fi
+echo ""
+
 # 检查docker-compose
 if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null 2>&1; then
     echo "❌ docker-compose未安装"
