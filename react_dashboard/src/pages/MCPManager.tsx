@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { DashboardAPI } from '../services/api';
 import type { MCPInstance } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge, StatusIndicator } from '../components/ui/common';
-import { Play, Square, Trash2, Plus, X, Copy, Download } from 'lucide-react';
+import { Play, Square, Trash2, Plus, X, Copy } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export const MCPManager = () => {
@@ -10,7 +10,7 @@ export const MCPManager = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [claudeConfig, setClaudeConfig] = useState('');
+  const [exportConfig, setExportConfig] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [templates, setTemplates] = useState<any[]>([]);
 
@@ -61,25 +61,17 @@ export const MCPManager = () => {
   };
 
   const handleCopy = (instance: MCPInstance) => {
-      const template = {
-          id: 'copy',
-          name: `${instance.name} (Copy)`,
-          type: instance.type,
-          config: instance.config,
-          description: `Copy of ${instance.name}`
+      const config = {
+          "mcpServers": {
+              [instance.name]: { // 使用实例名作为key
+                  "transport": "streamable", // 暂时保留这个
+                  "url": `http://localhost:${instance.port}/mcp`,
+                  "env": instance.config
+              }
+          }
       };
-      setSelectedTemplate(template);
-      setShowCreateModal(true);
-  };
-
-  const handleExportConfig = async () => {
-      try {
-          const config = await DashboardAPI.getClaudeConfig();
-          setClaudeConfig(JSON.stringify(config, null, 2));
-          setShowExportModal(true);
-      } catch (e) {
-          alert('获取配置失败');
-      }
+      setExportConfig(JSON.stringify(config, null, 2));
+      setShowExportModal(true);
   };
 
   return (
@@ -89,14 +81,9 @@ export const MCPManager = () => {
           <h2 className="text-3xl font-bold tracking-tight">MCP 服务</h2>
           <p className="text-muted-foreground">管理 Model Context Protocol (MCP) 服务实例。</p>
         </div>
-        <div className="flex gap-2">
-            <Button variant="secondary" onClick={handleExportConfig}>
-                <Download className="w-4 h-4 mr-2" /> 导出 Claude 配置
-            </Button>
-            <Button onClick={() => { setSelectedTemplate(null); setShowCreateModal(true); }}>
-                <Plus className="w-4 h-4 mr-2" /> 创建实例
-            </Button>
-        </div>
+        <Button onClick={() => { setSelectedTemplate(null); setShowCreateModal(true); }}>
+            <Plus className="w-4 h-4 mr-2" /> 创建实例
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -163,7 +150,7 @@ export const MCPManager = () => {
 
       {showExportModal && (
         <ExportConfigModal 
-            config={claudeConfig} 
+            config={exportConfig} 
             onClose={() => setShowExportModal(false)} 
         />
       )}
@@ -185,11 +172,11 @@ const ExportConfigModal = ({ config, onClose }: { config: string, onClose: () =>
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-background rounded-xl border shadow-lg w-full max-w-lg p-6">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Claude Desktop 配置</h3>
+                    <h3 className="text-lg font-semibold">MCP 服务配置</h3>
                     <button onClick={onClose}><X className="w-4 h-4" /></button>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                    将此配置添加到您的 <code>claude_desktop_config.json</code> 文件中。
+                    使用此配置连接到该 MCP 服务。
                 </p>
                 <pre className="bg-slate-950 text-slate-50 p-4 rounded-md text-xs overflow-auto max-h-[300px] mb-4 font-mono">
                     {config}
