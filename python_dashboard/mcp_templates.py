@@ -9,9 +9,11 @@ MCP_TEMPLATES = {
         "type": "elasticsearch",
         "description": "MCP Docker容器通过host.docker.internal访问宿主机ES",
         "config": {
-            "es_url": "http://host.docker.internal:9200",
-            "es_username": "elastic",
-            "es_password": "changeme123"
+            "ES_URL": "http://host.docker.internal:9200",
+            "ES_USERNAME": "elastic",
+            "ES_PASSWORD": "changeme123",
+            "MAX_TOKEN_CALL": "8000",
+            "NODE_TLS_REJECT_UNAUTHORIZED": "0"
         }
     },
     "local_es_localhost": {
@@ -19,9 +21,11 @@ MCP_TEMPLATES = {
         "type": "elasticsearch",
         "description": "适用于MCP Node模式或测试环境",
         "config": {
-            "es_url": "http://localhost:9200",
-            "es_username": "elastic",
-            "es_password": "changeme123"
+            "ES_URL": "http://localhost:9200",
+            "ES_USERNAME": "elastic",
+            "ES_PASSWORD": "changeme123",
+            "MAX_TOKEN_CALL": "8000",
+            "NODE_TLS_REJECT_UNAUTHORIZED": "0"
         }
     },
     "local_kibana": {
@@ -29,10 +33,11 @@ MCP_TEMPLATES = {
         "type": "kibana",
         "description": "MCP Docker容器通过host.docker.internal访问宿主机Kibana",
         "config": {
-            "kibana_url": "http://host.docker.internal:5601",
-            "kibana_username": "elastic",
-            "kibana_password": "changeme123",
-            "kibana_space": "default"
+            "KIBANA_URL": "http://host.docker.internal:5601",
+            "KIBANA_USERNAME": "elastic",
+            "KIBANA_PASSWORD": "changeme123",
+            "KIBANA_DEFAULT_SPACE": "default",
+            "NODE_TLS_REJECT_UNAUTHORIZED": "0"
         }
     },
     "local_kibana_localhost": {
@@ -40,10 +45,11 @@ MCP_TEMPLATES = {
         "type": "kibana",
         "description": "适用于MCP Node模式或测试环境",
         "config": {
-            "kibana_url": "http://localhost:5601",
-            "kibana_username": "elastic",
-            "kibana_password": "changeme123",
-            "kibana_space": "default"
+            "KIBANA_URL": "http://localhost:5601",
+            "KIBANA_USERNAME": "elastic",
+            "KIBANA_PASSWORD": "changeme123",
+            "KIBANA_DEFAULT_SPACE": "default",
+            "NODE_TLS_REJECT_UNAUTHORIZED": "0"
         }
     },
     "local_newflow": {
@@ -51,8 +57,9 @@ MCP_TEMPLATES = {
         "type": "newflow",
         "description": "MCP Docker容器通过host.docker.internal访问宿主机NewFlow",
         "config": {
-            "newflow_url": "http://host.docker.internal:5678/api/v1",
-            "newflow_api_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYTg3YzdkOS1kYTk2LTQ3NDMtOGEwOS0wYzBhMWI5YWRiZjYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwMzc4OTYwfQ.AeMI20moNigjQwcMTi8FRaaOgupTuZ3Apso3jNyQg5Q"
+            "NEWFLOW_API_URL": "http://host.docker.internal:5678/api/v1",
+            "NEWFLOW_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYTg3YzdkOS1kYTk2LTQ3NDMtOGEwOS0wYzBhMWI5YWRiZjYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwMzc4OTYwfQ.AeMI20moNigjQwcMTi8FRaaOgupTuZ3Apso3jNyQg5Q",
+            "NODE_TLS_REJECT_UNAUTHORIZED": "0"
         }
     },
     "local_newflow_localhost": {
@@ -60,8 +67,9 @@ MCP_TEMPLATES = {
         "type": "newflow",
         "description": "适用于MCP Node模式或测试环境",
         "config": {
-            "newflow_url": "http://localhost:5678",
-            "newflow_api_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYTg3YzdkOS1kYTk2LTQ3NDMtOGEwOS0wYzBhMWI5YWRiZjYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwMzc4OTYwfQ.AeMI20moNigjQwcMTi8FRaaOgupTuZ3Apso3jNyQg5Q"
+            "NEWFLOW_API_URL": "http://localhost:5678/api/v1",
+            "NEWFLOW_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYTg3YzdkOS1kYTk2LTQ3NDMtOGEwOS0wYzBhMWI5YWRiZjYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwMzc4OTYwfQ.AeMI20moNigjQwcMTi8FRaaOgupTuZ3Apso3jNyQg5Q",
+            "NODE_TLS_REJECT_UNAUTHORIZED": "0"
         }
     },
     "remote_es": {
@@ -69,9 +77,10 @@ MCP_TEMPLATES = {
         "type": "elasticsearch",
         "description": "连接到远程Elasticsearch集群",
         "config": {
-            "es_url": "https://your-es-cluster.example.com:9200",
-            "es_username": "elastic",
-            "es_password": ""
+            "ES_URL": "https://your-es-cluster.example.com:9200",
+            "ES_USERNAME": "elastic",
+            "ES_PASSWORD": "",
+            "MAX_TOKEN_CALL": "8000"
         }
     },
     "production_kibana": {
@@ -79,10 +88,10 @@ MCP_TEMPLATES = {
         "type": "kibana",
         "description": "连接到生产环境Kibana",
         "config": {
-            "kibana_url": "https://your-kibana.example.com:5601",
-            "kibana_username": "elastic",
-            "kibana_password": "",
-            "kibana_space": "default"
+            "KIBANA_URL": "https://your-kibana.example.com:5601",
+            "KIBANA_USERNAME": "elastic",
+            "KIBANA_PASSWORD": "",
+            "KIBANA_DEFAULT_SPACE": "default"
         }
     },
     "local_cmdb": {
@@ -90,10 +99,10 @@ MCP_TEMPLATES = {
         "type": "cmdb",
         "description": "MCP Docker容器连接CMDB配置管理数据库",
         "config": {
-            "cmdb_domain": "https://cmdb-service.example.com",
-            "cmdb_app_id": "",
-            "cmdb_app_secret": "",
-            "cmdb_verify_ssl": "true"
+            "CMDB_DOMAIN": "https://cmdb-service.example.com",
+            "CMDB_APP_ID": "",
+            "CMDB_APP_SECRET": "",
+            "CMDB_VERIFY_SSL": "true"
         }
     },
     "production_cmdb": {
@@ -101,10 +110,10 @@ MCP_TEMPLATES = {
         "type": "cmdb",
         "description": "连接到生产环境CMDB",
         "config": {
-            "cmdb_domain": "https://cmdb-service.example.com",
-            "cmdb_app_id": "",
-            "cmdb_app_secret": "",
-            "cmdb_verify_ssl": "true"
+            "CMDB_DOMAIN": "https://cmdb-service.example.com",
+            "CMDB_APP_ID": "",
+            "CMDB_APP_SECRET": "",
+            "CMDB_VERIFY_SSL": "true"
         }
     }
 }
