@@ -5,9 +5,9 @@ MCP模板预设
 
 MCP_TEMPLATES = {
     "elasticsearch": {
-        "name": "Elasticsearch 集群",
+        "name": "Elasticsearch Cluster",
         "type": "elasticsearch",
-        "description": "连接到 Elasticsearch 集群 (本地或远程)",
+        "description": "Connect to Elasticsearch Cluster (Local or Remote)",
         "config": {
             "ES_URL": "http://host.docker.internal:9200",
             "ES_USERNAME": "elastic",
@@ -17,9 +17,9 @@ MCP_TEMPLATES = {
         }
     },
     "kibana": {
-        "name": "Kibana 服务",
+        "name": "Kibana Service",
         "type": "kibana",
-        "description": "连接到 Kibana 服务 (本地或远程)",
+        "description": "Connect to Kibana Service (Local or Remote)",
         "config": {
             "KIBANA_URL": "http://host.docker.internal:5601",
             "KIBANA_USERNAME": "elastic",
@@ -29,19 +29,21 @@ MCP_TEMPLATES = {
         }
     },
     "newflow": {
-        "name": "NewFlow 工作流",
+        "name": "NewFlow Workflow",
         "type": "newflow",
-        "description": "连接到 NewFlow 工作流引擎",
+        "description": "Connect to NewFlow Workflow Engine",
         "config": {
             "NEWFLOW_API_URL": "http://host.docker.internal:5678/api/v1",
             "NEWFLOW_API_KEY": "your_api_key_here",
+            "NEWFLOW_WEBHOOK_USERNAME": "username",
+            "NEWFLOW_WEBHOOK_PASSWORD": "password",
             "NODE_TLS_REJECT_UNAUTHORIZED": "0"
         }
     },
     "cmdb": {
-        "name": "CMDB 配置管理",
+        "name": "CMDB Service",
         "type": "cmdb",
-        "description": "连接到 CMDB 配置管理数据库",
+        "description": "Connect to CMDB Configuration Database",
         "config": {
             "CMDB_DOMAIN": "https://cmdb-service.example.com",
             "CMDB_APP_ID": "your_app_id",
@@ -69,7 +71,12 @@ def generate_newchat_config(mcp_instances: list) -> dict:
     config = {"mcpServers": {}}
     
     for instance in mcp_instances:
-        server_key = instance["id"].replace("mcp-", "").replace("-", "_")
+        # 优先使用实例名称作为 key (如果名称是英文且无空格，或者进行 slugify)
+        # 这里简单处理：如果名字全是 ASCII，就用名字，否则用 ID
+        if all(ord(c) < 128 for c in instance["name"]):
+            server_key = instance["name"].replace(" ", "_").lower()
+        else:
+            server_key = instance["id"].replace("mcp-", "").replace("-", "_")
         
         config["mcpServers"][server_key] = {
             "transport": "streamable",
@@ -88,7 +95,12 @@ def generate_claude_config(mcp_instances: list) -> dict:
     config = {"mcpServers": {}}
     
     for instance in mcp_instances:
-        server_key = instance["id"].replace("mcp-", "").replace("-", "_")
+        # 优先使用实例名称作为 key (如果名称是英文且无空格，或者进行 slugify)
+        if all(ord(c) < 128 for c in instance["name"]):
+            server_key = instance["name"].replace(" ", "_").lower()
+        else:
+            server_key = instance["id"].replace("mcp-", "").replace("-", "_")
+            
         # Claude Desktop 支持简单的 url 配置用于 SSE
         config["mcpServers"][server_key] = {
             "url": instance["endpoint"]
