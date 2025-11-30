@@ -61,10 +61,17 @@ export const MCPManager = () => {
   };
 
   const handleCopy = (instance: MCPInstance) => {
+      // 使用更友好的 key (如果名称是英文)
+      let key = instance.id;
+      if (/^[a-zA-Z0-9\s\-_]+$/.test(instance.name)) {
+          key = instance.name.toLowerCase().replace(/\s+/g, '_');
+      }
+
       const config = {
           "mcpServers": {
-              [instance.name]: { // 使用实例名作为key
-                  "transport": "streamable", // 暂时保留这个
+              [key]: { 
+                  "transport": "streamable",
+                  "enabled": true,
                   "url": `http://localhost:${instance.port}/mcp`,
                   "env": instance.config
               }
