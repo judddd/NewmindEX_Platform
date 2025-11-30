@@ -29,30 +29,7 @@ echo "📋 从 config.yaml 读取版本号:"
 echo "   Elasticsearch: $ES_VERSION"
 echo "   Kibana: $KIBANA_VERSION"
 echo "   Logstash: $LOGSTASH_VERSION"
-echo "   Newflow: $NEWFLOW_VERSION"
-
-# 导入 NewFlow 镜像（如果尚未导入）
-echo "📦 检查 NewFlow 镜像..."
-# 从 config.yaml 读取需要的版本，或使用默认版本
-REQUIRED_VERSION=$(grep -A2 "newflow:" config.yaml | grep "version:" | awk '{print $2}' | tr -d '"' | head -1)
-if [ -z "$REQUIRED_VERSION" ]; then
-    REQUIRED_VERSION="1.0.3"
-fi
-
-# 检查是否已有所需版本的镜像
-if ! docker images --format "{{.Repository}}:{{.Tag}}" | grep -qE "^newflow:${REQUIRED_VERSION}$"; then
-    NEWFLOW_TAR="installers/newflow-${REQUIRED_VERSION}.tar"
-    if [ -f "$NEWFLOW_TAR" ]; then
-        echo "📦 导入 NewFlow 镜像: $NEWFLOW_TAR (版本 ${REQUIRED_VERSION})"
-        docker load -i "$NEWFLOW_TAR"
-        echo "✅ NewFlow 镜像导入成功"
-    else
-        echo "⚠️  找不到 NewFlow 镜像文件: $NEWFLOW_TAR"
-        echo "   将尝试从 Docker Hub 拉取（可能失败）"
-    fi
-else
-    echo "✅ NewFlow 镜像 (${REQUIRED_VERSION}) 已存在，跳过导入"
-fi
+echo "   Newflow: $NEWFLOW_VERSION (本地运行，无需 Docker 镜像)"
 echo ""
 
 # 导入 NewFlow Docs 镜像（如果尚未导入）
@@ -100,14 +77,6 @@ else
     COMPOSE_CMD="docker-compose"
 fi
 
-# 启动前检查 Newflow 初始化状态
-echo "🔍 检查 Newflow 初始化状态..."
-if [ -f "scripts/check_newflow_init.sh" ]; then
-    bash scripts/check_newflow_init.sh
-else
-    echo "⚠️  跳过 Newflow 初始化检查（脚本不存在）"
-fi
-echo ""
 
 echo "📦 启动容器..."
 $COMPOSE_CMD up -d
@@ -216,21 +185,12 @@ echo ""
 echo "✅ Docker服务启动完成！"
 echo ""
 
-# Newflow 启动后自动配置
-echo "🔧 等待 Newflow 初始化并自动配置..."
-if [ -f "scripts/post_newflow_init.sh" ]; then
-    # 在后台运行，不阻塞启动流程
-    bash scripts/post_newflow_init.sh &
-    echo "ℹ️  Newflow 初始化检查已在后台运行"
-else
-    echo "⚠️  跳过 Newflow 初始化后检查（脚本不存在）"
-fi
-echo ""
 
-echo "🔗 服务访问地址："
+echo "🔗 Docker 服务访问地址："
 echo "   Elasticsearch: http://localhost:${ES_PORT_1:-9200} (elastic / ${ELASTIC_PASSWORD:-changeme123})"
 echo "   Kibana: http://localhost:${KIBANA_PORT:-5601}"
 echo "   Logstash: http://localhost:${LOGSTASH_PORT:-5044}"
-echo "   NewFlow: http://localhost:${NEWFLOW_PORT:-5678}"
-echo "   NewFlow API 文档: http://localhost:${NEWFLOW_DOCS_PORT:-8081}"
-echo "   NewChat 文档: http://localhost:${NEWCHAT_DOCS_PORT:-8082}"
+echo "   NewFlow 文档: http://localhost:${NEWFLOW_DOCS_PORT:-8001}"
+echo "   NewChat 文档: http://localhost:${NEWCHAT_DOCS_PORT:-8002}"
+echo ""
+echo "ℹ️  注意: NewFlow 和 NewRAG 现在作为本地服务运行，使用 start_all.sh 启动"
