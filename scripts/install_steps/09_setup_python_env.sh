@@ -101,9 +101,17 @@ create_venv() {
 install_dependencies() {
     log_info "安装 Python 依赖..."
     
-    # 确保虚拟环境已激活
+    # 显式激活虚拟环境
+    if [ -f ".venv/bin/activate" ]; then
+        source .venv/bin/activate
+    else
+        log_error "找不到虚拟环境激活脚本 (.venv/bin/activate)"
+        return 1
+    fi
+    
+    # 再次检查是否激活成功
     if [ -z "$VIRTUAL_ENV" ]; then
-        log_error "虚拟环境未激活"
+        log_error "虚拟环境激活失败"
         return 1
     fi
     
