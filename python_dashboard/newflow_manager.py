@@ -155,6 +155,8 @@ def start_newflow():
         env = os.environ.copy()
         env["PORT"] = str(NEWFLOW_PORT)
         env["N8N_PORT"] = str(NEWFLOW_PORT)
+        env["N8N_LISTEN_ADDRESS"] = "0.0.0.0"  # 确保对外暴露
+        env["N8N_HOST"] = "0.0.0.0"            # 某些版本可能需要这个
         env["N8N_USER_FOLDER"] = str(NEWFLOW_DIR / "data")
         
         # 确保 data 目录存在

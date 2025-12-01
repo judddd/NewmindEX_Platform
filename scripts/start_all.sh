@@ -175,6 +175,22 @@ else
     SERVICES_TO_START+=("minio")
 fi
 
+# 检查 NewFlow 文档
+if docker ps --format '{{.Names}}' | grep -q '^newflow_docs$'; then
+    SERVICES_RUNNING+=("NewFlow Docs")
+    echo "   ✅ NewFlow 文档服务已运行，跳过启动"
+else
+    SERVICES_TO_START+=("newflow_docs")
+fi
+
+# 检查 NewChat 文档
+if docker ps --format '{{.Names}}' | grep -q '^newchat_docs$'; then
+    SERVICES_RUNNING+=("NewChat Docs")
+    echo "   ✅ NewChat 文档服务已运行，跳过启动"
+else
+    SERVICES_TO_START+=("newchat_docs")
+fi
+
 # 根据需要启动服务
 if [ ${#SERVICES_TO_START[@]} -eq 0 ]; then
     echo "✅ 所有Docker服务都已运行，无需启动"

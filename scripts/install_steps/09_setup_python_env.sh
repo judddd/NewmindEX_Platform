@@ -39,7 +39,10 @@ run_step() {
     fi
     
     # 安装依赖
-    if ! install_dependencies; then
+    # 如果是解压的离线包，通常已经包含了依赖，跳过安装
+    if [ -f "../installers/dashboard_venv.tar.gz" ]; then
+        log_info "使用离线环境，跳过依赖安装步骤"
+    elif ! install_dependencies; then
         log_error "安装依赖失败"
         cd ..
         mark_step_failed "$STEP_ID" "依赖安装失败"
@@ -60,6 +63,25 @@ run_step() {
 # 创建虚拟环境
 create_venv() {
     log_info "创建 Python 虚拟环境..."
+    
+    # 0. 优先尝试离线解压
+    local offline_venv="../installers/dashboard_venv.tar.gz"
+    if [ -f "$offline_venv" ]; then
+        log_info "发现离线环境包: $offline_venv"
+        
+        if [ -d ".venv" ]; then
+            log_warn "虚拟环境已存在，正在覆盖..."
+            rm -rf .venv
+        fi
+        
+        log_info "解压离线环境..."
+        if tar -xzf "$offline_venv"; then
+            log_success "离线环境解压成功"
+            return 0
+        else
+            log_error "离线包解压失败，将尝试常规创建"
+        fi
+    fi
     
     # 确保 uv 在 PATH 中
     export PATH="$HOME/.local/bin:$PATH"

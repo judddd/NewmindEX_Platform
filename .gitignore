@@ -5,6 +5,7 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
+*.zip
 # Node
 node_modules/
 *.log
@@ -31,15 +32,11 @@ kibana_data/
 logstash_data/
 minio_data/
 
-# NewFlow 运行时数据
-newflow-main/data/
-newflow-main/*.log
+# NewFlow 运行时及源码 (从 installer 解压)
+newflow-main/
 
-# NewRAG 运行时数据
-newrag-main/data/
-newrag-main/logs/
-newrag-main/uploads/
-newrag-main/*.log
+# NewRAG 运行时及源码 (从 installer 解压)
+newrag-main/
 
 # Environment
 .env
@@ -99,4 +96,3 @@ LOGGING_IMPLEMENTATION_SUMMARY.txt
 # Keep plan files
 !.plan.md
 !mcp-.plan.md
-
