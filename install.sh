@@ -16,7 +16,7 @@ source scripts/lib/checks.sh
 source scripts/lib/state.sh
 
 # 总步骤数
-    export TOTAL_STEPS=13
+    export TOTAL_STEPS=14
     
     # ==================== 主函数 ====================
 
@@ -43,6 +43,7 @@ main() {
         "03_install_docker:安装Docker Desktop"
         "04_install_nodejs_uv:安装Node.js和UV"
         "05_install_lmstudio:安装LM Studio"
+        "05b_install_libreoffice:安装LibreOffice"
         "06_install_newchat:安装NewChat"
         "07_copy_models:复制AI模型(135GB)"
         "08_load_docker_images:加载Docker镜像"
