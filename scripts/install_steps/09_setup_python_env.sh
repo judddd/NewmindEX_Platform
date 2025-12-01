@@ -115,10 +115,16 @@ install_dependencies() {
         return 1
     fi
     
-    # 检查 requirements.txt
-    if [ ! -f "requirements.txt" ]; then
-        log_error "找不到 requirements.txt"
-        return 1
+    # 确定 requirements.txt 路径
+    local req_file="requirements.txt"
+    if [ ! -f "$req_file" ]; then
+        if [ -f "../installers/python_deps/requirements.txt" ]; then
+            req_file="../installers/python_deps/requirements.txt"
+            log_info "使用安装包中的依赖清单: $req_file"
+        else
+            log_error "找不到 requirements.txt (当前目录和 installers 目录均未找到)"
+            return 1
+        fi
     fi
     
     # 确保 uv 可用
@@ -131,7 +137,7 @@ install_dependencies() {
     # 直接联网安装
     log_info "从 PyPI 在线安装依赖..."
     # 添加 --force-reinstall 确保依赖完整性
-    if uv pip install --force-reinstall -r requirements.txt 2>&1 | tee -a "$LOG_FILE"; then
+    if uv pip install --force-reinstall -r "$req_file" 2>&1 | tee -a "$LOG_FILE"; then
         UV_STATUS=${PIPESTATUS[0]}
         if [ $UV_STATUS -eq 0 ]; then
             log_success "依赖安装完成"
