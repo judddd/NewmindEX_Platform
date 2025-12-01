@@ -308,15 +308,23 @@ verify_step() {
     # 检查端口
     echo -e "${CYAN}端口监听状态:${NC}"
     
-    for port_info in "9200:Elasticsearch" "5601:Kibana" "5678:NewFlow" "80:Dashboard"; do
+    # 获取实际端口配置
+    local dash_port=${DASHBOARD_PORT:-8000}
+    
+    for port_info in "9200:Elasticsearch" "5601:Kibana" "5678:NewFlow" "$dash_port:Dashboard"; do
         local port=$(echo $port_info | cut -d: -f1)
         local service=$(echo $port_info | cut -d: -f2)
         
         if lsof -i :$port > /dev/null 2>&1; then
             log_success "  ✓ $service (:$port)"
         else
-            log_warn "  ✗ $service (:$port) 未监听"
-            all_ok=false
+            # 再次尝试检查（有些服务绑定 0.0.0.0 可能 lsof 显示不同）
+            if nc -z localhost $port 2>/dev/null; then
+                log_success "  ✓ $service (:$port)"
+            else
+                log_warn "  ✗ $service (:$port) 未监听"
+                all_ok=false
+            fi
         fi
     done
     

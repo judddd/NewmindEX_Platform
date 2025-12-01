@@ -12,69 +12,66 @@ cd "$(dirname "$0")/.."
 
 # 构建ES MCP Server
 if [ -d "mcp_tool/mcp-server-elasticsearch-sl" ]; then
-    echo "📦 构建 Elasticsearch MCP Server..."
-    cd mcp_tool/mcp-server-elasticsearch-sl
-    
-    if [ ! -d "node_modules" ]; then
-        echo "   安装依赖..."
-        npm install
-    fi
-    
-    if [ ! -d "dist" ] || [ ! -f "dist/index.js" ]; then
+    if [ -d "mcp_tool/mcp-server-elasticsearch-sl/dist" ] && [ -f "mcp_tool/mcp-server-elasticsearch-sl/dist/index.js" ]; then
+        echo "✅ Elasticsearch MCP Server 已构建"
+    else
+        echo "📦 构建 Elasticsearch MCP Server..."
+        cd mcp_tool/mcp-server-elasticsearch-sl
+        
+        if [ ! -d "node_modules" ]; then
+            echo "   安装依赖..."
+            npm install
+        fi
+        
         echo "   编译TypeScript..."
         npm run build
-    else
-        echo "   ✅ 已构建，跳过"
+        cd ../..
+        echo "✅ Elasticsearch MCP Server构建完成"
     fi
-    
-    cd ../..
-    echo "✅ Elasticsearch MCP Server构建完成"
 else
     echo "⚠️  Elasticsearch MCP Server目录不存在"
 fi
 
 # 构建Kibana MCP Server
 if [ -d "mcp_tool/mcp-server-kibana" ]; then
-    echo "📦 构建 Kibana MCP Server..."
-    cd mcp_tool/mcp-server-kibana
-    
-    if [ ! -d "node_modules" ]; then
-        echo "   安装依赖..."
-        npm install
-    fi
-    
-    if [ ! -d "dist" ] || [ ! -f "dist/index.js" ]; then
+    if [ -d "mcp_tool/mcp-server-kibana/dist" ] && [ -f "mcp_tool/mcp-server-kibana/dist/index.js" ]; then
+        echo "✅ Kibana MCP Server 已构建"
+    else
+        echo "📦 构建 Kibana MCP Server..."
+        cd mcp_tool/mcp-server-kibana
+        
+        if [ ! -d "node_modules" ]; then
+            echo "   安装依赖..."
+            npm install
+        fi
+        
         echo "   编译TypeScript..."
         npm run build
-    else
-        echo "   ✅ 已构建，跳过"
+        cd ../..
+        echo "✅ Kibana MCP Server构建完成"
     fi
-    
-    cd ../..
-    echo "✅ Kibana MCP Server构建完成"
 else
     echo "⚠️  Kibana MCP Server目录不存在"
 fi
 
 # 构建NewFlow MCP Server
 if [ -d "mcp_tool/newflow-mcp-server" ]; then
-    echo "📦 构建 NewFlow MCP Server..."
-    cd mcp_tool/newflow-mcp-server
-    
-    if [ ! -d "node_modules" ]; then
-        echo "   安装依赖..."
-        npm install
-    fi
-    
-    if [ ! -d "build" ] || [ ! -f "build/index.js" ]; then
+    if [ -d "mcp_tool/newflow-mcp-server/build" ] && [ -f "mcp_tool/newflow-mcp-server/build/index.js" ]; then
+        echo "✅ NewFlow MCP Server 已构建"
+    else
+        echo "📦 构建 NewFlow MCP Server..."
+        cd mcp_tool/newflow-mcp-server
+        
+        if [ ! -d "node_modules" ]; then
+            echo "   安装依赖..."
+            npm install
+        fi
+        
         echo "   编译TypeScript..."
         npm run build
-    else
-        echo "   ✅ 已构建，跳过"
+        cd ../..
+        echo "✅ NewFlow MCP Server构建完成"
     fi
-    
-    cd ../..
-    echo "✅ NewFlow MCP Server构建完成"
 else
     echo "⚠️  NewFlow MCP Server目录不存在"
 fi
