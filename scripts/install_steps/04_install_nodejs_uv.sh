@@ -132,10 +132,29 @@ install_uv() {
     if [ -f "installers/system/uv-installer.sh" ]; then
         log_info "发现 UV 安装脚本，正在运行..."
         if sh installers/system/uv-installer.sh; then
-             # 添加到PATH (标准安装路径)
+             # 添加到PATH (当前会话)
             export PATH="$HOME/.local/bin:$PATH"
+            
+            # 添加到 shell 配置文件 (永久生效)
+            local shell_rc=""
+            if [ -n "$ZSH_VERSION" ]; then
+                shell_rc="$HOME/.zshrc"
+            elif [ -n "$BASH_VERSION" ]; then
+                shell_rc="$HOME/.bashrc"
+            fi
+            
+            if [ -n "$shell_rc" ] && [ -f "$shell_rc" ]; then
+                if ! grep -q "/.local/bin" "$shell_rc" 2>/dev/null; then
+                    echo '' >> "$shell_rc"
+                    echo '# UV package manager' >> "$shell_rc"
+                    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$shell_rc"
+                    log_info "已添加 UV 到 $shell_rc"
+                fi
+            fi
+            
             if command -v uv &> /dev/null; then
                 log_success "UV 安装完成: $(uv --version)"
+                log_info "提示: 如需在新终端使用 uv，请运行: source $shell_rc"
                 return 0
             fi
         else
@@ -176,8 +195,25 @@ install_uv() {
             cp "$uv_bin" "$HOME/.local/bin/uv"
             chmod +x "$HOME/.local/bin/uv"
             
-            # 添加到PATH
+            # 添加到PATH (当前会话)
             export PATH="$HOME/.local/bin:$PATH"
+            
+            # 添加到 shell 配置文件 (永久生效)
+            local shell_rc=""
+            if [ -n "$ZSH_VERSION" ]; then
+                shell_rc="$HOME/.zshrc"
+            elif [ -n "$BASH_VERSION" ]; then
+                shell_rc="$HOME/.bashrc"
+            fi
+            
+            if [ -n "$shell_rc" ] && [ -f "$shell_rc" ]; then
+                if ! grep -q "/.local/bin" "$shell_rc" 2>/dev/null; then
+                    echo '' >> "$shell_rc"
+                    echo '# UV package manager' >> "$shell_rc"
+                    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$shell_rc"
+                    log_info "已添加 UV 到 $shell_rc"
+                fi
+            fi
             
             # 清理临时目录
             rm -rf "$temp_dir"
@@ -186,7 +222,9 @@ install_uv() {
                 local version=$(uv --version 2>&1)
                 log_success "UV 安装完成: $version"
                 log_info "已安装到: $HOME/.local/bin/uv"
-                log_info "请确保 ~/.local/bin 在您的 PATH 中"
+                if [ -n "$shell_rc" ]; then
+                    log_info "提示: 如需在新终端使用 uv，请运行: source $shell_rc"
+                fi
                 return 0
             else
                 log_error "UV 安装后未能找到命令"
