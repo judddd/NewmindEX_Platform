@@ -55,14 +55,8 @@ run_step() {
 
     cd "$target_dir" || return 1
 
-    # 2. 配置 Python 后端 (优先使用离线环境)
-    local offline_venv="installers/newrag_venv.tar.gz"
-    
-    if [ -f "$offline_venv" ] && [ ! -d ".venv" ]; then
-        log_info "发现离线 Python 环境包，正在解压..."
-        tar -xzf "$offline_venv"
-        log_success "离线 Python 环境已部署"
-    elif [ -d ".venv" ] && [ -f ".venv/bin/python" ] && [ "$force_install" != "true" ]; then
+    # 2. 配置 Python 后端（联网安装）
+    if [ -d ".venv" ] && [ -f ".venv/bin/python" ] && [ "$force_install" != "true" ]; then
          log_info "Python 环境已存在，跳过配置"
     else
         log_info "配置 NewRAG 后端 (uv sync)..."
@@ -71,10 +65,25 @@ run_step() {
             cd ..
             return 1
         fi
-        if ! uv sync; then
-            log_error "NewRAG 后端依赖安装失败"
-            cd ..
-            return 1
+        
+        # 设置超时时间（防止大包下载断开）
+        export UV_HTTP_TIMEOUT=300
+        
+        # 直接联网安装
+        log_info "从 PyPI 在线安装依赖..."
+        if uv sync; then
+            log_success "NewRAG 后端依赖安装完成"
+        else
+            log_warn "官方源下载失败，尝试切换到清华镜像源..."
+            export UV_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
+            
+            if uv sync; then
+                log_success "NewRAG 后端依赖安装完成 (镜像源)"
+            else
+                log_error "NewRAG 后端依赖安装失败"
+                cd ..
+                return 1
+            fi
         fi
     fi
     
@@ -109,6 +118,15 @@ run_step() {
                 log_error "未找到 npm 命令"
                 cd ../..
                 return 1
+            fi
+            
+            # 自动修复 npm 缓存权限
+            if [ -d "$HOME/.npm" ]; then
+                local npm_owner=$(stat -f '%u' "$HOME/.npm" 2>/dev/null || stat -c '%u' "$HOME/.npm" 2>/dev/null)
+                if [ "$npm_owner" != "$(id -u)" ]; then
+                    log_warn "检测到 npm 缓存权限问题，尝试修复..."
+                    sudo chown -R $(id -u):$(id -g) "$HOME/.npm" 2>/dev/null || log_warn "自动修复失败，请手动运行: sudo chown -R \$(id -u) ~/.npm"
+                fi
             fi
 
             if ! npm install; then

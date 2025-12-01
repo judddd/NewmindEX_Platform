@@ -85,14 +85,18 @@ ai_models:
   base_path: "installers/models"
   runtime_path: "~/.lmstudio/models"
   models: []  # 不再预置模型，请使用 LM Studio 手动下载
-    # - name: "Qwen3-Coder-30B"
-    #   path: "installers/models/qwen3-coder-30b"
+    # - name: "Qwen3-VL-30B"
+    #   path: "installers/models/qwen3-vl-30b"
     #   size: "30GB"
-    #   description: "代码生成和补全专用模型"
+    #   description: "用于多模态视觉理解和代码生成"
     # - name: "Qwen3-Next-80B"
     #   path: "installers/models/qwen3-next-80b"
     #   size: "42GB"
-    #   description: "最强性能通用模型"
+    #   description: "用于通用对话、逻辑推理和复杂任务"
+    # - name: "text-embedding-qwen3-embedding-4b"
+    #   type: "embedding"
+    #   size: "4GB"
+    #   description: "用于 RAG 知识库向量化"
 
 # Python依赖
 python:

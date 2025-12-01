@@ -39,10 +39,7 @@ run_step() {
     fi
     
     # 安装依赖
-    # 如果是解压的离线包，通常已经包含了依赖，跳过安装
-    if [ -f "../installers/dashboard_venv.tar.gz" ]; then
-        log_info "使用离线环境，跳过依赖安装步骤"
-    elif ! install_dependencies; then
+    if ! install_dependencies; then
         log_error "安装依赖失败"
         cd ..
         mark_step_failed "$STEP_ID" "依赖安装失败"
@@ -63,25 +60,6 @@ run_step() {
 # 创建虚拟环境
 create_venv() {
     log_info "创建 Python 虚拟环境..."
-    
-    # 0. 优先尝试离线解压
-    local offline_venv="../installers/dashboard_venv.tar.gz"
-    if [ -f "$offline_venv" ]; then
-        log_info "发现离线环境包: $offline_venv"
-        
-        if [ -d ".venv" ]; then
-            log_warn "虚拟环境已存在，正在覆盖..."
-            rm -rf .venv
-        fi
-        
-        log_info "解压离线环境..."
-        if tar -xzf "$offline_venv"; then
-            log_success "离线环境解压成功"
-            return 0
-        else
-            log_error "离线包解压失败，将尝试常规创建"
-        fi
-    fi
     
     # 确保 uv 在 PATH 中
     export PATH="$HOME/.local/bin:$PATH"
@@ -121,39 +99,41 @@ create_venv() {
 
 # 安装依赖
 install_dependencies() {
-    log_info "安装 Python 依赖（离线模式）..."
+    log_info "安装 Python 依赖..."
     
-    # 确保 uv 在 PATH 中
+    # 确保虚拟环境已激活
+    if [ -z "$VIRTUAL_ENV" ]; then
+        log_error "虚拟环境未激活"
+        return 1
+    fi
+    
+    # 检查 requirements.txt
+    if [ ! -f "requirements.txt" ]; then
+        log_error "找不到 requirements.txt"
+        return 1
+    fi
+    
+    # 确保 uv 可用
     export PATH="$HOME/.local/bin:$PATH"
+    if ! command -v uv &> /dev/null; then
+        log_error "找不到 uv"
+        return 1
+    fi
     
-    # 激活虚拟环境
-    source .venv/bin/activate
-    
-    # 离线安装：优先使用本地wheels
-    if [ -d "../installers/python_deps/wheels" ] && [ -n "$(ls -A ../installers/python_deps/wheels/*.whl 2>/dev/null)" ]; then
-        log_info "从本地 wheels 安装依赖（完全离线）..."
-        
-        # 使用 uv pip install 安装
-        # 使用 PIPESTATUS 获取 uv 的返回值，而不是 tee 的
-        if uv pip install --no-index --find-links=../installers/python_deps/wheels -e . 2>&1 | tee -a "$LOG_FILE"; then
-            # 检查 uv 的退出码 (Bash特有)
-            UV_STATUS=${PIPESTATUS[0]}
-            if [ $UV_STATUS -eq 0 ]; then
-                log_success "依赖安装完成（离线）"
-                return 0
-            else
-                log_error "本地 wheels 安装失败 (uv exit code: $UV_STATUS)"
-                log_error "请确保 installers/python_deps/wheels/ 包含所有依赖"
-                return 1
-            fi
+    # 直接联网安装
+    log_info "从 PyPI 在线安装依赖..."
+    # 添加 --force-reinstall 确保依赖完整性
+    if uv pip install --force-reinstall -r requirements.txt 2>&1 | tee -a "$LOG_FILE"; then
+        UV_STATUS=${PIPESTATUS[0]}
+        if [ $UV_STATUS -eq 0 ]; then
+            log_success "依赖安装完成"
+            return 0
         else
-            # 如果 tee 失败也会走这里
-            log_error "安装过程发生错误 (可能是日志写入失败)"
+            log_error "在线安装失败 (uv exit code: $UV_STATUS)"
             return 1
         fi
     else
-        log_error "找不到本地 wheels 目录或目录为空"
-        log_error "路径: installers/python_deps/wheels/"
+        log_error "在线安装过程发生错误"
         return 1
     fi
 }
