@@ -44,13 +44,14 @@ else
 fi
 
 # 使用uv初始化虚拟环境和安装依赖
-echo "📦 安装Python依赖..."
 if [ ! -d ".venv" ]; then
+    echo "📦 创建虚拟环境..."
     uv venv
+    echo "📦 安装Python依赖..."
+    uv pip install -e .
+else
+    echo "✅ Python环境已存在，跳过依赖安装"
 fi
-
-# 安装依赖
-uv pip install -e .
 
 echo "✅ Python项目初始化完成！"
 echo "   虚拟环境位置: python_dashboard/.venv"

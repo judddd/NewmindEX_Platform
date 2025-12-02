@@ -95,7 +95,16 @@ run_step() {
     # 安装 pnpm
     if ! command -v pnpm &> /dev/null; then
         log_info "安装 pnpm..."
-        npm install -g pnpm
+        npm install -g pnpm@10.12.1
+    else
+        # 检查 pnpm 版本，确保 >= 10.2.1
+        local pnpm_ver=$(pnpm -v)
+        local pnpm_major=$(echo "$pnpm_ver" | cut -d. -f1)
+        
+        if [ "$pnpm_major" -lt 10 ]; then
+            log_warn "当前 pnpm 版本 ($pnpm_ver) 低于 10.x，正在升级到 10.12.1..."
+            npm install -g pnpm@10.12.1
+        fi
     fi
     
     log_success "pnpm 版本: $(pnpm -v)"

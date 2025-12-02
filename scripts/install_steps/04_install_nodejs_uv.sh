@@ -117,6 +117,29 @@ install_nodejs() {
     fi
 }
 
+# 配置 UV 环境变量
+setup_uv_env() {
+    # 添加到PATH (当前会话)
+    export PATH="$HOME/.local/bin:$PATH"
+    
+    # 添加到 shell 配置文件 (永久生效)
+    local shell_rc=""
+    if [ -n "$ZSH_VERSION" ]; then
+        shell_rc="$HOME/.zshrc"
+    elif [ -n "$BASH_VERSION" ]; then
+        shell_rc="$HOME/.bashrc"
+    fi
+    
+    if [ -n "$shell_rc" ] && [ -f "$shell_rc" ]; then
+        if ! grep -q "/.local/bin" "$shell_rc" 2>/dev/null; then
+            echo '' >> "$shell_rc"
+            echo '# UV package manager' >> "$shell_rc"
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$shell_rc"
+            log_info "已添加 UV 到 $shell_rc"
+        fi
+    fi
+}
+
 # 安装UV
 install_uv() {
     log_info "检查 UV..."
@@ -128,41 +151,7 @@ install_uv() {
         return 0
     fi
     
-    # 查找 UV 安装方式 (优先使用 installer 脚本)
-    if [ -f "installers/system/uv-installer.sh" ]; then
-        log_info "发现 UV 安装脚本，正在运行..."
-        if sh installers/system/uv-installer.sh; then
-             # 添加到PATH (当前会话)
-            export PATH="$HOME/.local/bin:$PATH"
-            
-            # 添加到 shell 配置文件 (永久生效)
-            local shell_rc=""
-            if [ -n "$ZSH_VERSION" ]; then
-                shell_rc="$HOME/.zshrc"
-            elif [ -n "$BASH_VERSION" ]; then
-                shell_rc="$HOME/.bashrc"
-            fi
-            
-            if [ -n "$shell_rc" ] && [ -f "$shell_rc" ]; then
-                if ! grep -q "/.local/bin" "$shell_rc" 2>/dev/null; then
-                    echo '' >> "$shell_rc"
-                    echo '# UV package manager' >> "$shell_rc"
-                    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$shell_rc"
-                    log_info "已添加 UV 到 $shell_rc"
-                fi
-            fi
-            
-            if command -v uv &> /dev/null; then
-                log_success "UV 安装完成: $(uv --version)"
-                log_info "提示: 如需在新终端使用 uv，请运行: source $shell_rc"
-                return 0
-            fi
-        else
-            log_warn "UV 安装脚本执行失败，尝试寻找压缩包..."
-        fi
-    fi
-
-    # 查找UV二进制压缩包
+    # 查找UV二进制压缩包 (优先使用离线包)
     local uv_tarball=""
     if [ -f "installers/uv-aarch64-apple-darwin.tar.gz" ]; then
         uv_tarball="installers/uv-aarch64-apple-darwin.tar.gz"
@@ -173,73 +162,65 @@ install_uv() {
         uv_tarball=$(find installers -name "uv-*.tar.gz" 2>/dev/null | head -1)
     fi
     
-    if [ -z "$uv_tarball" ]; then
-        log_error "找不到 UV 安装包"
-        return 1
-    fi
-    
-    log_info "发现 UV 安装包: $uv_tarball"
-    log_info "解压并安装 UV..."
-    
-    # 创建临时目录
-    local temp_dir=$(mktemp -d)
-    
-    # 解压
-    if tar -xzf "$uv_tarball" -C "$temp_dir"; then
-        # 查找uv可执行文件
-        local uv_bin=$(find "$temp_dir" -name "uv" -type f -perm +111 2>/dev/null | head -1)
+    if [ -n "$uv_tarball" ]; then
+        log_info "发现 UV 离线安装包: $uv_tarball"
+        log_info "解压并安装 UV..."
         
-        if [ -n "$uv_bin" ]; then
-            # 安装到用户目录
-            mkdir -p "$HOME/.local/bin"
-            cp "$uv_bin" "$HOME/.local/bin/uv"
-            chmod +x "$HOME/.local/bin/uv"
+        # 创建临时目录
+        local temp_dir=$(mktemp -d)
+        
+        # 解压
+        if tar -xzf "$uv_tarball" -C "$temp_dir"; then
+            # 查找uv可执行文件
+            local uv_bin=$(find "$temp_dir" -name "uv" -type f -perm +111 2>/dev/null | head -1)
             
-            # 添加到PATH (当前会话)
-            export PATH="$HOME/.local/bin:$PATH"
-            
-            # 添加到 shell 配置文件 (永久生效)
-            local shell_rc=""
-            if [ -n "$ZSH_VERSION" ]; then
-                shell_rc="$HOME/.zshrc"
-            elif [ -n "$BASH_VERSION" ]; then
-                shell_rc="$HOME/.bashrc"
-            fi
-            
-            if [ -n "$shell_rc" ] && [ -f "$shell_rc" ]; then
-                if ! grep -q "/.local/bin" "$shell_rc" 2>/dev/null; then
-                    echo '' >> "$shell_rc"
-                    echo '# UV package manager' >> "$shell_rc"
-                    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$shell_rc"
-                    log_info "已添加 UV 到 $shell_rc"
+            if [ -n "$uv_bin" ]; then
+                # 安装到用户目录
+                mkdir -p "$HOME/.local/bin"
+                cp "$uv_bin" "$HOME/.local/bin/uv"
+                chmod +x "$HOME/.local/bin/uv"
+                
+                # 配置环境变量
+                setup_uv_env
+                
+                # 清理临时目录
+                rm -rf "$temp_dir"
+                
+                if command -v uv &> /dev/null; then
+                    local version=$(uv --version 2>&1)
+                    log_success "UV 安装完成: $version"
+                    log_info "已安装到: $HOME/.local/bin/uv"
+                    return 0
+                else
+                    log_warn "UV 已安装到 $HOME/.local/bin/uv 但不在当前 PATH 中"
+                    return 0
                 fi
-            fi
-            
-            # 清理临时目录
-            rm -rf "$temp_dir"
-            
-            if command -v uv &> /dev/null; then
-                local version=$(uv --version 2>&1)
-                log_success "UV 安装完成: $version"
-                log_info "已安装到: $HOME/.local/bin/uv"
-                if [ -n "$shell_rc" ]; then
-                    log_info "提示: 如需在新终端使用 uv，请运行: source $shell_rc"
-                fi
-                return 0
             else
-                log_error "UV 安装后未能找到命令"
-                return 1
+                log_error "在压缩包中找不到 UV 可执行文件"
+                rm -rf "$temp_dir"
             fi
         else
-            log_error "在压缩包中找不到 UV 可执行文件"
+            log_error "解压 UV 压缩包失败"
             rm -rf "$temp_dir"
-            return 1
         fi
-    else
-        log_error "解压 UV 压缩包失败"
-        rm -rf "$temp_dir"
-        return 1
     fi
+
+    # 如果离线安装失败或没找到包，尝试使用脚本 (作为 Fallback)
+    if [ -f "installers/system/uv-installer.sh" ]; then
+        log_warn "未找到离线包，尝试使用安装脚本..."
+        if sh installers/system/uv-installer.sh; then
+             setup_uv_env
+             if command -v uv &> /dev/null; then
+                log_success "UV 安装完成: $(uv --version)"
+                return 0
+             fi
+        else
+            log_warn "UV 安装脚本执行失败"
+        fi
+    fi
+    
+    log_error "无法安装 UV (找不到离线包且脚本执行失败)"
+    return 1
 }
 
 # 验证步骤
@@ -275,4 +256,3 @@ verify_step() {
 if [ "${BASH_SOURCE[0]}" -ef "$0" ]; then
     run_step
 fi
-
