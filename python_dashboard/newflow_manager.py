@@ -90,7 +90,7 @@ def check_newflow_status():
             pid = int(f.read().strip())
         os.kill(pid, 0)
         # 进程还在但没监听端口？可能是僵尸进程或正在启动/停止
-        return True, "running" 
+        return True, "running"
     except (ProcessLookupError, ValueError):
         if PID_FILE.exists():
             PID_FILE.unlink()
@@ -258,8 +258,8 @@ def stop_newflow():
                     # It's running. Is it safe to kill?
                     # Only kill if it's NOT the current process and NOT the parent of current process
                     if pid_from_file != os.getpid() and pid_from_file != os.getppid():
-                         logger.info(f"Killing PID from file: {pid_from_file}")
-                         os.kill(pid_from_file, signal.SIGTERM)
+                        logger.info(f"Killing PID from file: {pid_from_file}")
+                        os.kill(pid_from_file, signal.SIGTERM)
                 except ProcessLookupError:
                     pass
                 except PermissionError:
@@ -272,7 +272,7 @@ def stop_newflow():
             finally:
                 if PID_FILE.exists():
                     PID_FILE.unlink()
-                
+
         return True, "已停止"
         
     except Exception as e:
