@@ -246,9 +246,9 @@ async def get_status():
     newchat_running = await check_port_open('localhost', 61990)
     
     # 检查NewRAG - 同时检查进程和端口
-    # 检查 3000 (Frontend) 或 8080 (Backend)
+    # 开发模式：前端3000 + 后端8080
     newrag_process, _ = check_newrag_status()
-    newrag_port_open = await check_port_open('127.0.0.1', 3000) or await check_port_open('localhost', 3000) or await check_port_open('127.0.0.1', 8080) or await check_port_open('localhost', 8080)
+    newrag_port_open = await check_port_open('127.0.0.1', 3000) or await check_port_open('localhost', 3000)
     newrag_running = newrag_process and newrag_port_open
     
     # 检查MinIO - 通过Docker检查实际状态
@@ -589,14 +589,14 @@ async def toggle_docker_service(service: str):
 async def newrag_status_api():
     """获取NewRAG状态"""
     is_running, status_str = check_newrag_status()
-    # 从config读取配置比较好，但这里暂时硬编码或用环境变量
-    # 假设默认端口
+    # 开发模式：前端和后端分离
     return {
         "status": "running" if is_running else "stopped",
         "detail": status_str,
         "frontend_url": "http://localhost:3000",
         "backend_url": "http://localhost:8080",
-        "mcp_url": "http://localhost:3001"
+        "mcp_url": "http://localhost:3001",  # NewRAG自己的MCP
+        "note": "NewRAG MCP在3001, ES MCP在3005, Kibana MCP在3002, NewFlow MCP在3003"
     }
 
 @app.post("/api/newrag/toggle")

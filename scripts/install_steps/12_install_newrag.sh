@@ -15,7 +15,7 @@ run_step() {
     local force_install=$1
     log_info "检查 NewRAG 安装状态..."
     
-    local zip_file="installers/newrag-main-1.0.0.zip"
+    local zip_file="installers/newrag-main-1.1.0.zip"
     local target_dir="newrag-main"
     
     # 0. 检查是否需要全新解压
@@ -87,16 +87,16 @@ run_step() {
         fi
     fi
     
-    # 3. 配置前端 (npm install & build)
+    # 3. 配置前端 (npm install only，开发模式不需要 build)
     if [ -d "frontend" ]; then
-        # 检查是否已构建 (dist 目录) 和 node_modules
-        if [ -d "frontend/node_modules" ] && [ -d "frontend/dist" ] && [ "$force_install" != "true" ]; then
-            log_info "前端依赖已安装且已构建，跳过"
+        # 只检查 node_modules，不检查 dist（开发模式不需要）
+        if [ -d "frontend/node_modules" ] && [ "$force_install" != "true" ]; then
+            log_info "前端依赖已安装，跳过"
         else
             log_info "配置 NewRAG 前端..."
             cd frontend
             
-            # 修复 TypeScript 构建错误 (允许未使用的变量)
+            # 修复 TypeScript 配置 (允许未使用的变量)
             log_info "调整 TypeScript 配置以允许未使用的变量..."
             for ts_file in tsconfig.app.json tsconfig.node.json tsconfig.json; do
                 if [ -f "$ts_file" ]; then
@@ -135,13 +135,7 @@ run_step() {
                 return 1
             fi
             
-            # 可选：如果只是缺失依赖但dist存在，是否需要build? 
-            # 为安全起见，依赖变动后重新build
-            if ! npm run build; then
-                log_error "前端构建失败"
-                cd ../..
-                return 1
-            fi
+            log_success "前端依赖安装完成（开发模式，跳过 build）"
             cd ..
         fi
     else
@@ -173,37 +167,7 @@ run_step() {
     
     cd ..
 
-    # 5. 安装离线 OCR 模型 (如果存在)
-    local models_pkg="installers/offline_ocr_models.tar.gz"
-    if [ -f "$models_pkg" ]; then
-        log_info "正在安装离线 OCR 模型..."
-        local temp_models_dir=$(mktemp -d)
-        tar -xzf "$models_pkg" -C "$temp_models_dir"
-        
-        # 安装 EasyOCR
-        if [ -d "$temp_models_dir/offline_models/EasyOCR" ]; then
-            log_info "  • 安装 EasyOCR 模型到 ~/.EasyOCR"
-            mkdir -p "$HOME/.EasyOCR"
-            # 不覆盖已存在的模型文件，除非强制
-            cp -n -r "$temp_models_dir/offline_models/EasyOCR/"* "$HOME/.EasyOCR/" 2>/dev/null || true
-            cp -r "$temp_models_dir/offline_models/EasyOCR/"* "$HOME/.EasyOCR/" # 确保覆盖 (简单粗暴一点，或者用上面的 -n) -> 还是覆盖吧，保证一致性
-            # 修正：cp -n 是不覆盖，我们还是用 rsync 或者 cp -r 覆盖确保完整
-            cp -r "$temp_models_dir/offline_models/EasyOCR" "$HOME/." 
-        fi
-        
-        # 安装 PaddleX
-        if [ -d "$temp_models_dir/offline_models/paddlex" ]; then
-             log_info "  • 安装 PaddleX 模型到 ~/.paddlex"
-             cp -r "$temp_models_dir/offline_models/paddlex" "$HOME/."
-        fi
-        
-        rm -rf "$temp_models_dir"
-        log_success "离线模型安装完成"
-    else
-        log_info "未找到离线 OCR 模型包 ($models_pkg)，将使用在线下载或系统模型"
-    fi
-
-    # 6. 修复权限 (关键步骤)
+    # 5. 修复权限 (关键步骤)
     log_info "正在修复文件权限..."
     # 确保当前用户拥有 newrag-main 的所有权
     if command -v sudo &> /dev/null; then

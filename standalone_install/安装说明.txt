@@ -1,0 +1,15 @@
+NewChat 简易安装指南
+===================
+
+1. 准备文件
+   将 install_newchat.sh 和 NewChat 安装包 (如 NewChat.dmg) 放在同一个文件夹中。
+
+2. 运行安装
+   打开终端 (Terminal)，输入以下命令并回车：
+
+   bash install_newchat.sh
+
+3. 完成
+   安装过程中可能需要输入电脑密码。
+   看到 "安装成功" 后，即可在应用程序中找到 NewChat。
+

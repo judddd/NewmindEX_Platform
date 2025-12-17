@@ -35,7 +35,7 @@ instance_exists() {
     curl -s "${API_BASE}/instances" | grep -q "\"name\":\"${instance_name}\""
 }
 
-# 1. 创建Elasticsearch MCP实例（端口3001）
+# 1. 创建Elasticsearch MCP实例（端口3005）
 echo ""
 echo "📦 创建Elasticsearch MCP实例..."
 if instance_exists "Elasticsearch Cluster"; then
@@ -47,7 +47,7 @@ else
       -d '{
         "name": "Elasticsearch Cluster",
         "type": "elasticsearch",
-        "port": 3001,
+        "port": 3005,
         "config": {
           "ES_URL": "http://host.docker.internal:9200",
           "ES_USERNAME": "elastic",
@@ -138,7 +138,7 @@ echo "===================================="
 echo "✅ 默认MCP实例初始化完成！"
 echo ""
 echo "📋 MCP服务地址（宿主机）："
-echo "   🔍 Elasticsearch MCP: http://localhost:3001/mcp"
+echo "   🔍 Elasticsearch MCP: http://localhost:3005/mcp"
 echo "   📊 Kibana MCP:        http://localhost:3002/mcp"
 echo "   🔄 NewFlow MCP:       http://localhost:3003/mcp"
 echo ""

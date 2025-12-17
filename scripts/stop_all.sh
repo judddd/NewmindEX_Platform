@@ -98,8 +98,15 @@ pkill -9 -f "web/app.py" 2>/dev/null || true
 pkill -9 -f "newrag-search-mcp" 2>/dev/null || true
 # Frontend (vite)
 pkill -9 -f "vite" 2>/dev/null || true
-# 清理端口占用 (8080, 2999)
+
+# 增加：根据端口强制清理 NewRAG 相关端口
+# Frontend: 3000
+lsof -t -i:3000 2>/dev/null | xargs kill -9 2>/dev/null || true
+# Backend: 8080
 lsof -t -i:8080 2>/dev/null | xargs kill -9 2>/dev/null || true
+# MCP: 3001
+lsof -t -i:3001 2>/dev/null | xargs kill -9 2>/dev/null || true
+# 旧端口兜底 (2999)
 lsof -t -i:2999 2>/dev/null | xargs kill -9 2>/dev/null || true
 
 # 停止 NewFlow

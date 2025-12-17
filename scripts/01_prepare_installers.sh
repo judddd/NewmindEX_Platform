@@ -216,24 +216,6 @@ MCP_NEWFLOW="installers/newmind-mcp-newflow-1.0.0.tar"
 MCP_NEWFLOW_URL="${DOWNLOAD_BASE_URL}/newmind-mcp-newflow-1.0.0.tar"
 check_or_download "$MCP_NEWFLOW" "$MCP_NEWFLOW_URL" || echo -e "${YELLOW}⚠️  MCP NewFlow 可选${NC}"
 
-# 9. 离线 OCR 模型 (本地生成)
-OFFLINE_MODELS="installers/offline_ocr_models.tar.gz"
-if [ -f "$OFFLINE_MODELS" ]; then
-    echo ""
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${BLUE}检查: offline_ocr_models.tar.gz${NC}"
-    echo -e "${GREEN}✅ 离线 OCR 模型包已存在 ($(du -h "$OFFLINE_MODELS" | cut -f1))${NC}"
-else
-    # 尝试自动生成 (如果本地有模型)
-    if [ -f "scripts/package_offline_models.sh" ]; then
-        echo ""
-        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo -e "${BLUE}检查: offline_ocr_models.tar.gz${NC}"
-        echo -e "${YELLOW}ℹ️  尝试从本地打包 OCR 模型...${NC}"
-        bash scripts/package_offline_models.sh || echo -e "${YELLOW}⚠️  无法生成离线模型包 (可能本地无模型)${NC}"
-    fi
-fi
-
 # ============================================
 # AI模型下载和解压（可选）
 # ============================================

@@ -70,8 +70,8 @@ docker_images:
 # 本地模块 (非Docker)
 local_modules:
   newrag:
-    file: "installers/newrag-main-1.0.0.zip"
-    version: "1.0.0"
+    file: "installers/newrag-main-1.1.0.zip"
+    version: "1.1.0"
     description: "RAG 知识库系统 (Frontend + Backend + MCP)"
     install_path: "newrag-main"
   newflow:
@@ -123,7 +123,7 @@ ports:
   newchat: 61990
   minio_api: 9000
   minio_console: 9001
-  mcp_elasticsearch: 3001
+  mcp_elasticsearch: 3005
   mcp_kibana: 3002
   mcp_newflow: 3003
 

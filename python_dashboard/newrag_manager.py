@@ -17,7 +17,7 @@ logger = logging.getLogger("newrag_manager")
 # 路径配置
 PROJECT_ROOT = Path(__file__).parent.parent
 NEWRAG_DIR = PROJECT_ROOT / "newrag-main"
-INSTALLER_ZIP = PROJECT_ROOT / "installers/newrag-main-1.0.0.zip"
+INSTALLER_ZIP = PROJECT_ROOT / "installers/newrag-main-1.1.0.zip"
 PID_FILE = PROJECT_ROOT / "python_dashboard/newrag.pid"
 LOG_FILE = PROJECT_ROOT / "python_dashboard/newrag.log"
 
@@ -37,6 +37,28 @@ def get_config_version():
 
 def check_newrag_status():
     """检查 NewRAG 运行状态"""
+    # 1. 优先检查端口 (这是最真实的运行指标)
+    try:
+        import socket
+        # 检查前端端口 3000
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(0.1)
+        result_frontend = sock.connect_ex(('localhost', 3000))
+        sock.close()
+        
+        # 检查后端端口 8080
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(0.1)
+        result_backend = sock.connect_ex(('localhost', 8080))
+        sock.close()
+        
+        if result_frontend == 0 or result_backend == 0:
+            # 如果PID文件不存在，甚至可以自动恢复一个（可选，这里先只返回状态）
+            return True, "running"
+    except Exception as e:
+        logger.warning(f"Port check failed: {e}")
+
+    # 2. 如果端口没通，再检查 PID 文件 (可能是刚启动还没监听，或者挂了)
     if not PID_FILE.exists():
         return False, "stopped"
     
@@ -165,7 +187,7 @@ def start_newrag():
         return False, str(e)
 
 def stop_newrag():
-    """停止 NewRAG"""
+    """停止 NewRAG（包括前端、后端、MCP三个服务）"""
     if not PID_FILE.exists():
         return True, "未运行"
         
@@ -178,20 +200,46 @@ def stop_newrag():
             
         logger.info(f"Stopping NewRAG (PID {pid})...")
         
-        # 安全停止逻辑：避免误杀 Dashboard 自身
+        # 找出所有相关进程（npm, node, python）
+        import psutil
         try:
-            target_pgid = os.getpgid(pid)
-            current_pgid = os.getpgrp()
+            parent = psutil.Process(pid)
+            children = parent.children(recursive=True)
             
-            if target_pgid == current_pgid:
-                logger.warning(f"NewRAG process (PID {pid}) is in the same process group ({target_pgid}) as Dashboard. Using os.kill instead of killpg.")
-                os.kill(pid, signal.SIGTERM)
-            else:
-                # 杀掉进程组
-                os.killpg(target_pgid, signal.SIGTERM)
-        except ProcessLookupError:
-            logger.info(f"Process {pid} group not found, maybe already dead.")
-            pass
+            # 先停止所有子进程
+            for child in children:
+                try:
+                    logger.info(f"Stopping child process {child.pid} ({child.name()})")
+                    child.terminate()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            
+            # 等待子进程结束
+            gone, alive = psutil.wait_procs(children, timeout=5)
+            for p in alive:
+                try:
+                    p.kill()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            
+            # 最后停止主进程
+            parent.terminate()
+            parent.wait(timeout=5)
+        except psutil.NoSuchProcess:
+            logger.info(f"Process {pid} not found, maybe already stopped.")
+        except ImportError:
+            # 如果没有 psutil，使用原来的方法
+            logger.warning("psutil not available, using fallback stop method")
+            try:
+                target_pgid = os.getpgid(pid)
+                current_pgid = os.getpgrp()
+                
+                if target_pgid == current_pgid:
+                    os.kill(pid, signal.SIGTERM)
+                else:
+                    os.killpg(target_pgid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
         
         # 等待进程结束
         for _ in range(5):

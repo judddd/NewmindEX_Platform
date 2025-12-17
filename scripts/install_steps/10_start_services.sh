@@ -320,10 +320,10 @@ verify_step() {
         else
             # 再次尝试检查（有些服务绑定 0.0.0.0 可能 lsof 显示不同）
             if nc -z localhost $port 2>/dev/null; then
-                log_success "  ✓ $service (:$port)"
-            else
-                log_warn "  ✗ $service (:$port) 未监听"
-                all_ok=false
+            log_success "  ✓ $service (:$port)"
+        else
+            log_warn "  ✗ $service (:$port) 未监听"
+            all_ok=false
             fi
         fi
     done

@@ -134,3 +134,5 @@ echo "您现在拥有一个全新的环境。"
 echo "请运行 ./scripts/start_all.sh 重新启动服务并初始化新数据。"
 echo ""
 
+
+
