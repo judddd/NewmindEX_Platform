@@ -50,70 +50,93 @@ install_nodejs() {
     log_info "检查 Node.js..."
     
     local need_install=true
+    local target_version="22.12.0"
     
-    # 检查是否已安装
+    # 检查是否已安装目标版本
     if command -v node &> /dev/null; then
-        local version_str=$(node --version) # v20.18.1
-        # 提取主版本号
-        local major_version=$(echo "$version_str" | cut -d. -f1 | tr -d 'v')
+        local version_str=$(node --version) # v22.12.0
+        local current_version=$(echo "$version_str" | tr -d 'v')
         
-        log_info "发现已安装 Node.js: $version_str (主版本: $major_version)"
+        log_info "发现已安装 Node.js: $version_str"
         
-        if [ "$major_version" -lt 22 ]; then
-            log_warn "Node.js 版本过低 ($version_str < v22). 准备升级..."
-            need_install=true
+        # 严格检查：必须是 22.12.0 版本
+        if [ "$current_version" == "$target_version" ]; then
+            log_success "Node.js 版本正确 ($version_str)"
+            # 确保 Corepack 已启用
+            enable_corepack
+            return 0
         else
-            log_success "Node.js 版本满足要求 ($version_str)"
-            need_install=false
+            log_warn "Node.js 版本不匹配 (当前: $version_str, 目标: v$target_version)"
+            log_warn "准备安装指定版本..."
+            need_install=true
         fi
     else
         log_info "Node.js 未安装"
         need_install=true
     fi
     
-    if [ "$need_install" = false ]; then
-        return 0
-    fi
+    # 强制使用 installers/system/node-v22.12.0.pkg
+    local node_pkg="installers/system/node-v22.12.0.pkg"
     
-    # 查找安装包
-    local node_pkg=""
-    # 优先查找 Node 22
-    node_pkg=$(find installers -name "node-v22*.pkg" 2>/dev/null | head -1)
-    
-    if [ -z "$node_pkg" ]; then
-        if [ -f "installers/system/node-v20.18.1.pkg" ]; then
-            node_pkg="installers/system/node-v20.18.1.pkg"
-        else
-            # 尝试查找任何Node.js安装包
-            node_pkg=$(find installers -name "node-*.pkg" 2>/dev/null | head -1)
-        fi
-    fi
-    
-    if [ -z "$node_pkg" ]; then
-        log_warn "找不到 Node.js 安装包，跳过"
+    if [ ! -f "$node_pkg" ]; then
+        log_error "未找到必需的 Node.js 22.12.0 安装包: $node_pkg"
+        log_error "请确保 installers/system/ 目录包含此文件"
         return 1
     fi
     
-    log_info "发现安装包: $node_pkg"
-    log_info "安装 Node.js (需要管理员权限)..."
+    log_info "使用指定安装包: $node_pkg"
+    log_info "安装 Node.js v$target_version (需要管理员权限)..."
     
     # 安装
     if sudo installer -pkg "$node_pkg" -target /; then
-        log_success "Node.js 安装完成"
+        log_success "Node.js v$target_version 安装完成"
         
         # 验证安装
         sleep 2
+        
+        # 刷新 shell 环境
+        export PATH="/usr/local/bin:$PATH"
+        hash -r 2>/dev/null || true
+        
         if command -v node &> /dev/null; then
             local version=$(node --version)
             log_success "Node.js 版本: $version"
+            log_success "npm 版本: $(npm --version)"
+            
+            # 启用 Corepack (自带 pnpm)
+            enable_corepack
+            
             return 0
         else
-            log_warn "Node.js 安装后未能找到命令"
+            log_warn "Node.js 安装后未能找到命令，尝试重新加载 PATH..."
             return 1
         fi
     else
         log_error "Node.js 安装失败"
         return 1
+    fi
+}
+
+# 启用 Corepack (Node.js 自带的 pnpm/yarn 管理器)
+enable_corepack() {
+    log_info "启用 Corepack (包含 pnpm)..."
+    
+    if command -v corepack &> /dev/null; then
+        # 启用 Corepack
+        if sudo corepack enable 2>/dev/null || corepack enable 2>/dev/null; then
+            log_success "Corepack 已启用"
+            
+            # 验证 pnpm 是否可用
+            if command -v pnpm &> /dev/null; then
+                log_success "pnpm 已可用: $(pnpm --version 2>/dev/null || echo '(通过 Corepack)')"
+            else
+                log_warn "Corepack 已启用，但 pnpm 尚未激活，首次使用时会自动下载"
+            fi
+        else
+            log_warn "Corepack 启用失败，可能需要手动执行: sudo corepack enable"
+        fi
+    else
+        log_warn "未找到 Corepack 命令，可能 Node.js 安装不完整"
     fi
 }
 

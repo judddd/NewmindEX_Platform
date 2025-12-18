@@ -92,22 +92,44 @@ run_step() {
         fi
     fi
     
-    # 安装 pnpm
+    # 确保 pnpm 可用 (通过 Corepack)
     if ! command -v pnpm &> /dev/null; then
-        log_info "安装 pnpm..."
-        npm install -g pnpm@10.12.1
-    else
-        # 检查 pnpm 版本，确保 >= 10.2.1
-        local pnpm_ver=$(pnpm -v)
-        local pnpm_major=$(echo "$pnpm_ver" | cut -d. -f1)
+        log_info "pnpm 未找到，启用 Corepack..."
         
-        if [ "$pnpm_major" -lt 10 ]; then
-            log_warn "当前 pnpm 版本 ($pnpm_ver) 低于 10.x，正在升级到 10.12.1..."
-            npm install -g pnpm@10.12.1
+        # 尝试启用 Corepack
+        if command -v corepack &> /dev/null; then
+            sudo corepack enable 2>/dev/null || corepack enable 2>/dev/null || true
+            
+            # 再次检查
+            if ! command -v pnpm &> /dev/null; then
+                log_warn "Corepack 已启用，但 pnpm 不可用"
+                log_warn "尝试通过 npm 安装 pnpm 作为备用方案..."
+                npm install -g pnpm@10.12.1
+            fi
+        else
+            log_error "未找到 Corepack，且无法使用 pnpm"
+            log_error "请确保 Node.js 22 已正确安装"
+            return 1
         fi
     fi
     
-    log_success "pnpm 版本: $(pnpm -v)"
+    # 检查 pnpm 版本
+    if command -v pnpm &> /dev/null; then
+        local pnpm_ver=$(pnpm -v 2>/dev/null || echo "unknown")
+        log_success "pnpm 版本: $pnpm_ver"
+        
+        # 如果版本过低，尝试更新
+        if [ "$pnpm_ver" != "unknown" ]; then
+            local pnpm_major=$(echo "$pnpm_ver" | cut -d. -f1)
+            if [ "$pnpm_major" -lt 9 ]; then
+                log_warn "pnpm 版本过低 ($pnpm_ver)，尝试更新..."
+                npm install -g pnpm@10.12.1 || true
+            fi
+        fi
+    else
+        log_error "pnpm 不可用，无法继续"
+        return 1
+    fi
     
     # 安装依赖
     log_info "安装 NewFlow 依赖 (pnpm install)..."
