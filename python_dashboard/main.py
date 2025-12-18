@@ -590,16 +590,38 @@ async def toggle_docker_service(service: str):
 
 @app.get("/api/newrag/status")
 async def newrag_status_api():
-    """获取NewRAG状态"""
+    """获取NewRAG状态（增强诊断）"""
     is_running, status_str = check_newrag_status()
     # 开发模式：前端和后端分离
+    # 读取 NewRAG 实际配置的端口
+    try:
+        import yaml
+        config_path = Path(__file__).parent.parent / "newrag-main" / "config.yaml"
+        if config_path.exists():
+            with open(config_path) as f:
+                newrag_config = yaml.safe_load(f)
+                mcp_port = newrag_config.get("mcp", {}).get("port", 2999)
+        else:
+            mcp_port = 2999  # 默认值
+    except:
+        mcp_port = 2999
+    
+    # 增强诊断：检查各个端口和依赖
+    diagnostics = {
+        "frontend_reachable": await check_port_open('localhost', 3000),
+        "backend_reachable": await check_port_open('localhost', 8080),
+        "mcp_reachable": await check_port_open('localhost', mcp_port),
+        "lm_studio_reachable": await check_port_open('localhost', 1234)
+    }
+    
     return {
         "status": "running" if is_running else "stopped",
         "detail": status_str,
         "frontend_url": "http://localhost:3000",
         "backend_url": "http://localhost:8080",
-        "mcp_url": "http://localhost:3001",  # NewRAG自己的MCP
-        "note": "NewRAG MCP在3001, ES MCP在3005, Kibana MCP在3002, NewFlow MCP在3003"
+        "mcp_url": f"http://localhost:{mcp_port}",
+        "diagnostics": diagnostics,
+        "note": f"NewRAG MCP在{mcp_port}, ES MCP在3005, Kibana MCP在3002, NewFlow MCP在3003"
     }
 
 @app.post("/api/newrag/toggle")
