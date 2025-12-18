@@ -22,11 +22,12 @@ from pathlib import Path
 # ==================== IP 地址自动检测工具 ====================
 def get_server_ip():
     """
-    自动获取服务器 IP 地址（优先级：环境变量 > LAN IP > localhost）
+    自动获取服务器 IP 地址（优先级：环境变量 > 公网IP > en0/en1网卡 > localhost）
     
     环境变量控制：
     - SERVER_IP: 手动指定 IP（优先级最高）
     - USE_PUBLIC_IP: 设为 true 时尝试获取公网 IP
+    - NETWORK_INTERFACE: 指定网卡名称（默认自动选择 en0 或 en1）
     """
     # 1. 优先使用环境变量指定的 IP
     if os.getenv('SERVER_IP'):
@@ -44,15 +45,33 @@ def get_server_ip():
         except:
             pass  # 获取失败，回退到 LAN IP
     
-    # 3. 获取本机 LAN IP（默认行为）
+    # 3. 获取物理网卡（en0/en1）的 LAN IP（默认行为）
     try:
-        # 创建一个 UDP socket 连接到外部地址（不会真正发送数据）
-        # 通过这种方式获取本机在局域网中的 IP
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        lan_ip = s.getsockname()[0]
-        s.close()
-        return lan_ip
+        import subprocess
+        import re
+        
+        # 允许通过环境变量指定网卡，否则按 en0 > en1 顺序尝试
+        preferred_interfaces = [os.getenv('NETWORK_INTERFACE')] if os.getenv('NETWORK_INTERFACE') else ['en0', 'en1']
+        
+        for interface in preferred_interfaces:
+            try:
+                result = subprocess.run(
+                    ['ifconfig', interface],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                
+                if result.returncode == 0:
+                    # 提取 inet 地址（IPv4）
+                    match = re.search(r'inet\s+(\d+\.\d+\.\d+\.\d+)', result.stdout)
+                    if match:
+                        lan_ip = match.group(1)
+                        # 排除回环地址和特殊网段（VPN/虚拟网卡）
+                        if not lan_ip.startswith(('127.', '169.254.', '198.18.', '10.8.')):
+                            return lan_ip
+            except:
+                continue  # 该网卡不存在或无法访问，尝试下一个
     except:
         pass
     
