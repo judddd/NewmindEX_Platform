@@ -19,6 +19,56 @@ import shutil
 # 加载环境变量 (使用标准方式)
 from pathlib import Path
 
+# ==================== IP 地址自动检测工具 ====================
+def get_server_ip():
+    """
+    自动获取服务器 IP 地址（优先级：环境变量 > LAN IP > localhost）
+    
+    环境变量控制：
+    - SERVER_IP: 手动指定 IP（优先级最高）
+    - USE_PUBLIC_IP: 设为 true 时尝试获取公网 IP
+    """
+    # 1. 优先使用环境变量指定的 IP
+    if os.getenv('SERVER_IP'):
+        return os.getenv('SERVER_IP')
+    
+    # 2. 如果设置了 USE_PUBLIC_IP，尝试获取公网 IP
+    if os.getenv('USE_PUBLIC_IP', '').lower() in ('true', '1', 'yes'):
+        try:
+            import requests
+            response = requests.get('https://api.ipify.org?format=json', timeout=3)
+            if response.status_code == 200:
+                public_ip = response.json().get('ip')
+                if public_ip:
+                    return public_ip
+        except:
+            pass  # 获取失败，回退到 LAN IP
+    
+    # 3. 获取本机 LAN IP（默认行为）
+    try:
+        # 创建一个 UDP socket 连接到外部地址（不会真正发送数据）
+        # 通过这种方式获取本机在局域网中的 IP
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        lan_ip = s.getsockname()[0]
+        s.close()
+        return lan_ip
+    except:
+        pass
+    
+    # 4. 回退到 localhost
+    return "localhost"
+
+# 全局缓存 IP（避免重复获取）
+_cached_server_ip = None
+
+def get_cached_server_ip():
+    """获取缓存的服务器 IP"""
+    global _cached_server_ip
+    if _cached_server_ip is None:
+        _cached_server_ip = get_server_ip()
+    return _cached_server_ip
+
 # 优先使用 .env 文件，其次使用 env.copy（兼容旧配置）
 env_file = Path(__file__).parent.parent / ".env"
 if not env_file.exists():
@@ -263,35 +313,42 @@ async def get_status():
     for instance in mcp_instances:
         instance['is_healthy'] = check_mcp_health(instance['id'])
     
+    # 获取服务器 IP（自动检测或使用环境变量配置）
+    server_ip = get_cached_server_ip()
+    
     return {
+        "server_ip": server_ip,  # 新增：告诉前端当前服务器 IP
         "elasticsearch": {
             "status": "running" if es_running else "stopped",
-            "health": es_health
+            "health": es_health,
+            "url": f"http://{server_ip}:9200"
         },
         "kibana": {
             "status": "running" if kibana_running else "stopped",
-            "url": f"http://localhost:{os.getenv('KIBANA_PORT', '5601')}"
+            "url": f"http://{server_ip}:{os.getenv('KIBANA_PORT', '5601')}"
         },
         "lmstudio": {
             "status": "running" if lm_status else "stopped",
-            "port": int(os.getenv('LMSTUDIO_PORT', '1234'))
+            "port": int(os.getenv('LMSTUDIO_PORT', '1234')),
+            "url": f"http://{server_ip}:{os.getenv('LMSTUDIO_PORT', '1234')}"
         },
         "newchat": {
             "status": "running" if newchat_running else "stopped",
-            "port": 61990
+            "port": 61990,
+            "url": f"http://{server_ip}:61990"
         },
         "newrag": {
             "status": "running" if newrag_running else "stopped",
-            "url": "http://localhost:3000"
+            "url": f"http://{server_ip}:3000"
         },
         "newflow": {
             "status": "running" if newflow_running else "stopped",
-            "url": f"http://localhost:{os.getenv('NEWFLOW_PORT', '5678')}"
+            "url": f"http://{server_ip}:{os.getenv('NEWFLOW_PORT', '5678')}"
         },
         "minio": {
             "status": "running" if minio_running else "stopped",
-            "api_url": f"http://localhost:{os.getenv('MINIO_API_PORT', '9000')}",
-            "console_url": f"http://localhost:{os.getenv('MINIO_CONSOLE_PORT', '9001')}"
+            "api_url": f"http://{server_ip}:{os.getenv('MINIO_API_PORT', '9000')}",
+            "console_url": f"http://{server_ip}:{os.getenv('MINIO_CONSOLE_PORT', '9001')}"
         },
         "mcp_servers": {
             "total": len(mcp_instances),
@@ -418,12 +475,16 @@ async def minio_status():
     status_result = await get_docker_service_status('minio')
     is_running = status_result.get('status') == 'running'
     
+    # 使用动态 IP
+    server_ip = get_cached_server_ip()
+    
     minio_info = {
         "status": "running" if is_running else "stopped",
         "api_port": int(os.getenv('MINIO_API_PORT', '9000')),
         "console_port": int(os.getenv('MINIO_CONSOLE_PORT', '9001')),
-        "api_url": f"http://localhost:{os.getenv('MINIO_API_PORT', '9000')}",
-        "console_url": f"http://localhost:{os.getenv('MINIO_CONSOLE_PORT', '9001')}",
+        "api_url": f"http://{server_ip}:{os.getenv('MINIO_API_PORT', '9000')}",
+        "console_url": f"http://{server_ip}:{os.getenv('MINIO_CONSOLE_PORT', '9001')}",
+        "server_ip": server_ip,
         "root_user": os.getenv('MINIO_ROOT_USER', 'minioadmin')
     }
     
@@ -614,13 +675,17 @@ async def newrag_status_api():
         "lm_studio_reachable": await check_port_open('localhost', 1234)
     }
     
+    # 获取服务器 IP（支持外部访问）
+    server_ip = get_cached_server_ip()
+    
     return {
         "status": "running" if is_running else "stopped",
         "detail": status_str,
-        "frontend_url": "http://localhost:3000",
-        "backend_url": "http://localhost:8080",
-        "mcp_url": f"http://localhost:{mcp_port}",
+        "frontend_url": f"http://{server_ip}:3000",
+        "backend_url": f"http://{server_ip}:8080",
+        "mcp_url": f"http://{server_ip}:{mcp_port}",
         "diagnostics": diagnostics,
+        "server_ip": server_ip,
         "note": f"NewRAG MCP在{mcp_port}, ES MCP在3005, Kibana MCP在3002, NewFlow MCP在3003"
     }
 
