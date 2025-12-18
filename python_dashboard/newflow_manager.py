@@ -157,6 +157,8 @@ def start_newflow():
         env["N8N_PORT"] = str(NEWFLOW_PORT)
         env["N8N_LISTEN_ADDRESS"] = "0.0.0.0"  # 确保对外暴露
         env["N8N_HOST"] = "0.0.0.0"            # 某些版本可能需要这个
+        env["N8N_SECURE_COOKIE"] = "false"     # 禁用安全 cookie（HTTP 模式需要）
+        env["NEWFLOW_SECURE_COOKIE"] = "false" # NewFlow 版本的环境变量
         env["N8N_USER_FOLDER"] = str(NEWFLOW_DIR / "data")
         
         # 确保 data 目录存在
