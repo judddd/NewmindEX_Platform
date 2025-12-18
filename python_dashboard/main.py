@@ -112,12 +112,15 @@ async def log_requests(request: Request, call_next):
     
     return response
 
-# 挂载静态文件
-# 先挂载 assets (Vite build output)
-if os.path.exists("static/assets"):
-    app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
+# 挂载静态文件（使用绝对路径，避免工作目录问题）
+STATIC_DIR = Path(__file__).parent / "static"
+ASSETS_DIR = STATIC_DIR / "assets"
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# 先挂载 assets (Vite build output)
+if ASSETS_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=str(ASSETS_DIR)), name="assets")
+
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 # ==================== 启动事件 ====================
@@ -1049,8 +1052,8 @@ async def catch_all(full_path: str):
     # API和静态资源404不处理
     if full_path.startswith("api/") or full_path.startswith("static/") or full_path.startswith("assets/"):
         raise HTTPException(status_code=404)
-    # 其他路径返回index.html
-    return FileResponse("static/index.html")
+    # 其他路径返回index.html（使用绝对路径）
+    return FileResponse(str(STATIC_DIR / "index.html"))
 
 
 # ==================== 启动事件 ====================
