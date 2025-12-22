@@ -73,70 +73,6 @@ echo ""
 echo "步骤 9/13: 启动Docker服务"
 echo "🔍 检查Docker服务状态..."
 
-# 检查 Docker 是否正在运行
-check_and_start_docker() {
-    echo "🐳 检查 Docker 运行状态..."
-    
-    # 尝试连接 Docker daemon
-    if docker info > /dev/null 2>&1; then
-        echo "✅ Docker 正在运行"
-        return 0
-    fi
-    
-    echo "⚠️  Docker 未运行，正在自动启动 Docker Desktop..."
-    
-    # 检测操作系统
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
-        if [ -d "/Applications/Docker.app" ]; then
-            echo "📂 找到 Docker.app，正在启动..."
-            open -a Docker
-        else
-            echo "❌ 未找到 Docker Desktop，请先安装 Docker Desktop"
-            echo "   下载地址: https://www.docker.com/products/docker-desktop"
-            exit 1
-        fi
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Linux - 尝试启动 Docker 服务
-        echo "🐧 检测到 Linux 系统，尝试启动 Docker 服务..."
-        if command -v systemctl &> /dev/null; then
-            sudo systemctl start docker || {
-                echo "❌ 无法启动 Docker 服务，请手动启动"
-                exit 1
-            }
-        else
-            echo "❌ 未找到 systemctl，请手动启动 Docker"
-            exit 1
-        fi
-    else
-        echo "❌ 不支持的操作系统: $OSTYPE"
-        exit 1
-    fi
-    
-    # 等待 Docker daemon 启动
-    echo "⏳ 等待 Docker 启动..."
-    MAX_WAIT=60
-    ELAPSED=0
-    while [ $ELAPSED -lt $MAX_WAIT ]; do
-        if docker info > /dev/null 2>&1; then
-            echo "✅ Docker 已成功启动"
-            return 0
-        fi
-        sleep 2
-        ELAPSED=$((ELAPSED + 2))
-        printf "."
-    done
-    
-    echo ""
-    echo "❌ Docker 启动超时（等待 ${MAX_WAIT}s），请手动检查 Docker Desktop"
-    echo "   提示：首次启动 Docker Desktop 可能需要更长时间"
-    exit 1
-}
-
-# 执行 Docker 检查和启动
-check_and_start_docker
-echo ""
-
 # 检查哪些服务需要启动
 SERVICES_TO_START=()
 SERVICES_RUNNING=()
@@ -167,28 +103,20 @@ else
     SERVICES_TO_START+=("logstash")
 fi
 
+# 检查NewFlow
+if docker ps --format '{{.Names}}' | grep -q '^newflow$'; then
+    SERVICES_RUNNING+=("NewFlow")
+    echo "   ✅ NewFlow 已运行，跳过启动"
+else
+    SERVICES_TO_START+=("newflow")
+fi
+
 # 检查MinIO
 if docker ps --format '{{.Names}}' | grep -q '^minio$'; then
     SERVICES_RUNNING+=("MinIO")
     echo "   ✅ MinIO 已运行，跳过启动"
 else
     SERVICES_TO_START+=("minio")
-fi
-
-# 检查 NewFlow 文档
-if docker ps --format '{{.Names}}' | grep -q '^newflow_docs$'; then
-    SERVICES_RUNNING+=("NewFlow Docs")
-    echo "   ✅ NewFlow 文档服务已运行，跳过启动"
-else
-    SERVICES_TO_START+=("newflow_docs")
-fi
-
-# 检查 NewChat 文档
-if docker ps --format '{{.Names}}' | grep -q '^newchat_docs$'; then
-    SERVICES_RUNNING+=("NewChat Docs")
-    echo "   ✅ NewChat 文档服务已运行，跳过启动"
-else
-    SERVICES_TO_START+=("newchat_docs")
 fi
 
 # 根据需要启动服务
@@ -239,6 +167,25 @@ else
         done
         if [ $ELAPSED -ge $MAX_WAIT ]; then
             echo "⚠️  Kibana 启动超时，请检查日志: docker logs kibana"
+        fi
+    fi
+    
+    # 如果启动了NewFlow，等待其就绪
+    if [[ " ${SERVICES_TO_START[@]} " =~ " newflow " ]]; then
+        echo "⏳ 等待 NewFlow 就绪..."
+        sleep 5
+        MAX_WAIT=60
+        ELAPSED=0
+        while [ $ELAPSED -lt $MAX_WAIT ]; do
+            if curl -s http://localhost:${NEWFLOW_PORT:-5677} > /dev/null 2>&1; then
+                echo "✅ NewFlow 已就绪"
+                break
+            fi
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+        done
+        if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "⚠️  NewFlow 启动超时，请检查日志: docker logs newflow"
         fi
     fi
     
@@ -315,7 +262,7 @@ fi
 # 检查 Newflow 是否就绪
 NEWFLOW_READY=false
 for i in {1..30}; do
-    if curl -s http://localhost:${NEWFLOW_PORT:-5678} > /dev/null 2>&1; then
+    if curl -s http://localhost:${NEWFLOW_PORT:-5677} > /dev/null 2>&1; then
         echo "✅ Newflow 已就绪"
         NEWFLOW_READY=true
         break
@@ -362,208 +309,16 @@ if ! $DASHBOARD_RUNNING; then
     # 清理可能残留的旧PID文件
     rm -f dashboard.pid
     
+    source .venv/bin/activate
     # 加载环境变量
     set -a; source ../.env 2>/dev/null || true; set +a
-    
-    # 使用 uv 启动
-    nohup uv run uvicorn main:app --host 0.0.0.0 --port ${DASHBOARD_PORT:-80} > dashboard.log 2>&1 &
+    nohup uvicorn main:app --host 0.0.0.0 --port ${DASHBOARD_PORT:-8000} > dashboard.log 2>&1 &
     DASHBOARD_PID=$!
     echo $DASHBOARD_PID > dashboard.pid
     echo "✅ Python Dashboard已在后台启动，PID: $DASHBOARD_PID。日志文件: python_dashboard/dashboard.log"
 fi
 
 cd ..
-echo ""
-
-# 步骤13：启动 NewRAG
-echo "步骤 13/13: 启动 NewRAG..."
-
-# 定义启动函数
-start_newrag() {
-    local NEWRAG_PID_FILE="python_dashboard/newrag.pid"
-    local NEWRAG_DIR="newrag-main"
-    
-    cd "$NEWRAG_DIR"
-    mkdir -p ../python_dashboard
-    
-    echo "🚀 启动 NewRAG 服务（开发模式）..."
-    
-    # 1. 启动 MCP 服务
-    echo "  • 启动 MCP 服务 (3001)..."
-    cd newrag-mcp
-    if [ ! -d "node_modules" ]; then
-        echo "    📦 安装 MCP 依赖..."
-        npm install > /dev/null 2>&1
-    fi
-    if [ ! -d "dist" ]; then
-        echo "    🔨 构建 MCP..."
-        npm run build > /dev/null 2>&1
-    fi
-    MCP_HTTP_PORT=3001 MCP_HTTP_HOST=0.0.0.0 nohup npm run start:http > ../../python_dashboard/newrag-mcp.log 2>&1 &
-    local MCP_PID=$!
-    cd ..
-    
-    # 2. 启动后端
-    echo "  • 启动后端服务 (8080)..."
-    nohup uv run web/app.py > ../python_dashboard/newrag-backend.log 2>&1 &
-    local BACKEND_PID=$!
-    
-    # 3. 启动前端开发服务器
-    echo "  • 启动前端服务 (3000)..."
-    cd frontend
-    if [ ! -d "node_modules" ]; then
-        echo "    📦 安装前端依赖..."
-        npm install > /dev/null 2>&1
-    fi
-    FRONTEND_PORT=3000 BACKEND_URL=http://localhost:8080 nohup npm run dev > ../../python_dashboard/newrag-frontend.log 2>&1 &
-    local FRONTEND_PID=$!
-    cd ..
-    
-    # 等待服务启动（增加等待时间）
-    echo "  ⏳ 等待服务启动..."
-    sleep 10
-    
-    # 等待直到前端端口 (3000) 可用，或者超时 (最多等30秒)
-    echo "  ⏳ 等待前端就绪..."
-    for i in {1..10}; do
-        if curl -s http://localhost:3000 >/dev/null || lsof -i :3000 >/dev/null 2>&1; then
-            break
-        fi
-        sleep 2
-    done
-    
-    # 检查服务状态
-    local all_running=true
-    # MCP服务启动检测优化：允许一定的延迟等待
-    # 只要端口不被占用，且其他服务都正常，就不因MCP瞬间未就绪而报错
-    # 前端代理会尝试连接 MCP
-    
-    if ! ps -p $BACKEND_PID > /dev/null 2>&1; then
-         # 再次检查端口
-        if ! curl -s http://localhost:8080 >/dev/null && ! lsof -i :8080 >/dev/null 2>&1; then
-            echo "  ⚠️ 后端服务可能启动较慢"
-            # all_running=false <-- 不再强制标记为失败
-        fi
-    fi
-    if ! ps -p $FRONTEND_PID > /dev/null 2>&1; then
-         # 再次检查端口
-        if ! curl -s http://localhost:3000 >/dev/null && ! lsof -i :3000 >/dev/null 2>&1; then
-            echo "  ⚠️ 前端服务可能启动较慢"
-            # all_running=false  <-- 不再强制标记为失败
-        fi
-    fi
-    
-    # 只要没显式报错，就认为成功
-    if $all_running; then
-        # 保存主 PID（后端）用于停止管理
-        echo $BACKEND_PID > ../$NEWRAG_PID_FILE
-        echo "✅ NewRAG 已启动"
-        echo "   - 前端: http://localhost:3000 (PID: $FRONTEND_PID)"
-        echo "   - 后端: http://localhost:8080 (PID: $BACKEND_PID)"
-        echo "   - MCP:  http://localhost:3001 (PID: $MCP_PID)"
-        cd ..
-        return 0
-    else
-        echo "⚠️ NewRAG 启动检测超时，请稍后检查"
-        cd ..
-        return 0  # 强制返回成功，避免红色❌
-    fi
-}
-
-# 1. 尝试智能安装 (只会补全缺失的部分)
-# 引用安装脚本
-if [ -f "scripts/install_steps/12_install_newrag.sh" ]; then
-    source scripts/install_steps/12_install_newrag.sh
-    
-    # 运行安装检查 (force=false)
-    echo "🔍 检查 NewRAG 环境..."
-    if run_step "false"; then
-        # 2. 尝试启动
-        NEWRAG_PID_FILE="python_dashboard/newrag.pid"
-        NEWRAG_RUNNING=false
-        
-        if [ -f "$NEWRAG_PID_FILE" ]; then
-            if [ -s "$NEWRAG_PID_FILE" ]; then
-                PID=$(cat "$NEWRAG_PID_FILE")
-                if ps -p $PID > /dev/null 2>&1; then
-                    NEWRAG_RUNNING=true
-                    echo "✅ NewRAG 已经在运行 (PID: $PID)"
-                else
-                    rm "$NEWRAG_PID_FILE"
-                fi
-            else
-                rm "$NEWRAG_PID_FILE"
-            fi
-        fi
-        
-        # 额外检查：检测端口占用，避免重复启动
-        if ! $NEWRAG_RUNNING; then
-            # 优先使用 curl 检查服务是否响应 (更可靠，不依赖 lsof 参数)
-            if curl -s http://localhost:8080 >/dev/null || curl -s http://localhost:3000 >/dev/null; then
-                 echo "✅ NewRAG 服务已响应 (端口 3000/8080)，跳过启动"
-                 NEWRAG_RUNNING=true
-            # 其次使用 lsof 检查端口监听 (简化参数以兼容 MacOS)
-            elif lsof -i :3000 >/dev/null 2>&1 || lsof -i :8080 >/dev/null 2>&1; then
-                echo "✅ NewRAG 端口 (3000/8080) 已被占用，假设服务已运行，跳过启动"
-                NEWRAG_RUNNING=true
-            fi
-        fi
-        
-        if ! $NEWRAG_RUNNING; then
-            if ! start_newrag; then
-                echo "❌ NewRAG 启动失败，请检查 logs/newrag.log"
-                echo "   提示：如果服务实际上已运行，请忽略此错误。"
-            fi
-        fi
-    else
-        echo "❌ NewRAG 环境检查/安装失败"
-    fi
-else
-    echo "⚠️  找不到安装脚本 scripts/install_steps/12_install_newrag.sh，跳过 NewRAG 启动"
-fi
-echo ""
-
-# 步骤14：启动 NewFlow
-echo "步骤 14/14: 启动 NewFlow..."
-
-# NewFlow 安装与启动（通过 Python Dashboard API 统一管理）
-if [ -f "scripts/install_steps/13_install_newflow.sh" ]; then
-    source scripts/install_steps/13_install_newflow.sh
-    
-    echo "🔍 检查 NewFlow 环境..."
-    if run_step "false"; then
-        echo "✅ NewFlow 环境就绪"
-        
-        # 通过 Dashboard API 启动 NewFlow（确保使用统一的启动逻辑）
-        echo "🚀 通过 Dashboard API 启动 NewFlow..."
-        
-        # 等待 Dashboard API 就绪
-        MAX_WAIT=30
-        ELAPSED=0
-        while [ $ELAPSED -lt $MAX_WAIT ]; do
-            if curl -s http://localhost:${DASHBOARD_PORT:-80}/api/status > /dev/null 2>&1; then
-                break
-            fi
-            sleep 1
-            ELAPSED=$((ELAPSED + 1))
-        done
-        
-        # 调用 API 启动 NewFlow
-        RESPONSE=$(curl -s -X POST http://localhost:${DASHBOARD_PORT:-80}/api/newflow/toggle 2>&1)
-        
-        # 检查启动结果
-        sleep 3
-        if curl -s http://localhost:5678 > /dev/null 2>&1; then
-            echo "✅ NewFlow 已启动"
-        else
-            echo "⚠️  NewFlow 启动可能失败，请检查 Dashboard 或手动启动"
-        fi
-    else
-        echo "❌ NewFlow 环境检查/安装失败"
-    fi
-else
-    echo "⚠️  找不到安装脚本 13_install_newflow.sh"
-fi
 echo ""
 
 # 步骤11：初始化默认MCP实例
@@ -576,24 +331,24 @@ echo ""
 echo "===================================="
 echo "🔗 服务访问地址："
 echo "===================================="
-echo "📊 管理控制台: http://localhost:${DASHBOARD_PORT:-80}"
+echo "📊 管理控制台: http://localhost:8000"
 echo "🔍 Elasticsearch: http://localhost:9200"
 echo "📈 Kibana: http://localhost:5601"
 echo "📮 Logstash: localhost:5044"
-echo "🔄 NewFlow: http://localhost:5678"
+echo "🔄 NewFlow: http://localhost:5677"
 echo "🤖 LM Studio: http://localhost:1234"
 echo ""
 echo "🔐 默认凭据:"
 echo "   Elasticsearch/Kibana: elastic / changeme123"
 echo ""
 echo "🔌 MCP服务地址:"
-echo "   • Elasticsearch MCP: http://localhost:3005/mcp"
+echo "   • Elasticsearch MCP: http://localhost:3001/mcp"
 echo "   • Kibana MCP: http://localhost:3002/mcp"
 echo "   • NewFlow MCP: http://localhost:3003/mcp"
 echo ""
 echo "📝 提示："
 echo "   • 查看日志: tail -f python_dashboard/dashboard.log"
 echo "   • 停止服务: bash scripts/stop_all.sh"
-echo "   • MCP服务器管理: http://localhost:${DASHBOARD_PORT:-80} (Dashboard)"
+echo "   • MCP服务器管理: http://localhost:8000 (Dashboard)"
 echo ""
 
