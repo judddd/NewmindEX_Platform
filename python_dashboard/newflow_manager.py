@@ -160,6 +160,7 @@ def start_newflow():
         env["N8N_SECURE_COOKIE"] = "false"     # 禁用安全 cookie（HTTP 模式需要）
         env["NEWFLOW_SECURE_COOKIE"] = "false" # NewFlow 版本的环境变量
         env["N8N_USER_FOLDER"] = str(NEWFLOW_DIR / "data")
+        env["COREPACK_ENABLE_STRICT"] = "0"    # 禁用 Corepack 严格模式，避免签名验证失败
         
         # 确保 data 目录存在
         (NEWFLOW_DIR / "data").mkdir(parents=True, exist_ok=True)

@@ -103,12 +103,20 @@ else
     SERVICES_TO_START+=("logstash")
 fi
 
-# 检查NewFlow
-if docker ps --format '{{.Names}}' | grep -q '^newflow$'; then
-    SERVICES_RUNNING+=("NewFlow")
-    echo "   ✅ NewFlow 已运行，跳过启动"
+# 检查 NewFlow 文档
+if docker ps --format '{{.Names}}' | grep -q '^newflow_docs$'; then
+    SERVICES_RUNNING+=("NewFlow Docs")
+    echo "   ✅ NewFlow 文档服务已运行，跳过启动"
 else
-    SERVICES_TO_START+=("newflow")
+    SERVICES_TO_START+=("newflow_docs")
+fi
+
+# 检查 NewChat 文档
+if docker ps --format '{{.Names}}' | grep -q '^newchat_docs$'; then
+    SERVICES_RUNNING+=("NewChat Docs")
+    echo "   ✅ NewChat 文档服务已运行，跳过启动"
+else
+    SERVICES_TO_START+=("newchat_docs")
 fi
 
 # 检查MinIO
@@ -170,24 +178,6 @@ else
         fi
     fi
     
-    # 如果启动了NewFlow，等待其就绪
-    if [[ " ${SERVICES_TO_START[@]} " =~ " newflow " ]]; then
-        echo "⏳ 等待 NewFlow 就绪..."
-        sleep 5
-        MAX_WAIT=60
-        ELAPSED=0
-        while [ $ELAPSED -lt $MAX_WAIT ]; do
-            if curl -s http://localhost:${NEWFLOW_PORT:-5677} > /dev/null 2>&1; then
-                echo "✅ NewFlow 已就绪"
-                break
-            fi
-            sleep 5
-            ELAPSED=$((ELAPSED + 5))
-        done
-        if [ $ELAPSED -ge $MAX_WAIT ]; then
-            echo "⚠️  NewFlow 启动超时，请检查日志: docker logs newflow"
-        fi
-    fi
     
     # 如果启动了MinIO，等待其就绪
     if [[ " ${SERVICES_TO_START[@]} " =~ " minio " ]]; then
