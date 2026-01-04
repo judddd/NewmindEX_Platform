@@ -17,7 +17,7 @@ logger = logging.getLogger("newrag_manager")
 # 路径配置
 PROJECT_ROOT = Path(__file__).parent.parent
 NEWRAG_DIR = PROJECT_ROOT / "newrag-main"
-INSTALLER_ZIP = PROJECT_ROOT / "installers/newrag-main-1.1.0.zip"
+INSTALLER_ZIP = PROJECT_ROOT / "installers/newrag-main-2.0.0.zip"
 PID_FILE = PROJECT_ROOT / "python_dashboard/newrag.pid"
 LOG_FILE = PROJECT_ROOT / "python_dashboard/newrag.log"
 
@@ -118,9 +118,33 @@ def install_newrag(force=False):
             
         # 2. Backend Setup (uv sync)
         logger.info("Setting up Backend (uv sync)...")
-        # 确保 .python-version 正确或使用当前环境
+        # 确保虚拟环境存在且使用 Python 3.11
+        venv_dir = NEWRAG_DIR / ".venv"
+        if not venv_dir.exists():
+            logger.info("Creating Python 3.11 virtual environment...")
+            subprocess.run(["uv", "venv", ".venv", "--python", "3.11"], cwd=NEWRAG_DIR, check=True)
+        
+        # 2.1 临时补丁：安装缺失的依赖 (等待上游修复 pyproject.toml)
+        logger.info("Installing missing dependencies (patch)...")
+        subprocess.run(["uv", "add", "bcrypt", "python-jose", "email-validator"], cwd=NEWRAG_DIR, check=True)
+        
+        # 同步依赖
         subprocess.run(["uv", "sync"], cwd=NEWRAG_DIR, check=True)
         
+        # 2.2 自动生成配置
+        if not (NEWRAG_DIR / "config.yaml").exists():
+            logger.info("Config missing, creating from example...")
+            if (NEWRAG_DIR / "config.example.yaml").exists():
+                shutil.copy(NEWRAG_DIR / "config.example.yaml", NEWRAG_DIR / "config.yaml")
+            else:
+                logger.warning("config.example.yaml not found, skipping config generation")
+
+        # 2.3 自动初始化数据库 (创建 admin 用户)
+        # 检查是否需要初始化 (通过检查数据库文件是否存在或大小，更严谨的方法是查询数据库，这里简单处理)
+        # init_auth_system.py 脚本内部有幂等检查，所以直接运行是安全的
+        logger.info("Initializing authentication system...")
+        subprocess.run(["uv", "run", "scripts/init_auth_system.py"], cwd=NEWRAG_DIR, check=True)
+
         # 3. Frontend Setup (开发模式：只需要 npm install，不需要 build)
         frontend_dir = NEWRAG_DIR / "frontend"
         if frontend_dir.exists():
