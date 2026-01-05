@@ -45,8 +45,8 @@ fi
 
 # 使用uv初始化虚拟环境和安装依赖
 if [ ! -d ".venv" ]; then
-    echo "📦 创建虚拟环境..."
-    uv venv
+    echo "📦 创建虚拟环境 (Python 3.11)..."
+    uv venv --python 3.11
     echo "📦 安装Python依赖..."
     uv pip install -e .
 else

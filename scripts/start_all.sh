@@ -5,6 +5,10 @@
 
 set -e
 
+# 强制使用系统安装的 Node.js (22.12.0)
+export PATH="/usr/local/bin:$PATH"
+unset NVM_DIR NVM_BIN NVM_INC
+
 echo "🚀 NewMind AI Platform - 一键启动"
 echo "===================================="
 echo ""
@@ -299,10 +303,10 @@ if ! $DASHBOARD_RUNNING; then
     # 清理可能残留的旧PID文件
     rm -f dashboard.pid
     
-    source .venv/bin/activate
     # 加载环境变量
     set -a; source ../.env 2>/dev/null || true; set +a
-    nohup uvicorn main:app --host 0.0.0.0 --port ${DASHBOARD_PORT:-8000} > dashboard.log 2>&1 &
+    # 使用 uv run 启动，确保使用正确的虚拟环境
+    nohup uv run uvicorn main:app --host 0.0.0.0 --port ${DASHBOARD_PORT:-8000} > dashboard.log 2>&1 &
     DASHBOARD_PID=$!
     echo $DASHBOARD_PID > dashboard.pid
     echo "✅ Python Dashboard已在后台启动，PID: $DASHBOARD_PID。日志文件: python_dashboard/dashboard.log"
@@ -312,7 +316,7 @@ cd ..
 echo ""
 
 # 步骤11：初始化默认MCP实例
-echo "🔧 初始化默认MCP实例（3001-3003端口）..."
+echo "🔧 初始化默认MCP实例（Docker MCP: 3002,3003,3005）..."
 bash scripts/11_init_default_mcp_instances.sh || echo "⚠️  MCP实例初始化失败，可在Dashboard中手动创建"
 echo ""
 
@@ -332,9 +336,10 @@ echo "🔐 默认凭据:"
 echo "   Elasticsearch/Kibana: elastic / changeme123"
 echo ""
 echo "🔌 MCP服务地址:"
-echo "   • Elasticsearch MCP: http://localhost:3001/mcp"
-echo "   • Kibana MCP: http://localhost:3002/mcp"
-echo "   • NewFlow MCP: http://localhost:3003/mcp"
+echo "   • NewRAG MCP: http://localhost:3001/mcp (本地进程)"
+echo "   • Kibana MCP: http://localhost:3002/mcp (Docker)"
+echo "   • NewFlow MCP: http://localhost:3003/mcp (Docker)"
+echo "   • Elasticsearch MCP: http://localhost:3005/mcp (Docker)"
 echo ""
 echo "📝 提示："
 echo "   • 查看日志: tail -f python_dashboard/dashboard.log"

@@ -52,12 +52,12 @@ install_nodejs() {
     local need_install=true
     local target_version="22.12.0"
     
-    # 检查是否已安装目标版本
-    if command -v node &> /dev/null; then
-        local version_str=$(node --version) # v22.12.0
+    # 检查是否已安装目标版本（在 /usr/local/bin）
+    if [ -x "/usr/local/bin/node" ]; then
+        local version_str=$(/usr/local/bin/node --version) # v22.12.0
         local current_version=$(echo "$version_str" | tr -d 'v')
         
-        log_info "发现已安装 Node.js: $version_str"
+        log_info "发现系统安装的 Node.js: $version_str (路径: /usr/local/bin/node)"
         
         # 严格检查：必须是 22.12.0 版本
         if [ "$current_version" == "$target_version" ]; then
@@ -67,11 +67,11 @@ install_nodejs() {
             return 0
         else
             log_warn "Node.js 版本不匹配 (当前: $version_str, 目标: v$target_version)"
-            log_warn "准备安装指定版本..."
+            log_warn "准备重新安装指定版本..."
             need_install=true
         fi
     else
-        log_info "Node.js 未安装"
+        log_info "系统未安装 Node.js (检查路径: /usr/local/bin/node)"
         need_install=true
     fi
     

@@ -5,6 +5,10 @@
 
 set -e
 
+# 强制使用系统安装的 Node.js (22.12.0)
+export PATH="/usr/local/bin:$PATH"
+unset NVM_DIR NVM_BIN NVM_INC
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/utils.sh"
 source "$SCRIPT_DIR/../lib/checks.sh"

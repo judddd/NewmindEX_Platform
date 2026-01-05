@@ -680,11 +680,11 @@ async def newrag_status_api():
         if config_path.exists():
             with open(config_path) as f:
                 newrag_config = yaml.safe_load(f)
-                mcp_port = newrag_config.get("mcp", {}).get("port", 2999)
+                mcp_port = newrag_config.get("mcp", {}).get("port", 3001)
         else:
-            mcp_port = 2999  # 默认值
+            mcp_port = 3001  # 默认值
     except:
-        mcp_port = 2999
+        mcp_port = 3001
     
     # 增强诊断：检查各个端口和依赖
     diagnostics = {
@@ -705,7 +705,7 @@ async def newrag_status_api():
         "mcp_url": f"http://{server_ip}:{mcp_port}",
         "diagnostics": diagnostics,
         "server_ip": server_ip,
-        "note": f"NewRAG MCP在{mcp_port}, ES MCP在3005, Kibana MCP在3002, NewFlow MCP在3003"
+        "note": f"NewRAG MCP在{mcp_port}, ES MCP在3005, Kibana MCP在3002, NewFlow MCP在3003 (NewRAG默认3001)"
     }
 
 @app.post("/api/newrag/toggle")

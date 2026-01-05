@@ -3,6 +3,10 @@
 # 安装 NewRAG
 # 解压并配置 NewRAG 环境
 
+# 强制使用系统安装的 Node.js (22.12.0)
+export PATH="/usr/local/bin:$PATH"
+unset NVM_DIR NVM_BIN NVM_INC
+
 # 如果 log_info 未定义，定义简单的 fallback (兼容 start_all.sh)
 if ! command -v log_info &> /dev/null; then
     log_info() { echo "ℹ️  $1"; }
@@ -15,7 +19,7 @@ run_step() {
     local force_install=$1
     log_info "检查 NewRAG 安装状态..."
     
-    local zip_file="installers/newrag-main-1.1.0.zip"
+    local zip_file="installers/newrag-main-2.0.0.zip"
     local target_dir="newrag-main"
     
     # 0. 检查是否需要全新解压
@@ -68,6 +72,16 @@ run_step() {
         
         # 设置超时时间（防止大包下载断开）
         export UV_HTTP_TIMEOUT=300
+        
+        # 确保使用 Python 3.11 创建虚拟环境
+        if [ ! -d ".venv" ]; then
+            log_info "创建 Python 3.11 虚拟环境..."
+            if ! uv venv .venv --python 3.11; then
+                log_error "创建虚拟环境失败"
+                cd ..
+                return 1
+            fi
+        fi
         
         # 直接联网安装
         log_info "从 PyPI 在线安装依赖..."

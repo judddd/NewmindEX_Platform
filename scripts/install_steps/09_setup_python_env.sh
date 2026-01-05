@@ -101,6 +101,34 @@ create_venv() {
 install_dependencies() {
     log_info "安装 Python 依赖..."
     
+    # 确保 uv 可用
+    export PATH="$HOME/.local/bin:$PATH"
+    if ! command -v uv &> /dev/null; then
+        log_error "找不到 uv"
+        return 1
+    fi
+    
+    # 优先使用 uv sync (基于 pyproject.toml)
+    if [ -f "pyproject.toml" ]; then
+        log_info "使用 uv sync 安装依赖 (基于 pyproject.toml)..."
+        if uv sync 2>&1 | tee -a "$LOG_FILE"; then
+            UV_STATUS=${PIPESTATUS[0]}
+            if [ $UV_STATUS -eq 0 ]; then
+                log_success "依赖安装完成"
+                return 0
+            else
+                log_error "uv sync 失败 (exit code: $UV_STATUS)"
+                return 1
+            fi
+        else
+            log_error "uv sync 过程发生错误"
+            return 1
+        fi
+    fi
+    
+    # 降级方案：使用 requirements.txt
+    log_warn "未找到 pyproject.toml，尝试使用 requirements.txt..."
+    
     # 显式激活虚拟环境
     if [ -f ".venv/bin/activate" ]; then
         source .venv/bin/activate
@@ -127,16 +155,8 @@ install_dependencies() {
         fi
     fi
     
-    # 确保 uv 可用
-    export PATH="$HOME/.local/bin:$PATH"
-    if ! command -v uv &> /dev/null; then
-        log_error "找不到 uv"
-        return 1
-    fi
-    
     # 直接联网安装
     log_info "从 PyPI 在线安装依赖..."
-    # 添加 --force-reinstall 确保依赖完整性
     if uv pip install --force-reinstall -r "$req_file" 2>&1 | tee -a "$LOG_FILE"; then
         UV_STATUS=${PIPESTATUS[0]}
         if [ $UV_STATUS -eq 0 ]; then
@@ -175,7 +195,7 @@ verify_step() {
     echo ""
     echo -e "${CYAN}关键依赖检查:${NC}"
     
-    for package in fastapi uvicorn httpx docker aiosqlite; do
+    for package in fastapi uvicorn httpx docker aiosqlite psutil; do
         if python3 -c "import $package" 2>/dev/null; then
             local version=$(python3 -c "import $package; print($package.__version__)" 2>/dev/null || echo "未知")
             log_success "  ✓ $package ($version)"
