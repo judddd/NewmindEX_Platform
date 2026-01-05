@@ -144,7 +144,7 @@ def install_newrag(force=False):
         # init_auth_system.py 脚本内部有幂等检查，所以直接运行是安全的
         logger.info("Initializing authentication system...")
         subprocess.run(["uv", "run", "scripts/init_auth_system.py"], cwd=NEWRAG_DIR, check=True)
-
+        
         # 3. Frontend Setup (开发模式：只需要 npm install，不需要 build)
         frontend_dir = NEWRAG_DIR / "frontend"
         if frontend_dir.exists():
@@ -179,11 +179,45 @@ def start_newrag():
         return True, "已在运行中"
         
     # 启动前检查是否需要安装/升级
-    # 如果目录不存在，才尝试安装，避免每次启动都运行耗时的检查
     if not NEWRAG_DIR.exists():
         install_success, msg = install_newrag()
         if not install_success:
             return False, f"启动失败: {msg}"
+
+    # === 启动前强制自检与修复 (Self-Healing) ===
+    try:
+        # 1. 修复配置 config.yaml
+        if not (NEWRAG_DIR / "config.yaml").exists():
+            logger.info("Config missing, performing self-healing...")
+            if (NEWRAG_DIR / "config.example.yaml").exists():
+                shutil.copy(NEWRAG_DIR / "config.example.yaml", NEWRAG_DIR / "config.yaml")
+                logger.info("✅ Config restored from example")
+            else:
+                logger.warning("⚠️ Config example not found, skip config healing")
+
+        # 2. 修复关键依赖 (bcrypt, python-jose, email-validator)
+        # 每次启动前快速检查，如果缺了就补上。这比依赖 install 过程更可靠。
+        # 使用 uv pip install --system 或在 venv 下运行
+        # 为了不拖慢每次启动，我们只在 import 失败时才安装
+        check_script = """
+try:
+    import bcrypt
+    import jose
+    import email_validator
+except ImportError:
+    exit(1)
+"""
+        # 在 newrag venv 环境下检查
+        venv_python = NEWRAG_DIR / ".venv" / "bin" / "python"
+        if venv_python.exists():
+            res = subprocess.run([str(venv_python), "-c", check_script], capture_output=True)
+            if res.returncode != 0:
+                logger.info("Missing dependencies detected, performing self-healing...")
+                subprocess.run(["uv", "add", "bcrypt", "python-jose", "email-validator"], cwd=NEWRAG_DIR, check=True)
+                logger.info("✅ Dependencies patched")
+    except Exception as e:
+        logger.warning(f"Self-healing process encountered non-fatal error: {e}")
+    # ==========================================
         
     try:
         logger.info("Starting NewRAG...")
