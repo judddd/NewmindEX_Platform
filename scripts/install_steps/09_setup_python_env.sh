@@ -78,7 +78,19 @@ create_venv() {
         response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
         if [[ "$response" =~ ^(y|yes)$ ]]; then
             log_info "删除旧环境..."
-            rm -rf .venv
+            if ! rm -rf .venv 2>/dev/null; then
+                log_warn "无法直接删除 .venv，尝试修复权限..."
+                chmod -R u+w .venv 2>/dev/null || true
+                if ! rm -rf .venv; then
+                    log_warn "权限不足，尝试使用 sudo 删除..."
+                    if command -v sudo &> /dev/null; then
+                        sudo rm -rf .venv
+                    else
+                        log_error "无法删除 .venv 且找不到 sudo 命令，请手动删除 .venv 目录后重试"
+                        return 1
+                    fi
+                fi
+            fi
         else
             log_info "使用现有虚拟环境"
             return 0
