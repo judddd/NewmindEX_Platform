@@ -15,7 +15,7 @@ set +a
 # 等待Dashboard API可用
 echo "⏳ 等待Dashboard API就绪..."
 for i in {1..30}; do
-    if curl -s http://localhost:${DASHBOARD_PORT:-80}/api/status > /dev/null 2>&1; then
+    if curl -s http://localhost:${DASHBOARD_PORT:-8000}/api/status > /dev/null 2>&1; then
         echo "✅ Dashboard API已就绪"
         break
     fi
@@ -27,7 +27,7 @@ for i in {1..30}; do
 done
 
 # API基础URL
-API_BASE="http://localhost:${DASHBOARD_PORT:-80}/api/mcp"
+API_BASE="http://localhost:${DASHBOARD_PORT:-8000}/api/mcp"
 
 # 检查实例是否已存在的函数
 instance_exists() {

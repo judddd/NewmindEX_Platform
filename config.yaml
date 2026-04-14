@@ -67,16 +67,16 @@ docker_images:
     image: "minio/minio:latest"
     version: "latest"
 
-# 本地模块 (非Docker)
+# 本地模块 (非Docker, 从 GitHub 克隆)
 local_modules:
   newrag:
-    file: "installers/newrag-main-2.0.0.zip"
-    version: "2.0.0"
+    git_url: "https://github.com/TocharianOU/newrag.git"
+    branch: "main"
     description: "RAG 知识库系统 (Frontend + Backend + MCP)"
     install_path: "newrag-main"
   newflow:
-    file: "installers/newflow-main-1.0.0.zip"
-    version: "1.0.0"
+    git_url: "https://github.com/TocharianOU/newflow.git"
+    branch: "main"
     description: "NewFlow 工作流引擎 (Node.js)"
     install_path: "newflow-main"
 
@@ -159,8 +159,8 @@ download_sources:
       md5: ""
       required: true
     nodejs:
-      remote: "node-v20.18.1.pkg"
-      local: "installers/system/node-v20.18.1.pkg"
+      remote: "node-v22.20.0.pkg"
+      local: "installers/system/node-v22.20.0.pkg"
       size: "71M"
       md5: ""
       required: true

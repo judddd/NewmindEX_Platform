@@ -106,7 +106,7 @@ lsof -t -i:3000 2>/dev/null | xargs kill -9 2>/dev/null || true
 lsof -t -i:8080 2>/dev/null | xargs kill -9 2>/dev/null || true
 # MCP: 3001
 lsof -t -i:3001 2>/dev/null | xargs kill -9 2>/dev/null || true
-# 旧端口兜底 (2999)
+# MCP 旧端口兜底 (2999 = upstream default, 3001 = platform default)
 lsof -t -i:2999 2>/dev/null | xargs kill -9 2>/dev/null || true
 
 # 停止 NewFlow

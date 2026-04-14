@@ -16,7 +16,7 @@ source scripts/lib/checks.sh
 source scripts/lib/state.sh
 
 # 总步骤数
-    export TOTAL_STEPS=14
+    export TOTAL_STEPS=12
     
     # ==================== 主函数 ====================
 
@@ -48,8 +48,6 @@ main() {
         "07_copy_models:复制AI模型(135GB)"
         "08_load_docker_images:加载Docker镜像"
         "09_setup_python_env:配置Python环境"
-        "12_install_newrag:安装NewRAG模块"
-        "13_install_newflow:安装NewFlow模块"
         "10_start_services:启动所有服务"
         "11_verify_installation:验证安装"
     )
@@ -164,6 +162,11 @@ show_installation_summary() {
     echo -e "   2. 启动 LM Studio 并加载模型"
     echo -e "   3. 启动 NewChat 应用"
     echo -e "   4. 在Dashboard中管理MCP服务器"
+    echo ""
+    echo -e "${CYAN}📦 安装 NewRAG / NewFlow（独立模块，需单独安装）:${NC}"
+    echo -e "   ${WHITE}bash scripts/clone_modules.sh${NC}"
+    echo -e "   ${WHITE}bash scripts/install_steps/12_install_newrag.sh${NC}"
+    echo -e "   ${WHITE}bash scripts/install_steps/13_install_newflow.sh${NC}"
     echo ""
     
     # 显示有用命令

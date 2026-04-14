@@ -95,7 +95,7 @@ install_nodejs() {
         sleep 2
         
         # 刷新 shell 环境
-        export PATH="/usr/local/bin:$PATH"
+        export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
         hash -r 2>/dev/null || true
         
         if command -v node &> /dev/null; then

@@ -6,7 +6,7 @@
 set -e
 
 # 强制使用系统安装的 Node.js (22.12.0)
-export PATH="/usr/local/bin:$PATH"
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 unset NVM_DIR NVM_BIN NVM_INC
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -230,7 +230,7 @@ start_dashboard() {
     set +a
     
     # 启动Dashboard
-    local port=${DASHBOARD_PORT:-80}
+    local port=${DASHBOARD_PORT:-8000}
     log_info "在端口 $port 启动Dashboard..."
     
     # 使用 uv 启动
